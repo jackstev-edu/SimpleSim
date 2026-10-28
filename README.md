@@ -30,8 +30,11 @@ pip install -r requirements.txt
 
 ## Team
 
+- Arin Rothschild
+- Jin Can
+- Yunus Polatoglu
 - Jack Stevens
-- _add teammates_
+
 
 ## GenAI use
 
