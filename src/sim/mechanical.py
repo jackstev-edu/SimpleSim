@@ -25,6 +25,16 @@ def _get_app(version: int = 261) -> App:
     return _app
 
 
+def shutdown() -> None:
+    """Dispose the embedded Mechanical. Call it on the thread that started it:
+    PyMechanical's own atexit hook disposes from the main thread, which deadlocks
+    when Mechanical was started on a worker thread (seen 2026-10-30)."""
+    global _app
+    if _app is not None:
+        _app._dispose()  # private, but it is exactly what PyMechanical's atexit hook calls
+        _app = None
+
+
 def solve(
     pmdb: str | Path,
     fixed: str,

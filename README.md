@@ -35,8 +35,17 @@ pip install -r requirements.txt
 The `src/sim` tools need a local ANSYS 2026 R1 install (Mechanical and SpaceClaim; the Student version works) and Python 3.12+. Check the whole chain with:
 
 ```bash
-python -m scripts.smoke_loop
+python -m scripts.smoke_loop     # geometry edit -> solve -> plausibility checks
+python -m scripts.smoke_tools    # the agent's tools, scripted, no LLM (no API cost)
 ```
+
+Run the chat app (needs `ANTHROPIC_API_KEY` set as an environment variable; never put the key in code):
+
+```bash
+python app.py                    # opens http://127.0.0.1:7860
+```
+
+Upload a part (`.scdocx`, `.stp`, `.step`; try `examples/l_bracket.scdocx`), then describe the load case and the objective in the chat.
 
 Student licence note: SpaceClaim can only save `.scdocx` and `.pmdb` (STEP/IGES/Parasolid export is blocked), but STEP import works.
 
