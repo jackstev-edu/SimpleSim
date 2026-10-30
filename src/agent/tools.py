@@ -11,6 +11,7 @@ are started there and must keep being called from there.
 from __future__ import annotations
 
 import json
+import re
 import shutil
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -19,6 +20,7 @@ from src.sim import mechanical
 from src.sim.geometry import GeometrySession
 
 FIXED, LOAD = "NS_FIXED", "NS_LOAD"
+DESIGN_NAME = re.compile(r"[A-Za-z0-9_-]{1,64}")
 
 TOOLS = [
     {
@@ -175,6 +177,9 @@ class Workbench:
         """Run one tool and return its result as a JSON string (errors raise)."""
         if self.part is None:
             raise RuntimeError("No part loaded yet. Ask the user to upload a part file.")
+        # Design names become file names, so keep them to a safe character set.
+        if "name" in args and not DESIGN_NAME.fullmatch(str(args["name"])):
+            raise ValueError("Design names may only use letters, digits, '_' and '-' (max 64 characters).")
         if name == "describe_part":
             out = self._run(self._describe)
         elif name == "set_load_case":
