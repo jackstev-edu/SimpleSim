@@ -24,6 +24,7 @@ models/
 *.dsdb
 *.err
 *.log
+outputs/
 
 # OS and editor
 .DS_Store

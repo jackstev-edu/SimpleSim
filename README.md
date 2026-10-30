@@ -13,6 +13,10 @@ src/
   data/         simulation data generation and processing
   models/       model training and inference
   agent/        advisor agent logic
+  sim/          SpaceClaim geometry edits and Mechanical solves (PyAnsys)
+scripts/        runnable checks, e.g. smoke_loop.py (edit -> solve -> plausibility checks)
+examples/       sample parts for development
+outputs/        generated part and result files (not committed)
 data/
   raw/          raw simulation outputs (not committed)
   processed/    cleaned datasets (not committed)
@@ -27,6 +31,14 @@ python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
+
+The `src/sim` tools need a local ANSYS 2026 R1 install (Mechanical and SpaceClaim; the Student version works) and Python 3.12+. Check the whole chain with:
+
+```bash
+python -m scripts.smoke_loop
+```
+
+Student licence note: SpaceClaim can only save `.scdocx` and `.pmdb` (STEP/IGES/Parasolid export is blocked), but STEP import works.
 
 ## Team
 
