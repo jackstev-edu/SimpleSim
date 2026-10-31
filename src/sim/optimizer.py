@@ -98,6 +98,9 @@ def arsm(
             if time.time() - t0 > timeout_s:
                 stopped = "timeout"
                 break
+            if should_stop and should_stop():  # also while ARSM is idle and no design is waiting
+                stopped = "user"
+                break
             done = []
             for d in proxy.get_designs():
                 if should_stop and should_stop():
