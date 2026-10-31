@@ -23,6 +23,45 @@ def _mm(q) -> float:
     return round(q.to(UNITS.mm).m, 6)
 
 
+def _xyz(p) -> list[float]:
+    """A Point3D as [x, y, z] in mm."""
+    return [_mm(p.x), _mm(p.y), _mm(p.z)]
+
+
+def _sub(a, b):
+    return [a[i] - b[i] for i in range(3)]
+
+
+def _dot(a, b):
+    return sum(a[i] * b[i] for i in range(3))
+
+
+def _cross(a, b):
+    return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+
+
+def _unit(a):
+    n = _dot(a, a) ** 0.5
+    return [c / n for c in a]
+
+
+def _in_planar_face(face, q: list[float], normal: list[float], samples: int = 16) -> bool:
+    """Is point q (mm, on the face's plane) inside the planar face? Even-odd ray cast in 2D
+    over all boundary edges (outer loop and holes), arcs sampled as polylines."""
+    drop = max(range(3), key=lambda i: abs(normal[i]))  # project onto the best-fit axis plane
+    keep = [i for i in range(3) if i != drop]
+    qx, qy = q[keep[0]], q[keep[1]]
+    inside = False
+    for e in face.edges:
+        n = 1 if e.curve_type.name == "CURVETYPE_LINE" else samples
+        pts = [_xyz(e.shape.evaluate_proportion(k / n).position) for k in range(n + 1)]
+        for p0, p1 in zip(pts, pts[1:]):
+            x0, y0, x1, y1 = p0[keep[0]], p0[keep[1]], p1[keep[0]], p1[keep[1]]
+            if (y0 > qy) != (y1 > qy) and qx < x0 + (qy - y0) * (x1 - x0) / (y1 - y0):
+                inside = not inside
+    return inside
+
+
 class GeometrySession:
     """One SpaceClaim process, kept open for the whole agent session (startup is ~36 s)."""
 
@@ -84,6 +123,37 @@ class GeometrySession:
             out.append(d)
         return out
 
+    def inside_corners(self) -> list[dict]:
+        """Concave edges between two planar faces: the sharp inside corners that cause
+        stress singularities, and the candidates for a fillet.
+
+        Test: w is the direction from the edge into face B (in B's plane, perpendicular to
+        the edge, checked with a point-in-face test). The edge is concave when w points
+        to the outward side of face A, i.e. B rises from A on A's open side.
+        """
+        out = []
+        for e in self.body.edges:
+            fs = e.faces
+            if (len(fs) != 2 or e.curve_type.name != "CURVETYPE_LINE"
+                    or any(f.surface_type.name != "SURFACETYPE_PLANE" for f in fs)):
+                continue
+            a, b = fs
+            n_a, n_b = list(a.normal()), list(b.normal())
+            s, t = _xyz(e.start), _xyz(e.end)
+            d = _unit(_sub(t, s))
+            w = _unit(_cross(n_b, d))
+            mid = [(s[i] + t[i]) / 2 for i in range(3)]
+            eps = 0.05  # mm
+            if not _in_planar_face(b, [mid[i] + eps * w[i] for i in range(3)], n_b):
+                w = [-c for c in w]
+            if _dot(w, n_a) > 1e-6:
+                out.append({
+                    "face_ids": [a.id, b.id],
+                    "length_mm": round(e.length.to(UNITS.mm).m, 3),
+                    "midpoint_mm": [round((s[i] + t[i]) / 2, 3) for i in range(3)],
+                })
+        return out
+
     def _face(self, face_id: str):
         for f in self.body.faces:
             if f.id == face_id:
@@ -104,6 +174,16 @@ class GeometrySession:
         )
         if not ok:
             raise RuntimeError(f"SpaceClaim could not set radius {radius_mm} mm on face {face_id}")
+
+    def fillet_between(self, face_a: str, face_b: str, radius_mm: float) -> None:
+        """Round the edge shared by two faces, e.g. a sharp inside corner (needs ANSYS 25R2+)."""
+        fa, fb = self._face(face_a), self._face(face_b)
+        ids_b = {e.id for e in fb.edges}
+        shared = [e for e in fa.edges if e.id in ids_b]
+        if not shared:
+            raise ValueError(f"Faces {face_a} and {face_b} do not share an edge")
+        if not self.modeler.geometry_commands.fillet(shared, Distance(radius_mm, UNITS.mm)):
+            raise RuntimeError(f"SpaceClaim could not fillet the {face_a}/{face_b} edge with r = {radius_mm} mm")
 
     def name_faces(self, name: str, face_ids: list[str]) -> None:
         """Tag faces so Mechanical can find them (supports, loads)."""

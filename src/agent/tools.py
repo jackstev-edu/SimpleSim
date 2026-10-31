@@ -19,7 +19,10 @@ from pathlib import Path
 from src.sim import mechanical
 from src.sim.geometry import GeometrySession
 
-FIXED, LOAD = "NS_FIXED", "NS_LOAD"
+FIXED, LOAD, FILLETS = "NS_FIXED", "NS_LOAD", "NS_FILLETS"
+FILLET_ELEMENTS_PER_RADIUS = 4  # local mesh size on fillet faces = r / 4
+# ANSYS's default Structural Steel, the only material used so far (see mechanical.solve).
+DENSITY_KG_PER_MM3 = 7850e-9
 DESIGN_NAME = re.compile(r"[A-Za-z0-9_-]{1,64}")
 
 TOOLS = [
@@ -27,8 +30,10 @@ TOOLS = [
         "name": "describe_part",
         "description": (
             "List every face of the loaded part: id, type (plane/cylinder/...), area, bounding box in mm, "
-            "normal for planes, radius for cylinders, plus the part volume. Use it to work out which faces "
-            "are walls, holes, mounting faces and load faces. Units: mm."
+            "normal for planes, radius for cylinders, plus the part volume and mass. Also lists inside_corners: "
+            "sharp concave edges between two flat faces (given by their two face ids). Sharp inside corners "
+            "cause stress singularities and are candidates for a fillet. Use it to work out which faces "
+            "are walls, holes, mounting faces and load faces. Units: mm, kg."
         ),
         "input_schema": {"type": "object", "properties": {}},
     },
@@ -53,11 +58,13 @@ TOOLS = [
         "name": "evaluate_design",
         "description": (
             "Build a design variant from the ORIGINAL part by applying the edits, then solve it in ANSYS "
-            "Mechanical with the load case. Returns volume, max equivalent stress (MPa), max deformation (mm), "
+            "Mechanical with the load case. Returns volume, mass, max equivalent stress (MPa), max deformation (mm), "
             "support reaction (N) and the reaction-balance error. An empty edit list evaluates the original "
             "part (the baseline). Edits: 'offset' moves a planar face by value_mm along its outward normal "
             "(positive = adds material, e.g. a thicker wall; negative = removes material); 'radius' sets a "
-            "cylindrical face's radius to value_mm (e.g. a hole or a fillet). Takes about 30 s."
+            "cylindrical face's radius to value_mm (e.g. a hole); 'fillet' rounds the sharp edge between face_id "
+            "and other_face_id (an inside corner from describe_part) with radius value_mm. Fillets are applied "
+            "after the other edits, and the fillet faces get a local mesh of r/4. Takes about 30 s."
         ),
         "input_schema": {
             "type": "object",
@@ -69,8 +76,9 @@ TOOLS = [
                         "type": "object",
                         "properties": {
                             "face_id": {"type": "string"},
-                            "action": {"type": "string", "enum": ["offset", "radius"]},
+                            "action": {"type": "string", "enum": ["offset", "radius", "fillet"]},
                             "value_mm": {"type": "number"},
+                            "other_face_id": {"type": "string", "description": "Second face, fillet only"},
                         },
                         "required": ["face_id", "action", "value_mm"],
                     },
@@ -140,19 +148,35 @@ class Workbench:
     def _describe(self) -> dict:
         geo = self._session()
         geo.open(self.part)
-        return {"volume_mm3": round(geo.volume_mm3(), 1), "faces": geo.describe_faces()}
+        volume = geo.volume_mm3()
+        return {"volume_mm3": round(volume, 1), "mass_kg": round(volume * DENSITY_KG_PER_MM3, 4),
+                "faces": geo.describe_faces(), "inside_corners": geo.inside_corners()}
 
     def _build(self, edits: list[dict]):
-        """Reopen the original part, tag the load-case faces, apply the edits."""
+        """Reopen the original part, tag the load-case faces, apply the edits.
+        Returns the session and the local mesh sizing for the fillet faces (or None)."""
         geo = self._session()
         geo.open(self.part)
         geo.name_faces(FIXED, self.load_case["fixed_face_ids"])
         geo.name_faces(LOAD, self.load_case["load_face_ids"])
         faces = {f["id"]: f for f in geo.describe_faces()}
-        for e in edits:
+        radii = []
+        # Fillets last: they add new faces and must round the edges of the already-edited walls.
+        for e in sorted(edits, key=lambda e: e["action"] == "fillet"):
             face = faces.get(e["face_id"])
             if face is None:
                 raise KeyError(f"Unknown face id {e['face_id']}")
+            if e["action"] == "fillet":
+                other = faces.get(e.get("other_face_id", ""))
+                if other is None:
+                    raise KeyError(f"fillet needs other_face_id, a known face id (got {e.get('other_face_id')!r})")
+                if face["type"] != "plane" or other["type"] != "plane":
+                    raise ValueError("fillet needs two planar faces that meet at an inside corner")
+                if e["value_mm"] <= 0:
+                    raise ValueError("fillet radius must be positive")
+                geo.fillet_between(e["face_id"], e["other_face_id"], e["value_mm"])
+                radii.append(e["value_mm"])
+                continue
             if e["action"] == "offset":
                 if face["type"] != "plane":
                     raise ValueError(f"offset needs a planar face; {e['face_id']} is {face['type']}")
@@ -161,16 +185,21 @@ class Workbench:
                 if face["type"] != "cylinder":
                     raise ValueError(f"radius needs a cylindrical face; {e['face_id']} is {face['type']}")
                 geo.set_radius(e["face_id"], e["value_mm"])
-        return geo
+        if not radii:
+            return geo, None
+        new = [f["id"] for f in geo.describe_faces() if f["id"] not in faces and f["type"] == "cylinder"]
+        geo.name_faces(FILLETS, new)
+        return geo, (FILLETS, round(min(radii) / FILLET_ELEMENTS_PER_RADIUS, 4))
 
     def _evaluate(self, name: str, edits: list[dict], element_size_mm: float) -> dict:
-        geo = self._build(edits)
+        geo, local = self._build(edits)
         volume = geo.volume_mm3()
         pmdb = geo.save(self.out_dir / f"{name}.pmdb")
-        res = mechanical.solve(pmdb, FIXED, LOAD, self.load_case["force_N"], element_size_mm)
-        self.designs[name] = {"name": name, "edits": edits, "volume_mm3": round(volume, 1), "pmdb": pmdb,
-                              "results": res}
-        return {"name": name, "volume_mm3": round(volume, 1), **res}
+        res = mechanical.solve(pmdb, FIXED, LOAD, self.load_case["force_N"], element_size_mm, local)
+        mass = round(volume * DENSITY_KG_PER_MM3, 4)
+        self.designs[name] = {"name": name, "edits": edits, "volume_mm3": round(volume, 1), "mass_kg": mass,
+                              "pmdb": pmdb, "local": local, "results": res}
+        return {"name": name, "volume_mm3": round(volume, 1), "mass_kg": mass, **res}
 
     # --- tool dispatch ------------------------------------------------------
     def call(self, name: str, args: dict) -> str:
@@ -193,16 +222,17 @@ class Workbench:
         elif name == "check_mesh":
             d = self.designs[args["name"]]
             size = d["results"]["element_size_mm"]
-            chk = self._run(mechanical.refinement_check, d["pmdb"], FIXED, LOAD, self.load_case["force_N"], size)
+            chk = self._run(mechanical.refinement_check, d["pmdb"], FIXED, LOAD, self.load_case["force_N"], size,
+                            0.10, d["local"])
             out = {"name": args["name"], "stress_change": round(chk["stress_change"], 4),
                    "converged": chk["converged"],
-                   "coarse": {k: chk["coarse"][k] for k in ("element_size_mm", "max_stress_MPa", "max_def_mm")},
-                   "fine": {k: chk["fine"][k] for k in ("element_size_mm", "max_stress_MPa", "max_def_mm")}}
+                   "coarse": {k: chk["coarse"][k] for k in ("element_size_mm", "local_size_mm", "max_stress_MPa", "max_def_mm", "nodes")},
+                   "fine": {k: chk["fine"][k] for k in ("element_size_mm", "local_size_mm", "max_stress_MPa", "max_def_mm", "nodes")}}
             d["mesh_check"] = out
         elif name == "finalize_design":
             d = self.designs[args["name"]]
             path = self.out_dir / f"final_{args['name']}.scdocx"
-            self._run(lambda: self._build(d["edits"]).save(path))
+            self._run(lambda: self._build(d["edits"])[0].save(path))
             self.final_part = path
             out = {"saved": str(path)}
         else:
@@ -215,7 +245,7 @@ class Workbench:
         for d in self.designs.values():
             r = d["results"]
             mc = d.get("mesh_check")
-            rows.append([d["name"], d["volume_mm3"], round(r["max_stress_MPa"], 1), round(r["max_def_mm"], 4),
+            rows.append([d["name"], d["mass_kg"], round(r["max_stress_MPa"], 1), round(r["max_def_mm"], 4),
                          f"{r['balance_error']:.2%}",
                          "" if mc is None else ("ok" if mc["converged"] else f"peak not converged "
                                                 f"({mc['stress_change']:.0%})")])

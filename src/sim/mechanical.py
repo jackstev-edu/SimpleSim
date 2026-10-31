@@ -41,8 +41,12 @@ def solve(
     load: str,
     force_N: tuple[float, float, float],
     element_size_mm: float = 2.0,
+    local_size: tuple[str, float] | None = None,
 ) -> dict:
-    """Fix the faces in named selection `fixed`, apply `force_N` on `load`, solve."""
+    """Fix the faces in named selection `fixed`, apply `force_N` on `load`, solve.
+
+    local_size = (named selection, size in mm) refines the mesh on those faces only,
+    e.g. fillets, which a global mesh fine enough to resolve would exceed the node limit."""
     app = _get_app()
     t0 = time.time()
     app.new()
@@ -55,12 +59,16 @@ def solve(
     )
     ExtAPI.Application.ActiveUnitSystem = MechanicalUnitSystem.StandardNMM  # noqa: F821
     ns = {n.Name: n for n in model.NamedSelections.Children}
-    missing = {fixed, load} - ns.keys()
+    missing = {fixed, load, *([local_size[0]] if local_size else [])} - ns.keys()
     if missing:
         raise KeyError(f"Named selections {sorted(missing)} not in {pmdb} (found {sorted(ns)})")
 
     analysis = model.AddStaticStructuralAnalysis()
     model.Mesh.ElementSize = Quantity(f"{element_size_mm} [mm]")  # noqa: F821
+    if local_size:
+        sizing = model.Mesh.AddSizing()
+        sizing.Location = ns[local_size[0]]
+        sizing.ElementSize = Quantity(f"{local_size[1]} [mm]")  # noqa: F821
     model.Mesh.GenerateMesh()
 
     support = analysis.AddFixedSupport()
@@ -87,6 +95,7 @@ def solve(
         "status": str(sol.Status),
         "nodes": model.Mesh.Nodes,
         "element_size_mm": element_size_mm,
+        "local_size_mm": local_size[1] if local_size else None,
         "max_stress_MPa": stress.Maximum.Value,
         "max_def_mm": deformation.Maximum.Value,
         "reaction_N": reaction_N,
@@ -97,10 +106,11 @@ def solve(
 
 
 def refinement_check(pmdb: str | Path, fixed: str, load: str, force_N, element_size_mm: float = 2.0,
-                     tolerance: float = 0.10) -> dict:
-    """Re-solve with half the element size. A max stress change above `tolerance`
-    means the peak is mesh-dependent, typically a singularity at a sharp corner."""
-    coarse = solve(pmdb, fixed, load, force_N, element_size_mm)
-    fine = solve(pmdb, fixed, load, force_N, element_size_mm / 2)
+                     tolerance: float = 0.10, local_size: tuple[str, float] | None = None) -> dict:
+    """Re-solve with half the element size (global and local). A max stress change above
+    `tolerance` means the peak is mesh-dependent, typically a singularity at a sharp corner."""
+    coarse = solve(pmdb, fixed, load, force_N, element_size_mm, local_size)
+    fine_local = (local_size[0], local_size[1] / 2) if local_size else None
+    fine = solve(pmdb, fixed, load, force_N, element_size_mm / 2, fine_local)
     change = abs(fine["max_stress_MPa"] - coarse["max_stress_MPa"]) / coarse["max_stress_MPa"]
     return {"coarse": coarse, "fine": fine, "stress_change": change, "converged": change <= tolerance}

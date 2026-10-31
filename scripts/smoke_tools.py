@@ -16,7 +16,9 @@ def main():
     try:
         part = wb.load_part(ROOT / "examples" / "l_bracket.scdocx")
         faces = part["faces"]
-        print(f"loaded: {len(faces)} faces, volume {part['volume_mm3']} mm^3")
+        print(f"loaded: {len(faces)} faces, volume {part['volume_mm3']} mm^3, mass {part['mass_kg']} kg")
+        print("inside corners:", part["inside_corners"])
+        corner = part["inside_corners"][0]["face_ids"]
 
         def face(rule):
             return next(f["id"] for f in faces if rule(f))
@@ -33,10 +35,16 @@ def main():
             ("baseline", []),
             ("t8_r6", [{"face_id": base_top, "action": "offset", "value_mm": 2},
                        {"face_id": hole, "action": "radius", "value_mm": 6}]),
+            ("fillet_r3", [{"face_id": corner[0], "other_face_id": corner[1], "action": "fillet",
+                            "value_mm": 3}]),
         ]:
             r = json.loads(wb.call("evaluate_design", {"name": name, "edits": edits}))
-            print(f"{name}: volume {r['volume_mm3']}, stress {r['max_stress_MPa']:.1f} MPa, "
+            print(f"{name}: volume {r['volume_mm3']}, mass {r['mass_kg']} kg, stress {r['max_stress_MPa']:.1f} MPa, "
                   f"deflection {r['max_def_mm']:.4f} mm, balance error {r['balance_error']:.2%}, {r['solve_s']} s")
+        for name in ("baseline", "fillet_r3"):
+            m = json.loads(wb.call("check_mesh", {"name": name}))
+            print(f"mesh check {name}: {m['coarse']['max_stress_MPa']:.1f} -> {m['fine']['max_stress_MPa']:.1f} MPa "
+                  f"({m['stress_change']:+.1%}), converged {m['converged']}")
         try:
             wb.call("evaluate_design", {"name": "bad", "edits": [{"face_id": hole, "action": "offset",
                                                                    "value_mm": 1}]})
