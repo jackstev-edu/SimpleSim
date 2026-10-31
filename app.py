@@ -45,6 +45,8 @@ def _stream(history: list, user_text: str):
         elif ev["type"] == "tool":
             history.append({"role": "assistant", "content": f"```json\n{json.dumps(ev['input'], indent=1)}\n```",
                             "metadata": {"title": f"🔧 {ev['name']} (running…)", "status": "pending"}})
+        elif ev["type"] == "progress":
+            history[-1]["content"] += f"\n- {ev['text']}"
         elif ev["type"] == "tool_result":
             msg = history[-1]
             mark = "❌" if ev["is_error"] else "✅"
@@ -75,6 +77,10 @@ def on_send(user_text, history):
     yield from _stream(history, user_text)
 
 
+def on_stop():
+    wb.request_stop()
+
+
 def on_open_ansys():
     if wb.final_part is None or not wb.final_part.exists():
         raise gr.Error("No final design yet. Ask the agent to finalize a design first.")
@@ -94,6 +100,7 @@ with gr.Blocks(title="SimpleSim design optimizer") as demo:
                                  "free end. Make it as light as possible with stress under 150 MPa.",
                                  show_label=False, scale=5)
                 send = gr.Button("Send", variant="primary", scale=1)
+            stop_btn = gr.Button("Stop search", variant="stop")
         with gr.Column(scale=2):
             part = gr.File(label="Part file (.scdocx, .stp, .step)", file_types=[".scdocx", ".stp", ".step"],
                            type="filepath")
@@ -105,6 +112,7 @@ with gr.Blocks(title="SimpleSim design optimizer") as demo:
     send.click(on_send, [box, chat], [chat, table]).then(lambda: "", None, box)
     box.submit(on_send, [box, chat], [chat, table]).then(lambda: "", None, box)
     open_btn.click(on_open_ansys, None, final_path)
+    stop_btn.click(on_stop, None, None, queue=False)
 
 if __name__ == "__main__":
     demo.launch(inbrowser=True)
