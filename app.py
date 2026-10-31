@@ -12,7 +12,7 @@ from pathlib import Path
 
 import gradio as gr
 
-from src.agent.agent import Agent
+from src.agent.agent import MODE, MODEL, Agent
 from src.agent.tools import Workbench
 
 ROOT = Path(__file__).resolve().parent
@@ -84,7 +84,8 @@ def on_open_ansys():
 
 with gr.Blocks(title="SimpleSim design optimizer") as demo:
     gr.Markdown("## SimpleSim: simulation-driven bracket optimization\n"
-                "Upload your part, then tell the assistant how it is loaded and what you want to optimize.")
+                "Upload your part, then tell the assistant how it is loaded and what you want to optimize.\n\n"
+                f"Model: `{MODEL}` ({MODE} mode)")
     with gr.Row():
         with gr.Column(scale=3):
             chat = gr.Chatbot(height=600, label="Assistant")

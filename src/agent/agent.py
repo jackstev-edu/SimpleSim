@@ -1,18 +1,26 @@
-"""The design-optimization agent: Claude Sonnet 5.5 with the tools in tools.py.
+"""The design-optimization agent: Claude with the tools in tools.py.
 
 Manual tool-use loop (rather than the SDK's beta tool runner) so every tool call
 can be shown in the GUI as it happens. The API key comes from the
 ANTHROPIC_API_KEY environment variable, never from code.
+
+SIMPLESIM_MODE picks the model: "debug" (default, Haiku 5.5, cheap) while we fix
+plumbing, "demo" (Sonnet 5.5) for real design runs and the demo.
 """
 from __future__ import annotations
 
+import os
 from collections.abc import Iterator
 
 import anthropic
 
 from src.agent.tools import TOOLS, Workbench
 
-MODEL = "claude-sonnet-5-5"
+MODELS = {"debug": "claude-haiku-5-5", "demo": "claude-sonnet-5-5"}
+MODE = os.environ.get("SIMPLESIM_MODE", "debug")
+if MODE not in MODELS:
+    raise ValueError(f"SIMPLESIM_MODE must be one of {sorted(MODELS)}, got {MODE!r}")
+MODEL = MODELS[MODE]
 MAX_TOOL_ROUNDS = 30  # per user message, a cost guard
 
 SYSTEM = """\
