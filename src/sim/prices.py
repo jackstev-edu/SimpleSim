@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import math
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -29,13 +30,16 @@ def get(material: str) -> dict | None:
 
 
 def record(material: str, usd_per_kg: float, source_url: str, source_title: str, basis: str) -> dict:
-    """Store a price with its source; today's date is the access date. Overwrites an older entry."""
-    if usd_per_kg <= 0:
-        raise ValueError("usd_per_kg must be positive")
+    """Store a price with its source; today's date is the access date. Overwrites an older entry.
+
+    New entries are stored with reviewed = False: web content is untrusted, so a person must
+    confirm the entry (set reviewed to true in the file) before it counts as reviewed."""
+    if not (math.isfinite(usd_per_kg) and usd_per_kg > 0):
+        raise ValueError("usd_per_kg must be a positive finite number")
     if urlparse(source_url).scheme not in ("http", "https"):
         raise ValueError(f"source_url must be an http(s) URL, got {source_url!r}")
     entry = {"usd_per_kg": float(usd_per_kg), "source_url": source_url, "source_title": source_title,
-             "basis": basis, "accessed": dt.date.today().isoformat()}
+             "basis": basis, "accessed": dt.date.today().isoformat(), "reviewed": False}
     data = _load()
     data[material] = entry
     PRICES.parent.mkdir(parents=True, exist_ok=True)

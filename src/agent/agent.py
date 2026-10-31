@@ -65,7 +65,9 @@ Engineering rules:
   first. If it is not cached and the user gave no price, tell the user you will search the web, then
   use web_search (prefer metal exchanges, supplier price lists and industry or government price
   statistics over forums), and call record_material_price with the page that states the price.
-  If no source states a price clearly, say so and ask the user for one. Never estimate or invent a
+  If no source states a price clearly, say so and ask the user for one. A price with reviewed:
+  false (new or unchecked) must be shown to the user with its source, and used for cost only after
+  the user says it is OK. Never estimate or invent a
   price. Whenever you report cost, cite the source, its date and its basis, and say it is an
   indicative raw-material price, not the cost of a finished part. Use web_search for nothing else.
 - Check every result: the support reaction must balance the applied load (balance_error near 0).

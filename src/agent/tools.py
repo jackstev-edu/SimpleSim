@@ -11,6 +11,7 @@ are started there and must keep being called from there.
 from __future__ import annotations
 
 import json
+import math
 import re
 import shutil
 from concurrent.futures import ThreadPoolExecutor
@@ -71,7 +72,8 @@ TOOLS = [
         "name": "get_material_price",
         "description": (
             "Look up a material's price (USD per kg) in the local price table, with its source, basis and access "
-            "date. Use it before searching the web for a price. Returns cached: false if there is no entry."
+            "date. Use it before searching the web for a price. Returns cached: false if there is no entry. "
+            "reviewed: false means no person has checked the entry yet."
         ),
         "input_schema": {
             "type": "object",
@@ -85,7 +87,8 @@ TOOLS = [
             "Store a price you found with web_search in the local price table and use it for cost_usd. "
             "source_url must be a page from this session's web_search results, and the price must be stated on "
             "that page; never compute or guess a price. basis says what the price is for, e.g. '6061-T6 plate, "
-            "bulk, US, 2026'. Convert to USD per kg and say so in basis if the page used other units."
+            "bulk, US, 2026'. Convert to USD per kg and say so in basis if the page used other units. The entry is "
+            "stored as unreviewed: show the user the price and its source and get their OK before relying on it."
         ),
         "input_schema": {
             "type": "object",
@@ -400,6 +403,7 @@ class Workbench:
             if entry is not None and args["material"] == self.material["name"]:
                 self._use_price(entry)
         elif name == "record_material_price":
+            materials.get(args["material"])  # only library materials; KeyError lists them
             if args["source_url"] not in self.seen_urls:
                 raise ValueError("source_url is not among this session's web_search results; search first and "
                                  "use the URL of the page that states the price.")
@@ -447,7 +451,8 @@ class Workbench:
 
     def _use_price(self, entry: dict) -> None:
         self.price = {"usd_per_kg": entry["usd_per_kg"], "source": entry["source_url"],
-                      "title": entry["source_title"], "basis": entry["basis"], "accessed": entry["accessed"]}
+                      "title": entry["source_title"], "basis": entry["basis"], "accessed": entry["accessed"],
+                      "reviewed": entry.get("reviewed", False)}
 
     def _set_material(self, args: dict) -> dict:
         note = []
@@ -456,8 +461,13 @@ class Workbench:
             self.designs, self.price = {}, None
             note.append("Material changed; earlier results and the price were cleared.")
         if "safety_factor" in args:
-            self.safety_factor = float(args["safety_factor"])
+            sf = float(args["safety_factor"])
+            if not (math.isfinite(sf) and sf >= 1.0):
+                raise ValueError("safety_factor must be a finite number >= 1 (below 1 the part is designed to yield).")
+            self.safety_factor = sf
         if "price_usd_per_kg" in args:
+            if not (math.isfinite(float(args["price_usd_per_kg"])) and args["price_usd_per_kg"] > 0):
+                raise ValueError("price_usd_per_kg must be a positive finite number.")
             if not args.get("price_source"):
                 raise ValueError("price_usd_per_kg needs price_source (where the user's price comes from).")
             self.price = {"usd_per_kg": float(args["price_usd_per_kg"]), "source": args["price_source"]}
