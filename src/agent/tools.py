@@ -16,7 +16,7 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from src.sim import mechanical
+from src.sim import mechanical, optimizer
 from src.sim.geometry import GeometrySession
 
 FIXED, LOAD, FILLETS = "NS_FIXED", "NS_LOAD", "NS_FILLETS"
@@ -24,6 +24,8 @@ FILLET_ELEMENTS_PER_RADIUS = 4  # local mesh size on fillet faces = r / 4
 # ANSYS's default Structural Steel, the only material used so far (see mechanical.solve).
 DENSITY_KG_PER_MM3 = 7850e-9
 DESIGN_NAME = re.compile(r"[A-Za-z0-9_-]{1,64}")
+RESPONSES = ("mass_kg", "max_stress_MPa", "max_def_mm")
+MAX_BUDGET = 30
 
 TOOLS = [
     {
@@ -58,7 +60,8 @@ TOOLS = [
         "name": "evaluate_design",
         "description": (
             "Build a design variant from the ORIGINAL part by applying the edits, then solve it in ANSYS "
-            "Mechanical with the load case. Returns volume, mass, max equivalent stress (MPa), max deformation (mm), "
+            "Mechanical with the load case. Returns volume, mass, max equivalent stress (MPa) and where it is "
+            "(max_stress_at_mm, x/y/z of the peak node; compare with face bounding boxes to name the feature), max deformation (mm), "
             "support reaction (N) and the reaction-balance error. An empty edit list evaluates the original "
             "part (the baseline). Edits: 'offset' moves a planar face by value_mm along its outward normal "
             "(positive = adds material, e.g. a thicker wall; negative = removes material); 'radius' sets a "
@@ -99,6 +102,48 @@ TOOLS = [
             "type": "object",
             "properties": {"name": {"type": "string"}},
             "required": ["name"],
+        },
+    },
+    {
+        "name": "optimize",
+        "description": (
+            "Run the classical optimizer (optiSLang ARSM, an adaptive response-surface method) over 1-3 design "
+            "variables. Each variable drives one edit (same actions as evaluate_design; for 'offset' the value is "
+            "the offset in mm from the original face, for 'radius' and 'fillet' it is the radius). fixed_edits are "
+            "applied to every design (e.g. a fillet you are not varying). Minimises the objective subject to "
+            "response <= limit for every entry of limits. Every design is stored like evaluate_design results "
+            "(names prefix_01, prefix_02, ...), so check_mesh and finalize_design work on them. Uses the 2 mm "
+            "mesh: run check_mesh on the best design before trusting it. Takes about 30 s per evaluation, so "
+            "agree the budget with the user first (default 15, max 30)."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "prefix": {"type": "string", "description": "Name prefix for the designs, e.g. 'opt'"},
+                "variables": {
+                    "type": "array", "minItems": 1, "maxItems": 3,
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "face_id": {"type": "string"},
+                            "action": {"type": "string", "enum": ["offset", "radius", "fillet"]},
+                            "other_face_id": {"type": "string", "description": "Second face, fillet only"},
+                            "lower": {"type": "number"},
+                            "upper": {"type": "number"},
+                            "start": {"type": "number"},
+                        },
+                        "required": ["face_id", "action", "lower", "upper", "start"],
+                    },
+                },
+                "fixed_edits": {"type": "array", "items": {"type": "object"}},
+                "objective": {"type": "string", "enum": ["mass_kg", "max_def_mm"]},
+                "limits": {
+                    "type": "object",
+                    "properties": {"max_stress_MPa": {"type": "number"}, "max_def_mm": {"type": "number"}},
+                },
+                "budget": {"type": "integer", "minimum": 4, "maximum": MAX_BUDGET},
+            },
+            "required": ["prefix", "variables", "objective", "limits"],
         },
     },
     {
@@ -201,6 +246,42 @@ class Workbench:
                               "pmdb": pmdb, "local": local, "results": res}
         return {"name": name, "volume_mm3": round(volume, 1), "mass_kg": mass, **res}
 
+    def _optimize(self, args: dict) -> dict:
+        """Run ARSM; every design goes through _evaluate (we are already on the ANSYS thread)."""
+        variables = args["variables"]
+        for v in variables:
+            if not v["lower"] <= v["start"] <= v["upper"]:
+                raise ValueError(f"start must lie within [lower, upper] for {v['face_id']}")
+        names = [f"x{i}" for i in range(len(variables))]
+        fixed = args.get("fixed_edits", [])
+        prefix, count = args["prefix"], [0]
+
+        def evaluate(values: dict[str, float]) -> dict[str, float]:
+            count[0] += 1
+            edits = fixed + [{k: v[k] for k in ("face_id", "action", "other_face_id") if k in v}
+                             | {"value_mm": round(values[n], 4)} for n, v in zip(names, variables)]
+            r = self._evaluate(f"{prefix}_{count[0]:02d}", edits, 2.0)
+            return {k: r[k] for k in RESPONSES}
+
+        run = optimizer.arsm([{"name": n, "lower": v["lower"], "upper": v["upper"], "start": v["start"]}
+                              for n, v in zip(names, variables)],
+                             evaluate, args["objective"], args["limits"], min(args.get("budget", 15), MAX_BUDGET))
+        rows = []
+        for k, e in enumerate(run["evaluations"], 1):
+            name = f"{prefix}_{k:02d}"
+            row = {"name": name, "values": [round(e["values"][n], 3) for n in names]}
+            if e["error"]:
+                row |= {"error": e["error"], "feasible": False}
+            else:  # full results (optiSLang only saw the objective and the limited responses)
+                d = self.designs[name]
+                full = {"mass_kg": d["mass_kg"], **{r: d["results"][r] for r in RESPONSES[1:]}}
+                row |= {r: round(full[r], 4) for r in RESPONSES}
+                row["feasible"] = all(full[r] <= lim for r, lim in args["limits"].items())
+            rows.append(row)
+        best = min((r for r in rows if r["feasible"]), key=lambda r: r[args["objective"]], default=None)
+        return {"stopped": run["stopped"], "evaluations": len(rows), "variable_order": names,
+                "best_feasible": best, "designs": rows}
+
     # --- tool dispatch ------------------------------------------------------
     def call(self, name: str, args: dict) -> str:
         """Run one tool and return its result as a JSON string (errors raise)."""
@@ -226,9 +307,17 @@ class Workbench:
                             0.10, d["local"])
             out = {"name": args["name"], "stress_change": round(chk["stress_change"], 4),
                    "converged": chk["converged"],
-                   "coarse": {k: chk["coarse"][k] for k in ("element_size_mm", "local_size_mm", "max_stress_MPa", "max_def_mm", "nodes")},
-                   "fine": {k: chk["fine"][k] for k in ("element_size_mm", "local_size_mm", "max_stress_MPa", "max_def_mm", "nodes")}}
+                   "coarse": {k: chk["coarse"][k] for k in ("element_size_mm", "local_size_mm", "max_stress_MPa", "max_stress_at_mm", "max_def_mm",
+                                                   "nodes")},
+                   "fine": {k: chk["fine"][k] for k in ("element_size_mm", "local_size_mm", "max_stress_MPa", "max_stress_at_mm", "max_def_mm",
+                                                   "nodes")}}
             d["mesh_check"] = out
+        elif name == "optimize":
+            if self.load_case is None:
+                raise RuntimeError("Set the load case first (set_load_case).")
+            if not DESIGN_NAME.fullmatch(str(args.get("prefix", ""))) or len(args["prefix"]) > 40:
+                raise ValueError("prefix may only use letters, digits, '_' and '-' (max 40 characters).")
+            out = self._run(self._optimize, args)
         elif name == "finalize_design":
             d = self.designs[args["name"]]
             path = self.out_dir / f"final_{args['name']}.scdocx"

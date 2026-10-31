@@ -97,12 +97,29 @@ def solve(
         "element_size_mm": element_size_mm,
         "local_size_mm": local_size[1] if local_size else None,
         "max_stress_MPa": stress.Maximum.Value,
+        "max_stress_at_mm": _peak_location(analysis, stress),
         "max_def_mm": deformation.Maximum.Value,
         "reaction_N": reaction_N,
         "balance_error": residual / applied if applied else 0.0,
         "messages": [m.DisplayString for m in ExtAPI.Application.Messages],  # noqa: F821
         "solve_s": round(time.time() - t0, 1),
     }
+
+
+def _peak_location(analysis, stress) -> list[float]:
+    """Coordinates (mm) of the node with the highest equivalent stress.
+
+    PlotData and MeshData are in solver SI units (Pa, m) regardless of the active unit
+    system (seen 2026-10-31), so the peak value is cross-checked against stress.Maximum
+    (MPa) to catch a unit change in a future release."""
+    pd = stress.PlotData
+    nodes, vals = list(pd["Node"]), list(pd["Values"])
+    i = max(range(len(vals)), key=vals.__getitem__)
+    if abs(vals[i] / 1e6 - stress.Maximum.Value) > 1e-3 * abs(stress.Maximum.Value):
+        raise RuntimeError(f"Peak-location units look wrong: PlotData max {vals[i]} vs "
+                           f"Maximum {stress.Maximum.Value} MPa")
+    node = analysis.MeshData.NodeById(nodes[i])
+    return [round(c * 1000, 2) for c in (node.X, node.Y, node.Z)]
 
 
 def refinement_check(pmdb: str | Path, fixed: str, load: str, force_N, element_size_mm: float = 2.0,
