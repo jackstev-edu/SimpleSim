@@ -40,12 +40,14 @@ def arsm(
     budget: int,
     timeout_s: float = 3600,
     sense: str = "min",
+    should_stop: Callable[[], bool] | None = None,
 ) -> dict:
     """Minimise (sense="min") or maximise ("max") response `objective` subject to every
     limit {"response", "op": "<=" | ">=", "value"}.
 
     variables: [{"name", "lower", "upper", "start"}]. evaluate(values) returns a dict
     with the objective and every limited response, or raises on failure.
+    should_stop() is checked before each design; when true the run ends with stopped = "user".
     Returns {"evaluations": [...], "stopped": reason}.
     """
     if sense not in SENSES:
@@ -98,6 +100,9 @@ def arsm(
                 break
             done = []
             for d in proxy.get_designs():
+                if should_stop and should_stop():
+                    stopped = "user"
+                    break
                 values = {p["name"]: p["value"] for p in d["parameters"]}
                 try:
                     out, error = evaluate(values), None
@@ -105,6 +110,8 @@ def arsm(
                     out, error = failed, f"{type(e).__name__}: {e}"
                 evaluations.append({"values": values, "responses": {r: out[r] for r in responses}, "error": error})
                 done.append({"hid": d["hid"], "responses": [{"name": r, "value": out[r]} for r in responses]})
+            if stopped == "user":
+                break
             if done:
                 proxy.set_designs(done)
             else:

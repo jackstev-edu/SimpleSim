@@ -13,7 +13,10 @@ from __future__ import annotations
 import json
 import math
 import re
+import queue
 import shutil
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -28,6 +31,7 @@ DESIGN_NAME = re.compile(r"[A-Za-z0-9_-]{1,64}")
 # Responses the optimizer can use. cost_usd exists only once the user has given a price.
 RESPONSES = ("mass_kg", "max_stress_MPa", "max_def_mm", "safety_factor", "cost_usd")
 MAX_BUDGET = 30
+DEFAULT_SECONDS_PER_DESIGN = 30.0  # used for time estimates until a design has been timed
 
 TOOLS = [
     {
@@ -171,6 +175,55 @@ TOOLS = [
         },
     },
     {
+        "name": "first_look",
+        "description": (
+            "Quick screen of 1-4 candidate features: vary ONE feature at a time to its low and high end while the "
+            "others stay at their reference value (the part's current value, else the middle of the range). That is "
+            "2n + 1 solves for n features (about 30 s each), run on the 2 mm mesh. Returns per-feature effects on every "
+            "response, a ranking by effect on the objective, and the best feasible design. The values are indicative "
+            "only (one-at-a-time, coarse mesh, no interactions): use them to choose the variables and bounds for "
+            "optimize, then run check_mesh on whatever you recommend. Before calling it, show the user the features, "
+            "their ranges and the estimated time (2n + 1 designs x seconds_per_design) and wait for their OK. "
+            "Designs are stored as look_ref, look_<k>_low, look_<k>_high. The user can stop it between designs."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "features": {
+                    "type": "array", "minItems": 1, "maxItems": 4,
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "face_id": {"type": "string"},
+                            "action": {"type": "string", "enum": ["offset", "radius", "fillet"]},
+                            "other_face_id": {"type": "string", "description": "Second face, fillet only"},
+                            "low": {"type": "number"},
+                            "high": {"type": "number"},
+                            "label": {"type": "string", "description": "Plain-language name for the user"},
+                        },
+                        "required": ["face_id", "action", "low", "high"],
+                    },
+                },
+                "fixed_edits": {"type": "array", "items": {"type": "object"}},
+                "objective": {"type": "string", "enum": list(RESPONSES)},
+                "sense": {"type": "string", "enum": ["min", "max"], "description": "Default min"},
+                "limits": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "response": {"type": "string", "enum": list(RESPONSES)},
+                            "op": {"type": "string", "enum": ["<=", ">="]},
+                            "value": {"type": "number"},
+                        },
+                        "required": ["response", "op", "value"],
+                    },
+                },
+            },
+            "required": ["features", "objective", "limits"],
+        },
+    },
+    {
         "name": "optimize",
         "description": (
             "Run the classical optimizer (optiSLang ARSM, an adaptive response-surface method) over 1-3 design "
@@ -253,6 +306,24 @@ class Workbench:
         self.safety_factor = DEFAULT_SAFETY_FACTOR
         self.price: dict | None = None  # {"usd_per_kg", "source"}: from the user or the price table
         self.seen_urls: set[str] = set()  # URLs from web_search results, filled in by the agent
+        self.faces: list[dict] = []  # describe_faces() of the original part, read at load time
+        self.stop_event = threading.Event()  # set by the GUI Stop button; checked between designs
+        self.progress: queue.Queue[dict] = queue.Queue()  # events for the GUI, one per finished design/solve
+        self._timings: list[float] = []  # wall seconds per evaluated design
+
+    def request_stop(self) -> None:
+        """Ask the running first_look/optimize to end after the design in progress."""
+        self.stop_event.set()
+
+    def seconds_per_design(self) -> float:
+        """Mean measured wall time of a design (build + solve), or a default before any was timed."""
+        return round(sum(self._timings) / len(self._timings), 1) if self._timings else DEFAULT_SECONDS_PER_DESIGN
+
+    def _emit(self, tool: str, k: int, n: int, design: str, responses: dict | None = None,
+              error: str | None = None, best: str | None = None) -> None:
+        ev = {"tool": tool, "k": k, "n": n, "design": design, "best_feasible": best}
+        ev |= {"error": error} if error else {"responses": responses}
+        self.progress.put(ev)
 
     # Everything that touches ANSYS goes through here.
     def _run(self, fn, *args):
@@ -269,7 +340,9 @@ class Workbench:
         shutil.copy(src, self.part)
         self.load_case, self.designs, self.final_part = None, {}, None
         self.material, self.safety_factor, self.price = materials.get(materials.DEFAULT), DEFAULT_SAFETY_FACTOR, None
-        return self._run(self._describe)
+        desc = self._run(self._describe)
+        self.faces = desc["faces"]
+        return desc
 
     def _describe(self) -> dict:
         geo = self._session()
@@ -331,6 +404,12 @@ class Workbench:
         return geo, (FILLETS, round(min(radii) / FILLET_ELEMENTS_PER_RADIUS, 4))
 
     def _evaluate(self, name: str, edits: list[dict], element_size_mm: float) -> dict:
+        t0 = time.time()
+        out = self._evaluate_untimed(name, edits, element_size_mm)
+        self._timings.append(time.time() - t0)
+        return out
+
+    def _evaluate_untimed(self, name: str, edits: list[dict], element_size_mm: float) -> dict:
         geo, local = self._build(edits)
         volume = geo.volume_mm3()
         pmdb = geo.save(self.out_dir / f"{name}.pmdb")
@@ -349,6 +428,10 @@ class Workbench:
         names = [f"x{i}" for i in range(len(variables))]
         fixed = args.get("fixed_edits", [])
         prefix, count = args["prefix"], [0]
+        budget = min(args.get("budget", 15), MAX_BUDGET)
+        sign = -1 if args.get("sense", "min") == "max" else 1
+        best = [None, None]  # [design name, objective value] of the best feasible design so far
+        self.stop_event.clear()
         limits = args.get("limits", [])
         used = {args["objective"], *(lim["response"] for lim in limits)}
         if "cost_usd" in used and not self.price:
@@ -358,13 +441,21 @@ class Workbench:
             count[0] += 1
             edits = fixed + [{k: v[k] for k in ("face_id", "action", "other_face_id") if k in v}
                              | {"value_mm": round(values[n], 4)} for n, v in zip(names, variables)]
-            r = self._evaluate(f"{prefix}_{count[0]:02d}", edits, 2.0)
+            name = f"{prefix}_{count[0]:02d}"
+            try:
+                r = self._evaluate(name, edits, 2.0)
+            except Exception as e:  # noqa: BLE001 - arsm records it; the GUI still wants the event
+                self._emit("optimize", count[0], budget, name, error=f"{type(e).__name__}: {e}", best=best[0])
+                raise
+            if screen.feasible(r, limits) and (best[1] is None or sign * r[args["objective"]] < sign * best[1]):
+                best[:] = [name, r[args["objective"]]]
+            self._emit("optimize", count[0], budget, name, {k: r[k] for k in RESPONSES if k in r}, best=best[0])
             return {k: r[k] for k in used}
 
         run = optimizer.arsm([{"name": n, "lower": v["lower"], "upper": v["upper"], "start": v["start"]}
                               for n, v in zip(names, variables)],
-                             evaluate, args["objective"], limits, min(args.get("budget", 15), MAX_BUDGET),
-                             sense=args.get("sense", "min"))
+                             evaluate, args["objective"], limits, budget,
+                             sense=args.get("sense", "min"), should_stop=self.stop_event.is_set)
         rows = []
         for k, e in enumerate(run["evaluations"], 1):
             name = f"{prefix}_{k:02d}"
@@ -376,10 +467,48 @@ class Workbench:
                 row |= {k: round(v, 4) if isinstance(v, float) else v for k, v in full.items()}
                 row["feasible"] = screen.feasible(full, limits)
             rows.append(row)
-        sign = -1 if args.get("sense", "min") == "max" else 1
-        best = min((r for r in rows if r["feasible"]), key=lambda r: sign * r[args["objective"]], default=None)
+        best_row = min((r for r in rows if r["feasible"]), key=lambda r: sign * r[args["objective"]], default=None)
         return {"stopped": run["stopped"], "evaluations": len(rows), "variable_order": names,
-                "best_feasible": best, "designs": rows}
+                "best_feasible": best_row, "designs": rows, "seconds_per_design": self.seconds_per_design()}
+
+    def _first_look(self, args: dict) -> dict:
+        """One-at-a-time screen: 2n + 1 designs via _evaluate (we are on the ANSYS thread)."""
+        features, objective = args["features"], args["objective"]
+        sense, limits = args.get("sense", "min"), args.get("limits", [])
+        if not 1 <= len(features) <= 4:
+            raise ValueError("first_look takes 1-4 features.")
+        for f in features:
+            if not f["low"] < f["high"]:
+                raise ValueError(f"low must be below high for {f['face_id']}")
+        if "cost_usd" in {objective, *(lim["response"] for lim in limits)} and not self.price:
+            raise ValueError("cost_usd needs a material price: ask the user for one, then call set_material.")
+        faces = {f["id"]: f for f in self.faces}
+        currents = [{"offset": 0.0, "radius": faces.get(f["face_id"], {}).get("radius_mm")}.get(f["action"])
+                    for f in features]  # a fillet has no current value
+        plan = screen.screen_plan(features, currents)
+        fixed, sign = args.get("fixed_edits", []), -1 if sense == "max" else 1
+        self.stop_event.clear()
+        rows, stopped, best = {}, "done", [None, None]
+        for k, (name, values) in enumerate(plan, 1):
+            if self.stop_event.is_set():
+                stopped = "user"
+                break
+            edits = fixed + [{c: f[c] for c in ("face_id", "action", "other_face_id") if c in f}
+                             | {"value_mm": round(v, 4)} for f, v in zip(features, values)]
+            try:
+                r = self._evaluate(name, edits, 2.0)
+            except Exception as e:  # noqa: BLE001 - one failed design must not end the screen
+                err = f"{type(e).__name__}: {e}"
+                rows[name] = {"values": values, "error": err}
+                self._emit("first_look", k, len(plan), name, error=err, best=best[0])
+                continue
+            resp = {c: r[c] for c in RESPONSES if c in r}
+            rows[name] = {"values": values, "responses": resp}
+            if screen.feasible(resp, limits) and (best[1] is None or sign * resp[objective] < sign * best[1]):
+                best[:] = [name, resp[objective]]
+            self._emit("first_look", k, len(plan), name, resp, best=best[0])
+        return {**screen.summarize(features, rows, objective, sense, limits), "stopped": stopped,
+                "solves": len(rows), "seconds_per_design": self.seconds_per_design()}
 
     # --- tool dispatch ------------------------------------------------------
     def call(self, name: str, args: dict) -> str:
@@ -416,16 +545,23 @@ class Workbench:
         elif name == "set_load_case":
             self.load_case = args
             self.designs = {}
-            out = {"ok": True, "note": "Load case set; earlier results were cleared."}
+            out = {"ok": True, "note": "Load case set; earlier results were cleared.",
+                   "seconds_per_design": self.seconds_per_design()}
         elif name == "evaluate_design":
             if self.load_case is None:
                 raise RuntimeError("Set the load case first (set_load_case).")
             out = self._run(self._evaluate, args["name"], args["edits"], args.get("element_size_mm", 2.0))
+            out = {**out, "seconds_per_design": self.seconds_per_design()}
         elif name == "check_mesh":
             d = self.designs[args["name"]]
             size = d["results"]["element_size_mm"]
+
+            def progress(which: str, res: dict) -> None:
+                self._emit("check_mesh", 1 if which == "coarse" else 2, 2, args["name"],
+                           {"max_stress_MPa": res["max_stress_MPa"], "element_size_mm": res["element_size_mm"]})
+
             chk = self._run(mechanical.refinement_check, d["pmdb"], FIXED, LOAD, self.load_case["force_N"], size,
-                            0.10, d["local"], d["material"])
+                            0.10, d["local"], d["material"], progress)
             out = {"name": args["name"], "stress_change": round(chk["stress_change"], 4),
                    "converged": chk["converged"],
                    "coarse": {k: chk["coarse"][k] for k in ("element_size_mm", "local_size_mm", "max_stress_MPa", "max_stress_at_mm", "max_def_mm",
@@ -433,12 +569,17 @@ class Workbench:
                    "fine": {k: chk["fine"][k] for k in ("element_size_mm", "local_size_mm", "max_stress_MPa", "max_stress_at_mm", "max_def_mm",
                                                    "nodes")}}
             d["mesh_check"] = out
+            out = {**out, "seconds_per_design": self.seconds_per_design()}
         elif name == "optimize":
             if self.load_case is None:
                 raise RuntimeError("Set the load case first (set_load_case).")
             if not DESIGN_NAME.fullmatch(str(args.get("prefix", ""))) or len(args["prefix"]) > 40:
                 raise ValueError("prefix may only use letters, digits, '_' and '-' (max 40 characters).")
             out = self._run(self._optimize, args)
+        elif name == "first_look":
+            if self.load_case is None:
+                raise RuntimeError("Set the load case first (set_load_case).")
+            out = self._run(self._first_look, args)
         elif name == "finalize_design":
             d = self.designs[args["name"]]
             path = self.out_dir / f"final_{args['name']}.scdocx"

@@ -136,11 +136,16 @@ def _peak_location(analysis, stress) -> list[float]:
 
 def refinement_check(pmdb: str | Path, fixed: str, load: str, force_N, element_size_mm: float = 2.0,
                      tolerance: float = 0.10, local_size: tuple[str, float] | None = None,
-                     material: dict | None = None) -> dict:
+                     material: dict | None = None, on_solve=None) -> dict:
     """Re-solve with half the element size (global and local). A max stress change above
-    `tolerance` means the peak is mesh-dependent, typically a singularity at a sharp corner."""
+    `tolerance` means the peak is mesh-dependent, typically a singularity at a sharp corner.
+    `on_solve("coarse" | "fine", result)` is called after each solve (progress reporting)."""
     coarse = solve(pmdb, fixed, load, force_N, element_size_mm, local_size, material)
+    if on_solve:
+        on_solve("coarse", coarse)
     fine_local = (local_size[0], local_size[1] / 2) if local_size else None
     fine = solve(pmdb, fixed, load, force_N, element_size_mm / 2, fine_local, material)
+    if on_solve:
+        on_solve("fine", fine)
     change = abs(fine["max_stress_MPa"] - coarse["max_stress_MPa"]) / coarse["max_stress_MPa"]
     return {"coarse": coarse, "fine": fine, "stress_change": change, "converged": change <= tolerance}
