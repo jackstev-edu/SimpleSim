@@ -14,6 +14,8 @@ from pathlib import Path
 
 from ansys.mechanical.core import App
 
+from src.sim import materials
+
 # PyMechanical's embedding injects Model, Quantity, enums etc. into these globals.
 _app: App | None = None
 
@@ -42,11 +44,13 @@ def solve(
     force_N: tuple[float, float, float],
     element_size_mm: float = 2.0,
     local_size: tuple[str, float] | None = None,
+    material: dict | None = None,
 ) -> dict:
     """Fix the faces in named selection `fixed`, apply `force_N` on `load`, solve.
 
     local_size = (named selection, size in mm) refines the mesh on those faces only,
-    e.g. fillets, which a global mesh fine enough to resolve would exceed the node limit."""
+    e.g. fillets, which a global mesh fine enough to resolve would exceed the node limit.
+    material = an entry from materials.get(); None keeps Mechanical's default Structural Steel."""
     app = _get_app()
     t0 = time.time()
     app.new()
@@ -62,6 +66,13 @@ def solve(
     missing = {fixed, load, *([local_size[0]] if local_size else [])} - ns.keys()
     if missing:
         raise KeyError(f"Named selections {sorted(missing)} not in {pmdb} (found {sorted(ns)})")
+
+    if material is not None and material["name"] != materials.DEFAULT:
+        model.Materials.Import(str(materials.library_dir() / material["library"]))
+        body = model.Geometry.GetChildren(Ansys.Mechanical.DataModel.Enums.DataModelObjectCategory.Body, True)[0]  # noqa: F821
+        body.Material = material["name"]
+        if body.Material != material["name"]:
+            raise RuntimeError(f"Mechanical did not assign material {material['name']!r} (got {body.Material!r})")
 
     analysis = model.AddStaticStructuralAnalysis()
     model.Mesh.ElementSize = Quantity(f"{element_size_mm} [mm]")  # noqa: F821
@@ -93,6 +104,7 @@ def solve(
     residual = sum((abs(r) - abs(f)) ** 2 for r, f in zip(reaction_N, force_N)) ** 0.5
     return {
         "status": str(sol.Status),
+        "material": material["name"] if material else materials.DEFAULT,
         "nodes": model.Mesh.Nodes,
         "element_size_mm": element_size_mm,
         "local_size_mm": local_size[1] if local_size else None,
@@ -123,11 +135,12 @@ def _peak_location(analysis, stress) -> list[float]:
 
 
 def refinement_check(pmdb: str | Path, fixed: str, load: str, force_N, element_size_mm: float = 2.0,
-                     tolerance: float = 0.10, local_size: tuple[str, float] | None = None) -> dict:
+                     tolerance: float = 0.10, local_size: tuple[str, float] | None = None,
+                     material: dict | None = None) -> dict:
     """Re-solve with half the element size (global and local). A max stress change above
     `tolerance` means the peak is mesh-dependent, typically a singularity at a sharp corner."""
-    coarse = solve(pmdb, fixed, load, force_N, element_size_mm, local_size)
+    coarse = solve(pmdb, fixed, load, force_N, element_size_mm, local_size, material)
     fine_local = (local_size[0], local_size[1] / 2) if local_size else None
-    fine = solve(pmdb, fixed, load, force_N, element_size_mm / 2, fine_local)
+    fine = solve(pmdb, fixed, load, force_N, element_size_mm / 2, fine_local, material)
     change = abs(fine["max_stress_MPa"] - coarse["max_stress_MPa"]) / coarse["max_stress_MPa"]
     return {"coarse": coarse, "fine": fine, "stress_change": change, "converged": change <= tolerance}

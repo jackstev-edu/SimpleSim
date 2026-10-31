@@ -28,23 +28,35 @@ from ansys.optislang.core.project_parametric import (
 # Penalty responses for a design whose geometry edit or solve failed. ARSM needs a value
 # for every design; a clearly infeasible one keeps it away from that region.
 FAILED = 1e9
+SENSES = {"min": ComparisonType.MIN, "max": ComparisonType.MAX}
+OPS = {"<=": ComparisonType.LESSEQUAL, ">=": ComparisonType.GREATEREQUAL}
 
 
 def arsm(
     variables: list[dict],
     evaluate: Callable[[dict[str, float]], dict[str, float]],
     objective: str,
-    limits: dict[str, float],
+    limits: list[dict],
     budget: int,
     timeout_s: float = 3600,
+    sense: str = "min",
 ) -> dict:
-    """Minimise response `objective` subject to response <= limit for each item of `limits`.
+    """Minimise (sense="min") or maximise ("max") response `objective` subject to every
+    limit {"response", "op": "<=" | ">=", "value"}.
 
     variables: [{"name", "lower", "upper", "start"}]. evaluate(values) returns a dict
     with the objective and every limited response, or raises on failure.
     Returns {"evaluations": [...], "stopped": reason}.
     """
-    responses = sorted({objective, *limits})
+    if sense not in SENSES:
+        raise ValueError(f"sense must be one of {sorted(SENSES)}")
+    for lim in limits:
+        if lim["op"] not in OPS:
+            raise ValueError(f"limit op must be one of {sorted(OPS)}, got {lim['op']!r}")
+    responses = sorted({objective, *(lim["response"] for lim in limits)})
+    # A failed design gets the worst value in the direction that matters for each response.
+    low_is_bad = {lim["response"] for lim in limits if lim["op"] == ">="} | ({objective} if sense == "max" else set())
+    failed = {r: -FAILED if r in low_is_bad else FAILED for r in responses}
     evaluations: list[dict] = []
     osl = Optislang(ini_timeout=180)
     try:
@@ -68,10 +80,11 @@ def arsm(
             system.parameter_manager.modify_parameter(
                 OptimizationParameter(name=v["name"], reference_value=v["start"], range=(v["lower"], v["upper"])))
         system.criteria_manager.add_criterion(
-            ObjectiveCriterion(name="objective", expression=objective, criterion=ComparisonType.MIN))
-        for r, limit in limits.items():
+            ObjectiveCriterion(name="objective", expression=objective, criterion=SENSES[sense]))
+        for k, lim in enumerate(limits):
             system.criteria_manager.add_criterion(ConstraintCriterion(
-                name=f"limit_{r}", expression=r, criterion=ComparisonType.LESSEQUAL, limit_expression=repr(limit)))
+                name=f"limit_{k}_{lim['response']}", expression=lim["response"], criterion=OPS[lim["op"]],
+                limit_expression=repr(float(lim["value"]))))
 
         project = osl.application.project
         project.start(wait_for_finished=False)
@@ -89,7 +102,7 @@ def arsm(
                 try:
                     out, error = evaluate(values), None
                 except Exception as e:  # noqa: BLE001 - a failed design must not stop the study
-                    out, error = {r: FAILED for r in responses}, f"{type(e).__name__}: {e}"
+                    out, error = failed, f"{type(e).__name__}: {e}"
                 evaluations.append({"values": values, "responses": {r: out[r] for r in responses}, "error": error})
                 done.append({"hid": d["hid"], "responses": [{"name": r, "value": out[r]} for r in responses]})
             if done:

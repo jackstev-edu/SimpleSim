@@ -1,7 +1,8 @@
 """Smoke test of the optimize tool (optiSLang ARSM + ANSYS), without the LLM (no API cost).
 
 Run from the repo root:  python -m scripts.smoke_optimize
-L-bracket, 500 N down at the free end: minimise mass subject to max stress <= 150 MPa,
+L-bracket, 500 N down at the free end: minimise mass subject to safety factor >= 1.6667
+(= max stress <= 150 MPa for Structural Steel, yield 250 MPa),
 varying the base thickness (offset of the base top face) with a fixed 4 mm inside fillet.
 Expected from the live agent run: about +0.8 mm (149.8 MPa, 0.2694 kg).
 """
@@ -27,7 +28,7 @@ def main():
             "prefix": "opt",
             "variables": [{"face_id": base_top, "action": "offset", "lower": 0.0, "upper": 2.0, "start": 1.0}],
             "fixed_edits": [{"face_id": a, "other_face_id": b, "action": "fillet", "value_mm": 4}],
-            "objective": "mass_kg", "limits": {"max_stress_MPa": 150}, "budget": 10}))
+            "objective": "mass_kg", "limits": [{"response": "safety_factor", "op": ">=", "value": 1.6667}], "budget": 10}))
         for d in out["designs"]:
             print(d)
         print("stopped:", out["stopped"], "| best feasible:", out["best_feasible"])

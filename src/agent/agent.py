@@ -22,6 +22,10 @@ if MODE not in MODELS:
     raise ValueError(f"SIMPLESIM_MODE must be one of {sorted(MODELS)}, got {MODE!r}")
 MODEL = MODELS[MODE]
 MAX_TOOL_ROUNDS = 30  # per user message, a cost guard
+# Server-side web search, used only to find material prices (decision 2026-10-31). The dynamic-
+# filtering variant needs Sonnet 5.5 or Opus; Haiku gets the basic one.
+WEB_SEARCH = {"type": "web_search_20260209" if MODE == "demo" else "web_search_20250305",
+              "name": "web_search", "max_uses": 3}
 
 SYSTEM = """\
 You are a structural design-optimization assistant for beginners who use ANSYS Mechanical.
@@ -33,6 +37,7 @@ How you work:
    holes, likely mounting and load faces), referring to faces by location, not only by id.
 2. Agree the load case with the user: which faces are fixed, which carry the load, and the force
    (magnitude and direction). Never invent loads, limits or materials; ask. Then call set_load_case.
+   Confirm the material (default Structural Steel) and the required safety factor (default 1.5).
 3. Evaluate the baseline (no edits) and run check_mesh on it before trusting its stresses.
 4. Agree the objective and constraints (e.g. minimise mass with max stress below an allowable
    value, or minimise deflection). Ask for the allowable stress or deflection if not given.
@@ -47,8 +52,22 @@ How you work:
    finalize_design.
 
 Engineering rules:
-- Units are mm, N, MPa and kg. Material is ANSYS's default Structural Steel (7850 kg/m³); say
-  so when reporting stresses. Report mass in kg (mass_kg), not volume, and never call a volume a mass.
+- Units are mm, N, MPa and kg. Report mass in kg (mass_kg), not volume, and never call a volume a mass.
+- Material: properties come only from ANSYS's library (list_materials); never quote material data
+  from memory. The default is Structural Steel. If the user names a material, find its exact library
+  name and call set_material; if it is not in the library, say so and ask which one to use. Name the
+  material whenever you report results.
+- Safety factor: safety_factor = yield strength / converged peak von Mises stress. The required
+  safety factor is 1.5 unless the user sets another. Always state which required safety factor you
+  are using, and when it is the default, say explicitly that 1.5 is a default the user can change.
+  In optimize, enforce it with the limit safety_factor >= required value.
+- Cost: cost_usd = price per kg x mass. Only when the user wants cost: call get_material_price
+  first. If it is not cached and the user gave no price, tell the user you will search the web, then
+  use web_search (prefer metal exchanges, supplier price lists and industry or government price
+  statistics over forums), and call record_material_price with the page that states the price.
+  If no source states a price clearly, say so and ask the user for one. Never estimate or invent a
+  price. Whenever you report cost, cite the source, its date and its basis, and say it is an
+  indicative raw-material price, not the cost of a finished part. Use web_search for nothing else.
 - Check every result: the support reaction must balance the applied load (balance_error near 0).
   If it does not, say the result is not trustworthy.
 - Stress limits are checked against the mesh-converged peak stress, after sharp inside corners
@@ -91,15 +110,34 @@ class Agent:
                 model=MODEL,
                 max_tokens=8000,
                 system=SYSTEM,
-                tools=TOOLS,
+                tools=TOOLS + [WEB_SEARCH],
                 messages=self.messages,
                 cache_control={"type": "ephemeral"},
             )
             self.messages.append({"role": "assistant", "content": response.content})
+            # Web-search citations split one answer into many text blocks; join each run of text
+            # blocks back into one message for the GUI.
+            text = []
             for block in response.content:
-                if block.type == "text" and block.text.strip():
-                    yield {"type": "text", "text": block.text}
+                if block.type == "text":
+                    text.append(block.text)
+                    continue
+                if "".join(text).strip():
+                    yield {"type": "text", "text": "".join(text)}
+                text = []
+                if block.type == "server_tool_use":  # web search, run by the API itself
+                    yield {"type": "tool", "name": block.name, "input": block.input}
+                elif block.type == "web_search_tool_result":
+                    # Success is a list of results; an error is a single object.
+                    hits = block.content if isinstance(block.content, list) else []
+                    self.wb.seen_urls.update(h.url for h in hits)
+                    yield {"type": "tool_result", "name": "web_search", "is_error": not hits,
+                           "content": "\n".join(f"{h.title}: {h.url}" for h in hits) or str(block.content)}
+            if "".join(text).strip():
+                yield {"type": "text", "text": "".join(text)}
 
+            if response.stop_reason == "pause_turn":  # server-side search loop paused; resend to resume
+                continue
             if response.stop_reason != "tool_use":
                 return
 

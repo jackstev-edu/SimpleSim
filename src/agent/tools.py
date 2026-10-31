@@ -16,15 +16,15 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from src.sim import mechanical, optimizer
+from src.sim import materials, mechanical, optimizer, prices
 from src.sim.geometry import GeometrySession
 
 FIXED, LOAD, FILLETS = "NS_FIXED", "NS_LOAD", "NS_FILLETS"
 FILLET_ELEMENTS_PER_RADIUS = 4  # local mesh size on fillet faces = r / 4
-# ANSYS's default Structural Steel, the only material used so far (see mechanical.solve).
-DENSITY_KG_PER_MM3 = 7850e-9
+DEFAULT_SAFETY_FACTOR = 1.5  # decision 2026-10-31: default 1.5, user can change it
 DESIGN_NAME = re.compile(r"[A-Za-z0-9_-]{1,64}")
-RESPONSES = ("mass_kg", "max_stress_MPa", "max_def_mm")
+# Responses the optimizer can use. cost_usd exists only once the user has given a price.
+RESPONSES = ("mass_kg", "max_stress_MPa", "max_def_mm", "safety_factor", "cost_usd")
 MAX_BUDGET = 30
 
 TOOLS = [
@@ -38,6 +38,66 @@ TOOLS = [
             "are walls, holes, mounting faces and load faces. Units: mm, kg."
         ),
         "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "list_materials",
+        "description": (
+            "List the materials in ANSYS's own material library with density (kg/m^3), Young's modulus (GPa), "
+            "Poisson's ratio, tensile yield and ultimate strength (MPa). Use it when the user names or asks "
+            "about a material, and to find the exact library name for set_material."
+        ),
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "set_material",
+        "description": (
+            "Set the part material (exact name from list_materials; default Structural Steel), the required "
+            "safety factor on yield (default 1.5), and optionally a material price. Changing the material clears "
+            "earlier results, since stresses, deflections and mass all depend on it. Only pass "
+            "price_usd_per_kg when the user has given a price, with price_source saying where it came from; "
+            "never estimate a price. With a price, every design also reports cost_usd = price x mass."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "material": {"type": "string"},
+                "safety_factor": {"type": "number", "exclusiveMinimum": 0},
+                "price_usd_per_kg": {"type": "number", "exclusiveMinimum": 0},
+                "price_source": {"type": "string"},
+            },
+        },
+    },
+    {
+        "name": "get_material_price",
+        "description": (
+            "Look up a material's price (USD per kg) in the local price table, with its source, basis and access "
+            "date. Use it before searching the web for a price. Returns cached: false if there is no entry."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {"material": {"type": "string"}},
+            "required": ["material"],
+        },
+    },
+    {
+        "name": "record_material_price",
+        "description": (
+            "Store a price you found with web_search in the local price table and use it for cost_usd. "
+            "source_url must be a page from this session's web_search results, and the price must be stated on "
+            "that page; never compute or guess a price. basis says what the price is for, e.g. '6061-T6 plate, "
+            "bulk, US, 2026'. Convert to USD per kg and say so in basis if the page used other units."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "material": {"type": "string"},
+                "usd_per_kg": {"type": "number", "exclusiveMinimum": 0},
+                "source_url": {"type": "string"},
+                "source_title": {"type": "string"},
+                "basis": {"type": "string"},
+            },
+            "required": ["material", "usd_per_kg", "source_url", "source_title", "basis"],
+        },
     },
     {
         "name": "set_load_case",
@@ -60,9 +120,11 @@ TOOLS = [
         "name": "evaluate_design",
         "description": (
             "Build a design variant from the ORIGINAL part by applying the edits, then solve it in ANSYS "
-            "Mechanical with the load case. Returns volume, mass, max equivalent stress (MPa) and where it is "
+            "Mechanical with the load case and the current material. Returns volume, mass, max equivalent stress "
+            "(MPa) and where it is "
             "(max_stress_at_mm, x/y/z of the peak node; compare with face bounding boxes to name the feature), max deformation (mm), "
-            "support reaction (N) and the reaction-balance error. An empty edit list evaluates the original "
+            "support reaction (N), the reaction-balance error, safety_factor = yield / peak stress (meets_safety_factor "
+            "compares it with the required one), and cost_usd if a price is set. An empty edit list evaluates the original "
             "part (the baseline). Edits: 'offset' moves a planar face by value_mm along its outward normal "
             "(positive = adds material, e.g. a thicker wall; negative = removes material); 'radius' sets a "
             "cylindrical face's radius to value_mm (e.g. a hole); 'fillet' rounds the sharp edge between face_id "
@@ -110,8 +172,9 @@ TOOLS = [
             "Run the classical optimizer (optiSLang ARSM, an adaptive response-surface method) over 1-3 design "
             "variables. Each variable drives one edit (same actions as evaluate_design; for 'offset' the value is "
             "the offset in mm from the original face, for 'radius' and 'fillet' it is the radius). fixed_edits are "
-            "applied to every design (e.g. a fillet you are not varying). Minimises the objective subject to "
-            "response <= limit for every entry of limits. Every design is stored like evaluate_design results "
+            "applied to every design (e.g. a fillet you are not varying). Minimises (or, with sense 'max', maximises) "
+            "the objective response subject to every limit (response, '<=' or '>=', value). To respect the required "
+            "safety factor, add the limit safety_factor >= that value. Every design is stored like evaluate_design results "
             "(names prefix_01, prefix_02, ...), so check_mesh and finalize_design work on them. Uses the 2 mm "
             "mesh: run check_mesh on the best design before trusting it. Takes about 30 s per evaluation, so "
             "agree the budget with the user first (default 15, max 30)."
@@ -136,10 +199,19 @@ TOOLS = [
                     },
                 },
                 "fixed_edits": {"type": "array", "items": {"type": "object"}},
-                "objective": {"type": "string", "enum": ["mass_kg", "max_def_mm"]},
+                "objective": {"type": "string", "enum": list(RESPONSES)},
+                "sense": {"type": "string", "enum": ["min", "max"], "description": "Default min"},
                 "limits": {
-                    "type": "object",
-                    "properties": {"max_stress_MPa": {"type": "number"}, "max_def_mm": {"type": "number"}},
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "response": {"type": "string", "enum": list(RESPONSES)},
+                            "op": {"type": "string", "enum": ["<=", ">="]},
+                            "value": {"type": "number"},
+                        },
+                        "required": ["response", "op", "value"],
+                    },
                 },
                 "budget": {"type": "integer", "minimum": 4, "maximum": MAX_BUDGET},
             },
@@ -173,6 +245,10 @@ class Workbench:
         self.load_case: dict | None = None
         self.designs: dict[str, dict] = {}
         self.final_part: Path | None = None
+        self.material = materials.get(materials.DEFAULT)
+        self.safety_factor = DEFAULT_SAFETY_FACTOR
+        self.price: dict | None = None  # {"usd_per_kg", "source"}: from the user or the price table
+        self.seen_urls: set[str] = set()  # URLs from web_search results, filled in by the agent
 
     # Everything that touches ANSYS goes through here.
     def _run(self, fn, *args):
@@ -188,14 +264,28 @@ class Workbench:
         self.part = self.out_dir / f"original{src.suffix.lower()}"
         shutil.copy(src, self.part)
         self.load_case, self.designs, self.final_part = None, {}, None
+        self.material, self.safety_factor, self.price = materials.get(materials.DEFAULT), DEFAULT_SAFETY_FACTOR, None
         return self._run(self._describe)
 
     def _describe(self) -> dict:
         geo = self._session()
         geo.open(self.part)
         volume = geo.volume_mm3()
-        return {"volume_mm3": round(volume, 1), "mass_kg": round(volume * DENSITY_KG_PER_MM3, 4),
+        return {"volume_mm3": round(volume, 1), "material": self.material["name"],
+                "mass_kg": round(volume * self.material["density_kg_m3"] * 1e-9, 4),
                 "faces": geo.describe_faces(), "inside_corners": geo.inside_corners()}
+
+    def _responses(self, d: dict) -> dict:
+        """Derived design measures of a stored design: mass, safety factor and cost."""
+        r, mat = d["results"], d["material"]
+        mass = d["volume_mm3"] * mat["density_kg_m3"] * 1e-9
+        out = {"mass_kg": round(mass, 4), "max_stress_MPa": r["max_stress_MPa"], "max_def_mm": r["max_def_mm"],
+               "safety_factor": round(mat["yield_MPa"] / r["max_stress_MPa"], 3),
+               "required_safety_factor": self.safety_factor}
+        out["meets_safety_factor"] = out["safety_factor"] >= self.safety_factor
+        if self.price:
+            out["cost_usd"] = round(mass * self.price["usd_per_kg"], 2)
+        return out
 
     def _build(self, edits: list[dict]):
         """Reopen the original part, tag the load-case faces, apply the edits.
@@ -240,11 +330,11 @@ class Workbench:
         geo, local = self._build(edits)
         volume = geo.volume_mm3()
         pmdb = geo.save(self.out_dir / f"{name}.pmdb")
-        res = mechanical.solve(pmdb, FIXED, LOAD, self.load_case["force_N"], element_size_mm, local)
-        mass = round(volume * DENSITY_KG_PER_MM3, 4)
-        self.designs[name] = {"name": name, "edits": edits, "volume_mm3": round(volume, 1), "mass_kg": mass,
-                              "pmdb": pmdb, "local": local, "results": res}
-        return {"name": name, "volume_mm3": round(volume, 1), "mass_kg": mass, **res}
+        res = mechanical.solve(pmdb, FIXED, LOAD, self.load_case["force_N"], element_size_mm, local, self.material)
+        d = {"name": name, "edits": edits, "volume_mm3": round(volume, 1), "material": self.material,
+             "pmdb": pmdb, "local": local, "results": res}
+        self.designs[name] = d
+        return {"name": name, "volume_mm3": d["volume_mm3"], **res, **self._responses(d)}
 
     def _optimize(self, args: dict) -> dict:
         """Run ARSM; every design goes through _evaluate (we are already on the ANSYS thread)."""
@@ -255,17 +345,22 @@ class Workbench:
         names = [f"x{i}" for i in range(len(variables))]
         fixed = args.get("fixed_edits", [])
         prefix, count = args["prefix"], [0]
+        limits = args.get("limits", [])
+        used = {args["objective"], *(lim["response"] for lim in limits)}
+        if "cost_usd" in used and not self.price:
+            raise ValueError("cost_usd needs a material price: ask the user for one, then call set_material.")
 
         def evaluate(values: dict[str, float]) -> dict[str, float]:
             count[0] += 1
             edits = fixed + [{k: v[k] for k in ("face_id", "action", "other_face_id") if k in v}
                              | {"value_mm": round(values[n], 4)} for n, v in zip(names, variables)]
             r = self._evaluate(f"{prefix}_{count[0]:02d}", edits, 2.0)
-            return {k: r[k] for k in RESPONSES}
+            return {k: r[k] for k in used}
 
         run = optimizer.arsm([{"name": n, "lower": v["lower"], "upper": v["upper"], "start": v["start"]}
                               for n, v in zip(names, variables)],
-                             evaluate, args["objective"], args["limits"], min(args.get("budget", 15), MAX_BUDGET))
+                             evaluate, args["objective"], limits, min(args.get("budget", 15), MAX_BUDGET),
+                             sense=args.get("sense", "min"))
         rows = []
         for k, e in enumerate(run["evaluations"], 1):
             name = f"{prefix}_{k:02d}"
@@ -273,12 +368,13 @@ class Workbench:
             if e["error"]:
                 row |= {"error": e["error"], "feasible": False}
             else:  # full results (optiSLang only saw the objective and the limited responses)
-                d = self.designs[name]
-                full = {"mass_kg": d["mass_kg"], **{r: d["results"][r] for r in RESPONSES[1:]}}
-                row |= {r: round(full[r], 4) for r in RESPONSES}
-                row["feasible"] = all(full[r] <= lim for r, lim in args["limits"].items())
+                full = self._responses(self.designs[name])
+                row |= {k: round(v, 4) if isinstance(v, float) else v for k, v in full.items()}
+                row["feasible"] = all(full[lim["response"]] <= lim["value"] if lim["op"] == "<="
+                                      else full[lim["response"]] >= lim["value"] for lim in limits)
             rows.append(row)
-        best = min((r for r in rows if r["feasible"]), key=lambda r: r[args["objective"]], default=None)
+        sign = -1 if args.get("sense", "min") == "max" else 1
+        best = min((r for r in rows if r["feasible"]), key=lambda r: sign * r[args["objective"]], default=None)
         return {"stopped": run["stopped"], "evaluations": len(rows), "variable_order": names,
                 "best_feasible": best, "designs": rows}
 
@@ -292,6 +388,27 @@ class Workbench:
             raise ValueError("Design names may only use letters, digits, '_' and '-' (max 64 characters).")
         if name == "describe_part":
             out = self._run(self._describe)
+        elif name == "list_materials":
+            out = {"default": materials.DEFAULT, "current": self.material["name"],
+                   "materials": {n: {k: v for k, v in m.items() if k != "library"}
+                                 for n, m in materials.catalog().items()}}
+        elif name == "set_material":
+            out = self._set_material(args)
+        elif name == "get_material_price":
+            entry = prices.get(args["material"])
+            out = {"cached": False, "material": args["material"]} if entry is None else {"cached": True, **entry}
+            if entry is not None and args["material"] == self.material["name"]:
+                self._use_price(entry)
+        elif name == "record_material_price":
+            if args["source_url"] not in self.seen_urls:
+                raise ValueError("source_url is not among this session's web_search results; search first and "
+                                 "use the URL of the page that states the price.")
+            entry = prices.record(args["material"], args["usd_per_kg"], args["source_url"], args["source_title"],
+                                  args["basis"])
+            if args["material"] == self.material["name"]:
+                self._use_price(entry)
+            out = {"recorded": entry, "used_for_cost": self.price is not None
+                   and self.price["source"] == entry["source_url"]}
         elif name == "set_load_case":
             self.load_case = args
             self.designs = {}
@@ -304,7 +421,7 @@ class Workbench:
             d = self.designs[args["name"]]
             size = d["results"]["element_size_mm"]
             chk = self._run(mechanical.refinement_check, d["pmdb"], FIXED, LOAD, self.load_case["force_N"], size,
-                            0.10, d["local"])
+                            0.10, d["local"], d["material"])
             out = {"name": args["name"], "stress_change": round(chk["stress_change"], 4),
                    "converged": chk["converged"],
                    "coarse": {k: chk["coarse"][k] for k in ("element_size_mm", "local_size_mm", "max_stress_MPa", "max_stress_at_mm", "max_def_mm",
@@ -328,13 +445,35 @@ class Workbench:
             raise ValueError(f"Unknown tool {name}")
         return json.dumps(out, default=str)
 
+    def _use_price(self, entry: dict) -> None:
+        self.price = {"usd_per_kg": entry["usd_per_kg"], "source": entry["source_url"],
+                      "title": entry["source_title"], "basis": entry["basis"], "accessed": entry["accessed"]}
+
+    def _set_material(self, args: dict) -> dict:
+        note = []
+        if "material" in args and args["material"] != self.material["name"]:
+            self.material = materials.get(args["material"])  # KeyError lists the valid names
+            self.designs, self.price = {}, None
+            note.append("Material changed; earlier results and the price were cleared.")
+        if "safety_factor" in args:
+            self.safety_factor = float(args["safety_factor"])
+        if "price_usd_per_kg" in args:
+            if not args.get("price_source"):
+                raise ValueError("price_usd_per_kg needs price_source (where the user's price comes from).")
+            self.price = {"usd_per_kg": float(args["price_usd_per_kg"]), "source": args["price_source"]}
+        return {"material": self.material, "required_safety_factor": self.safety_factor,
+                "allowable_stress_MPa": round(self.material["yield_MPa"] / self.safety_factor, 1),
+                "price": self.price, "note": " ".join(note) or "ok"}
+
     def table(self) -> list[list]:
         """Rows for the GUI's design comparison table."""
         rows = []
         for d in self.designs.values():
             r = d["results"]
             mc = d.get("mesh_check")
-            rows.append([d["name"], d["mass_kg"], round(r["max_stress_MPa"], 1), round(r["max_def_mm"], 4),
+            m = self._responses(d)
+            rows.append([d["name"], d["material"]["name"], m["mass_kg"], round(r["max_stress_MPa"], 1),
+                         m["safety_factor"], round(r["max_def_mm"], 4), m.get("cost_usd", ""),
                          f"{r['balance_error']:.2%}",
                          "" if mc is None else ("ok" if mc["converged"] else f"peak not converged "
                                                 f"({mc['stress_change']:.0%})")])

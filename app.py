@@ -20,8 +20,8 @@ wb = Workbench(ROOT / "outputs" / "session")
 atexit.register(wb.close)
 _agent: Agent | None = None
 
-TABLE_HEADERS = ["design", "mass (kg)", "max stress (MPa)", "max deflection (mm)", "reaction balance error",
-                 "mesh check"]
+TABLE_HEADERS = ["design", "material", "mass (kg)", "max stress (MPa)", "safety factor", "max deflection (mm)",
+                 "cost (USD)", "reaction balance error", "mesh check"]
 
 
 def agent() -> Agent:
