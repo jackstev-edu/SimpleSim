@@ -10,6 +10,8 @@ plumbing, "demo" (Sonnet 5.5) for real design runs and the demo.
 from __future__ import annotations
 
 import os
+import queue
+from concurrent.futures import ThreadPoolExecutor
 from collections.abc import Iterator
 
 import anthropic
@@ -95,11 +97,35 @@ Engineering rules:
 """
 
 
+def _progress_text(ev: dict) -> str:
+    """One status line for a progress event; tolerates missing response keys and error events."""
+    text = f"{ev.get('design', '?')}: {ev.get('k', '?')}/{ev.get('n', '?')}"
+    if ev.get("error"):
+        return f"{text} · error: {str(ev['error'])[:120]}"
+    r = ev.get("responses") or {}
+    if "mass_kg" in r:
+        text += f" · mass {r['mass_kg']:.3f} kg"
+    if "safety_factor" in r:
+        text += f" · SF {r['safety_factor']:.2f}"
+    if "max_stress_MPa" in r:
+        text += f" · peak {r['max_stress_MPa']:.1f} MPa"
+    if "element_size_mm" in r:
+        text += f" · {r['element_size_mm']:g} mm mesh"
+    if ev.get("best_feasible"):
+        text += f" · best {ev['best_feasible']}"
+    return text
+
+
 class Agent:
     def __init__(self, workbench: Workbench, client: anthropic.Anthropic | None = None):
         self.wb = workbench
+        self._pool = ThreadPoolExecutor(max_workers=1)  # tools run here so progress can stream
         self.client = client or anthropic.Anthropic()
         self.messages: list[dict] = []
+
+    @staticmethod
+    def _progress_event(ev: dict) -> dict:
+        return {"type": "progress", "tool": ev.get("tool", ""), "text": _progress_text(ev)}
 
     def reset(self) -> None:
         self.messages = []
@@ -148,8 +174,19 @@ class Agent:
                 if block.type != "tool_use":
                     continue
                 yield {"type": "tool", "name": block.name, "input": block.input}
+                future = self._pool.submit(self.wb.call, block.name, block.input)
+                while not future.done():
+                    try:
+                        yield self._progress_event(self.wb.progress.get(timeout=0.2))
+                    except queue.Empty:
+                        pass
+                while True:  # drain what arrived just before the tool finished
+                    try:
+                        yield self._progress_event(self.wb.progress.get_nowait())
+                    except queue.Empty:
+                        break
                 try:
-                    content, is_error = self.wb.call(block.name, block.input), False
+                    content, is_error = future.result(), False
                 except Exception as e:  # noqa: BLE001 - report any tool failure back to Claude
                     content, is_error = f"Error: {type(e).__name__}: {e}", True
                 yield {"type": "tool_result", "name": block.name, "content": content, "is_error": is_error}
