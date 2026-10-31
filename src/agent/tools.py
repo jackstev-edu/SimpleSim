@@ -17,6 +17,7 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from src.agent import screen
 from src.sim import materials, mechanical, optimizer, prices
 from src.sim.geometry import GeometrySession
 
@@ -373,8 +374,7 @@ class Workbench:
             else:  # full results (optiSLang only saw the objective and the limited responses)
                 full = self._responses(self.designs[name])
                 row |= {k: round(v, 4) if isinstance(v, float) else v for k, v in full.items()}
-                row["feasible"] = all(full[lim["response"]] <= lim["value"] if lim["op"] == "<="
-                                      else full[lim["response"]] >= lim["value"] for lim in limits)
+                row["feasible"] = screen.feasible(full, limits)
             rows.append(row)
         sign = -1 if args.get("sense", "min") == "max" else 1
         best = min((r for r in rows if r["feasible"]), key=lambda r: sign * r[args["objective"]], default=None)
