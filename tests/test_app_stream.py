@@ -29,3 +29,29 @@ def test_stop_calls_request_stop(monkeypatch):
     monkeypatch.setattr(app.wb, "request_stop", lambda: hit.append(1))
     app.on_stop()
     assert hit == [1]
+
+
+def test_agent_turns_share_one_queue():
+    """Upload and send must never run two agent turns at once (they share Agent.messages)."""
+    fns = [f for f in app.demo.fns.values() if getattr(f, "name", None) in ("on_upload", "on_send")]
+    assert len(fns) == 3  # upload, send click, box submit
+    assert {f.concurrency_id for f in fns} == {"agent"}
+    assert all(f.concurrency_limit == 1 for f in fns)
+    stop = next(f for f in app.demo.fns.values() if getattr(f, "name", None) == "on_stop")
+    assert stop.queue is False  # Stop must bypass the busy queue
+
+
+def test_queued_send_keeps_earlier_turn(monkeypatch):
+    """A send queued behind a running turn arrives with stale browser history; nothing may be lost."""
+    class TextAgent:
+        def run(self, text):
+            yield {"type": "text", "text": f"reply to {text}"}
+
+    monkeypatch.setattr(app, "agent", lambda: TextAgent())
+    monkeypatch.setattr(app.wb, "table", lambda: "TABLE")
+    monkeypatch.setattr(app, "_chat", [{"role": "assistant", "content": "earlier turn"}])
+    stale = []  # what the browser held when the user clicked Send
+    hist = None
+    for hist, _ in app.on_send("second", stale):
+        pass
+    assert [m["content"] for m in hist] == ["earlier turn", "second", "reply to second"]

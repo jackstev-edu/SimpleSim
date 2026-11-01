@@ -57,24 +57,29 @@ def _stream(history: list, user_text: str):
         yield history, wb.table()
 
 
+# The chat log lives here, not in the browser: a turn that waits in the queue was sent with the
+# browser's history from before the running turn finished, and would overwrite that turn's messages.
+_chat: list[dict] = []
+
+
 def on_upload(file, history):
     if file is None:
         return
-    history = history + [{"role": "assistant", "content": "Opening the part in SpaceClaim "
-                          "(the first start takes about a minute)…"}]
-    yield history, wb.table()
+    _chat[:] = [{"role": "assistant", "content": "Opening the part in SpaceClaim "
+                 "(the first start takes about a minute)…"}]
+    yield _chat, wb.table()
     wb.load_part(file)
     agent().reset()
     user_text = f"I uploaded my part '{Path(file).name}'. Please look at it and tell me what you see."
-    history = history + [{"role": "user", "content": user_text}]
-    yield from _stream(history, user_text)
+    _chat.append({"role": "user", "content": user_text})
+    yield from _stream(_chat, user_text)
 
 
 def on_send(user_text, history):
     if not user_text.strip():
         return
-    history = history + [{"role": "user", "content": user_text}]
-    yield from _stream(history, user_text)
+    _chat.append({"role": "user", "content": user_text})
+    yield from _stream(_chat, user_text)
 
 
 def on_stop():
@@ -108,9 +113,12 @@ with gr.Blocks(title="SimpleSim design optimizer") as demo:
             open_btn = gr.Button("Open final design in ANSYS")
             final_path = gr.Textbox(label="Final design file", interactive=False)
 
-    part.upload(on_upload, [part, chat], [chat, table])
-    send.click(on_send, [box, chat], [chat, table]).then(lambda: "", None, box)
-    box.submit(on_send, [box, chat], [chat, table]).then(lambda: "", None, box)
+    # One shared queue for every listener that drives the agent: a message sent while a turn is
+    # running must wait, or two turns interleave in Agent.messages and the API rejects the history.
+    one_turn = {"concurrency_id": "agent", "concurrency_limit": 1}
+    part.upload(on_upload, [part, chat], [chat, table], **one_turn)
+    send.click(on_send, [box, chat], [chat, table], **one_turn).then(lambda: "", None, box)
+    box.submit(on_send, [box, chat], [chat, table], **one_turn).then(lambda: "", None, box)
     open_btn.click(on_open_ansys, None, final_path)
     stop_btn.click(on_stop, None, None, queue=False)
 
