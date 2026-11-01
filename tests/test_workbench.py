@@ -80,6 +80,9 @@ def test_first_look_records_failed_design(wb):
     assert out["stopped"] == "done" and len(wb.calls) == 5
     assert out["features"][0]["feasible"]["high"] is False
     assert any("error" in e for e in drain(wb))
+    # the agent itself sees why the design failed, and solves counts only completed designs
+    assert out["errors"] == {"look_1_high": "RuntimeError: boom"}
+    assert out["failed"] == 1 and out["solves"] == 4
 
 
 def test_first_look_rejects_more_than_4_features(wb):

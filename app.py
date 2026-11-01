@@ -5,7 +5,6 @@ Needs ANTHROPIC_API_KEY in the environment and a local ANSYS 2026 R1 install.
 """
 from __future__ import annotations
 
-import atexit
 import json
 import os
 from pathlib import Path
@@ -16,8 +15,8 @@ from src.agent.agent import MODE, MODEL, Agent
 from src.agent.tools import Workbench
 
 ROOT = Path(__file__).resolve().parent
-wb = Workbench(ROOT / "outputs" / "session")
-atexit.register(wb.close)
+wb = Workbench(ROOT / "outputs" / "session")  # closed in the __main__ block, not atexit: by then
+# concurrent.futures has shut its pools down and wb.close fails
 _agent: Agent | None = None
 
 TABLE_HEADERS = ["design", "material", "mass (kg)", "max stress (MPa)", "safety factor", "max deflection (mm)",
@@ -82,6 +81,11 @@ def on_send(user_text, history):
     yield from _stream(_chat, user_text)
 
 
+def take_text(user_text):
+    """Empty the textbox at once (outside the queue) and hand the text on to on_send."""
+    return "", user_text
+
+
 def on_stop():
     wb.request_stop()
 
@@ -106,6 +110,7 @@ with gr.Blocks(title="SimpleSim design optimizer") as demo:
                                  show_label=False, scale=5)
                 send = gr.Button("Send", variant="primary", scale=1)
             stop_btn = gr.Button("Stop search", variant="stop")
+            pending = gr.State("")  # the message on its way from the textbox to on_send
         with gr.Column(scale=2):
             part = gr.File(label="Part file (.scdocx, .stp, .step)", file_types=[".scdocx", ".stp", ".step"],
                            type="filepath")
@@ -117,10 +122,13 @@ with gr.Blocks(title="SimpleSim design optimizer") as demo:
     # running must wait, or two turns interleave in Agent.messages and the API rejects the history.
     one_turn = {"concurrency_id": "agent", "concurrency_limit": 1}
     part.upload(on_upload, [part, chat], [chat, table], **one_turn)
-    send.click(on_send, [box, chat], [chat, table], **one_turn).then(lambda: "", None, box)
-    box.submit(on_send, [box, chat], [chat, table], **one_turn).then(lambda: "", None, box)
+    send.click(take_text, box, [box, pending], queue=False).then(on_send, [pending, chat], [chat, table], **one_turn)
+    box.submit(take_text, box, [box, pending], queue=False).then(on_send, [pending, chat], [chat, table], **one_turn)
     open_btn.click(on_open_ansys, None, final_path)
     stop_btn.click(on_stop, None, None, queue=False)
 
 if __name__ == "__main__":
-    demo.launch(inbrowser=True)
+    try:
+        demo.launch(inbrowser=True)
+    finally:
+        wb.close()

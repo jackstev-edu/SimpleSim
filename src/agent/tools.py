@@ -179,8 +179,8 @@ TOOLS = [
         "description": (
             "Quick screen of 1-4 candidate features: vary ONE feature at a time to its low and high end while the "
             "others stay at their reference value (the part's current value, else the middle of the range). That is "
-            "2n + 1 solves for n features (about 30 s each), run on the 2 mm mesh. Returns per-feature effects on every "
-            "response, a ranking by effect on the objective, and the best feasible design. The values are indicative "
+            "2n + 1 solves for n features (seconds_per_design each), run on the 2 mm mesh. Keep sharp inside corners filleted through fixed_edits. Returns per-feature effects on every "
+            "response, a ranking by effect on the objective, the best feasible design, and the error of every design that failed (errors, failed; a feature whose designs all failed is unranked, see note). The values are indicative "
             "only (one-at-a-time, coarse mesh, no interactions): use them to choose the variables and bounds for "
             "optimize, then run check_mesh on whatever you recommend. Before calling it, show the user the features, "
             "their ranges and the estimated time (2n + 1 designs x seconds_per_design) and wait for their OK. "
@@ -204,7 +204,7 @@ TOOLS = [
                         "required": ["face_id", "action", "low", "high"],
                     },
                 },
-                "fixed_edits": {"type": "array", "items": {"type": "object"}},
+                "fixed_edits": {"type": "array", "items": {"type": "object"}, "description": "Edits applied to every design and not varied (same form as evaluate_design edits), e.g. a fillet at each sharp inside corner in the load path so the peak stress is not a singularity"},
                 "objective": {"type": "string", "enum": list(RESPONSES)},
                 "sense": {"type": "string", "enum": ["min", "max"], "description": "Default min"},
                 "limits": {
@@ -233,7 +233,7 @@ TOOLS = [
             "the objective response subject to every limit (response, '<=' or '>=', value). To respect the required "
             "safety factor, add the limit safety_factor >= that value. Every design is stored like evaluate_design results "
             "(names prefix_01, prefix_02, ...), so check_mesh and finalize_design work on them. Uses the 2 mm "
-            "mesh: run check_mesh on the best design before trusting it. Takes about 30 s per evaluation, so "
+            "mesh: run check_mesh on the best design before trusting it. Each evaluation takes about seconds_per_design, so "
             "agree the budget with the user first (default 15, max 30)."
         ),
         "input_schema": {
@@ -255,7 +255,7 @@ TOOLS = [
                         "required": ["face_id", "action", "lower", "upper", "start"],
                     },
                 },
-                "fixed_edits": {"type": "array", "items": {"type": "object"}},
+                "fixed_edits": {"type": "array", "items": {"type": "object"}, "description": "Edits applied to every design and not varied (same form as evaluate_design edits), e.g. a fillet at each sharp inside corner in the load path so the peak stress is not a singularity"},
                 "objective": {"type": "string", "enum": list(RESPONSES)},
                 "sense": {"type": "string", "enum": ["min", "max"], "description": "Default min"},
                 "limits": {
@@ -507,8 +507,9 @@ class Workbench:
             if screen.feasible(resp, limits) and (best[1] is None or sign * resp[objective] < sign * best[1]):
                 best[:] = [name, resp[objective]]
             self._emit("first_look", k, len(plan), name, resp, best=best[0])
-        return {**screen.summarize(features, rows, objective, sense, limits), "stopped": stopped,
-                "solves": len(rows), "seconds_per_design": self.seconds_per_design()}
+        summary = screen.summarize(features, rows, objective, sense, limits)
+        return {**summary, "stopped": stopped, "solves": len(rows) - summary["failed"],
+                "seconds_per_design": self.seconds_per_design()}
 
     # --- tool dispatch ------------------------------------------------------
     def call(self, name: str, args: dict) -> str:
@@ -619,7 +620,7 @@ class Workbench:
     def table(self) -> list[list]:
         """Rows for the GUI's design comparison table."""
         rows = []
-        for d in self.designs.values():
+        for d in list(self.designs.values()):  # snapshot: the ANSYS thread may add designs meanwhile
             r = d["results"]
             mc = d.get("mesh_check")
             m = self._responses(d)

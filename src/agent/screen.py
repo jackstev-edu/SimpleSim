@@ -61,7 +61,7 @@ def summarize(features: list[dict], rows: dict[str, dict], objective: str, sense
     """Per-feature effects, a ranking (1-based feature indices, biggest objective swing first) and the best feasible design."""
     ref_resp = rows.get("look_ref", {}).get("responses", {})
     ref_vals = rows.get("look_ref", {}).get("values", [])
-    out_features, keys = [], []
+    out_features, keys, unranked = [], [], []
     for k, f in enumerate(features, start=1):
         ends = {e: rows.get(f"look_{k}_{e}", {}) for e in ("low", "high")}
         resp_out = {}
@@ -72,9 +72,13 @@ def summarize(features: list[dict], rows: dict[str, dict], objective: str, sense
             hi = ends["high"].get("responses", {}).get(r)
             lo, hi = (lo if _num(lo) else None), (hi if _num(hi) else None)
             # change = high - low when both ends ran, else the surviving end minus the reference
-            change = hi - lo if lo is not None and hi is not None else (
-                (lo if lo is not None else hi) - rv if (lo is not None or hi is not None) else None)
-            resp_out[r] = {"low": lo, "ref": rv, "high": hi, "change": change,
+            if lo is not None and hi is not None:
+                change, basis = hi - lo, "high_vs_low"
+            elif lo is not None or hi is not None:
+                change, basis = (lo if lo is not None else hi) - rv, "low_vs_ref" if lo is not None else "high_vs_ref"
+            else:
+                change, basis = None, None
+            resp_out[r] = {"low": lo, "ref": rv, "high": hi, "change": change, "basis": basis,
                            "change_rel": None if change is None or not rv else change / abs(rv)}
         out_features.append({
             "index": k, "label": f.get("label", f"feature {k}"),
@@ -89,11 +93,29 @@ def summarize(features: list[dict], rows: dict[str, dict], objective: str, sense
         tie = max((_swing(resp_out[l["response"]]["low"], resp_out[l["response"]]["high"],
                           resp_out[l["response"]]["ref"])
                    for l in limits if l["response"] in resp_out), default=0.0)
-        keys.append((-primary, -tie, k))
+        if any(_num(ends[e].get("responses", {}).get(objective)) for e in ("low", "high")):
+            keys.append((-primary, -tie, k))
+        else:
+            unranked.append(k)
+    errors = {n: r["error"] for n, r in rows.items() if r.get("error")}
+    notes = []
+    if not _num(ref_resp.get(objective)):
+        # Without the reference there is nothing to measure the effects against.
+        keys, unranked = [], [k for k in range(1, len(features) + 1)]
+        notes.append("look_ref failed, so no effects or ranking can be given; see errors.")
+    elif unranked:
+        notes.append("No ranking for " + ", ".join(f"feature {k}" for k in unranked)
+                     + ": both of its designs failed; see errors.")
     ranking = [k for *_, k in sorted(keys)]
     sign = -1 if sense == "max" else 1
     ok = [(n, r["responses"][objective]) for n, r in rows.items()
           if r.get("responses") and _num(r["responses"].get(objective)) and feasible(r["responses"], limits)]
     best = min(ok, key=lambda t: sign * t[1])[0] if ok else None
-    return {"reference": {"values": ref_vals, "responses": ref_resp},
-            "features": out_features, "ranking": ranking, "best_feasible": best}
+    out = {"reference": {"values": ref_vals, "responses": ref_resp},
+           "features": out_features, "ranking": ranking, "best_feasible": best,
+           "errors": errors, "failed": len(errors)}
+    if unranked:
+        out["unranked"] = unranked
+    if notes:
+        out["note"] = " ".join(notes)
+    return out

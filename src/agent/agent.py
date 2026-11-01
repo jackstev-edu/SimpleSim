@@ -53,7 +53,8 @@ How you work:
    limits, budget, estimated time) and wait for the user's OK. The user can press Stop at any
    time. After a stop, report what was found and ask how to go on.
 6. Before recommending any design (including the best design from a first look or a stopped
-   search), run check_mesh on it. When the user accepts it, call finalize_design.
+   search), run check_mesh on it. Say which limit is active at the optimum (the one the design
+   sits on) and what that means. When the user accepts it, call finalize_design.
 
 Engineering rules:
 - Units are mm, N, MPa and kg. Report mass in kg (mass_kg), not volume, and never call a volume a mass.
@@ -124,6 +125,9 @@ class Agent:
         self._pool = ThreadPoolExecutor(max_workers=1)  # tools run here so progress can stream
         self.client = client or anthropic.Anthropic()
         self.messages: list[dict] = []
+        # Set while tools run: {"ids": tool_use ids, "results": tool_results so far, "future": running tool}.
+        # Still set at the next run() only if the last turn was abandoned mid-tool (page refresh/close).
+        self._open: dict | None = None
 
     @staticmethod
     def _progress_event(ev: dict) -> dict:
@@ -131,10 +135,41 @@ class Agent:
 
     def reset(self) -> None:
         self.messages = []
+        self._open = None
+
+    def _close_abandoned_turn(self) -> list[dict]:
+        """tool_result blocks that answer the tool calls of an abandoned turn ([] if there was none).
+
+        Every tool_use must be followed by its tool_result or the API rejects the whole history.
+        Waits for the abandoned tool (it was asked to stop) and drops its progress events.
+        """
+        if self._open is None:
+            return []
+        future = self._open["future"]
+        if future is not None:
+            try:
+                future.result()
+            except Exception:  # noqa: BLE001 - its outcome is reported as interrupted below
+                pass
+        while True:
+            try:
+                self.wb.progress.get_nowait()
+            except queue.Empty:
+                break
+        done = {r["tool_use_id"] for r in self._open["results"]}
+        results = list(self._open["results"]) + [
+            {"type": "tool_result", "tool_use_id": i, "is_error": True,
+             "content": "Interrupted: the turn was cancelled (page closed or refreshed) before this tool's "
+                        "result was delivered. Designs it finished are still stored; ask the user how to go on."}
+            for i in self._open["ids"] if i not in done]
+        self._open = None
+        return results
 
     def run(self, user_text: str) -> Iterator[dict]:
         """Send one user message and run tools until Claude answers. Yields GUI events."""
-        self.messages.append({"role": "user", "content": user_text})
+        repaired = self._close_abandoned_turn()
+        self.messages.append({"role": "user", "content": repaired + [{"type": "text", "text": user_text}]
+                              if repaired else user_text})
         for _ in range(MAX_TOOL_ROUNDS):
             response = self.client.messages.create(
                 model=MODEL,
@@ -172,28 +207,39 @@ class Agent:
                 return
 
             results = []
-            for block in response.content:
-                if block.type != "tool_use":
-                    continue
-                yield {"type": "tool", "name": block.name, "input": block.input}
-                future = self._pool.submit(self.wb.call, block.name, block.input)
-                while not future.done():
+            self._open = {"ids": [b.id for b in response.content if b.type == "tool_use"],
+                          "results": results, "future": None}
+            try:
+                for block in response.content:
+                    if block.type != "tool_use":
+                        continue
+                    yield {"type": "tool", "name": block.name, "input": block.input}
+                    future = self._open["future"] = self._pool.submit(self.wb.call, block.name, block.input)
+                    while not future.done():
+                        try:
+                            yield self._progress_event(self.wb.progress.get(timeout=0.2))
+                        except queue.Empty:
+                            pass
+                    while True:  # drain what arrived just before the tool finished
+                        try:
+                            yield self._progress_event(self.wb.progress.get_nowait())
+                        except queue.Empty:
+                            break
                     try:
-                        yield self._progress_event(self.wb.progress.get(timeout=0.2))
-                    except queue.Empty:
-                        pass
-                while True:  # drain what arrived just before the tool finished
-                    try:
-                        yield self._progress_event(self.wb.progress.get_nowait())
-                    except queue.Empty:
-                        break
-                try:
-                    content, is_error = future.result(), False
-                except Exception as e:  # noqa: BLE001 - report any tool failure back to Claude
-                    content, is_error = f"Error: {type(e).__name__}: {e}", True
-                yield {"type": "tool_result", "name": block.name, "content": content, "is_error": is_error}
-                results.append({"type": "tool_result", "tool_use_id": block.id, "content": content,
-                                "is_error": is_error})
+                        content, is_error = future.result(), False
+                    except Exception as e:  # noqa: BLE001 - report any tool failure back to Claude
+                        content, is_error = f"Error: {type(e).__name__}: {e}", True
+                    results.append({"type": "tool_result", "tool_use_id": block.id, "content": content,
+                                    "is_error": is_error})
+                    yield {"type": "tool_result", "name": block.name, "content": content, "is_error": is_error}
+            except GeneratorExit:
+                # The GUI dropped this turn (page refresh/close): stop a running search. The next
+                # run() answers the open tool calls (self._open stays set).
+                stop = getattr(self.wb, "stop_event", None)
+                if stop is not None:
+                    stop.set()
+                raise
+            self._open = None
             self.messages.append({"role": "user", "content": results})
 
         yield {"type": "error", "text": f"Stopped after {MAX_TOOL_ROUNDS} tool rounds (cost guard)."}

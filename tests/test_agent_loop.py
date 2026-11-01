@@ -58,3 +58,50 @@ def test_progress_text_tolerates_missing_keys_and_errors():
     assert "boom" in _progress_text({"k": 1, "n": 2, "design": "d", "error": "boom"})
     assert "MPa" in _progress_text({"k": 1, "n": 2, "design": "d",
                                     "responses": {"max_stress_MPa": 140.0, "element_size_mm": 1.0}})
+
+
+class TwoToolClient:
+    """Asks for two tools, then answers; records the messages of every request."""
+    def __init__(self):
+        self.calls, self.sent = 0, []
+        self.messages = self
+
+    def create(self, **kwargs):
+        self.calls += 1
+        self.sent.append(list(kwargs["messages"]))
+        if self.calls == 1:
+            return NS(content=[NS(type="tool_use", id="t1", name="first_look", input={}),
+                               NS(type="tool_use", id="t2", name="check_mesh", input={})],
+                      stop_reason="tool_use")
+        return NS(content=[NS(type="text", text="ok")], stop_reason="end_turn")
+
+
+class StopAwareWB(FakeWB):
+    def __init__(self):
+        super().__init__()
+        import threading
+        self.stop_event = threading.Event()
+
+
+def test_abandoned_turn_is_repaired_on_next_run():
+    wb = StopAwareWB()
+    client = TwoToolClient()
+    ag = Agent(wb, client=client)
+    gen = ag.run("go")
+    for ev in gen:
+        if ev["type"] == "progress":
+            break
+    gen.close()                       # browser refresh mid-tool
+    assert wb.stop_event.is_set()     # a running search is asked to stop
+    evs = list(ag.run("hello again"))
+    assert evs[-1] == {"type": "text", "text": "ok"}
+    sent = client.sent[-1]
+    # every tool_use in the history has a matching tool_result in the next user message
+    assistant, user = sent[-2], sent[-1]
+    ids = [b.id for b in assistant["content"] if b.type == "tool_use"]
+    results = [b for b in user["content"] if b.get("type") == "tool_result"]
+    assert [r["tool_use_id"] for r in results] == ids
+    assert all(r["is_error"] for r in results)
+    assert user["content"][-1] == {"type": "text", "text": "hello again"}
+    # no stale progress from the abandoned tool leaks into the new turn
+    assert not any(e["type"] == "progress" for e in evs)

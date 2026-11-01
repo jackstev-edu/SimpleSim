@@ -55,3 +55,9 @@ def test_queued_send_keeps_earlier_turn(monkeypatch):
     for hist, _ in app.on_send("second", stale):
         pass
     assert [m["content"] for m in hist] == ["earlier turn", "second", "reply to second"]
+
+
+def test_send_clears_textbox_before_the_turn_runs():
+    assert app.take_text("hello") == ("", "hello")
+    clear = [f for f in app.demo.fns.values() if getattr(f, "name", None) == "take_text"]
+    assert len(clear) == 2 and all(f.queue is False for f in clear)  # not stuck behind a running turn
