@@ -30,6 +30,24 @@ from ansys.optislang.core.project_parametric import (
 FAILED = 1e9
 SENSES = {"min": ComparisonType.MIN, "max": ComparisonType.MAX}
 OPS = {"<=": ComparisonType.LESSEQUAL, ">=": ComparisonType.GREATEREQUAL}
+FAILED_STATES = {"Check failed", "Execution failed"}
+
+
+def _log_messages(osl) -> list[dict]:
+    """Every actor log message in the project status (best effort, for error reports)."""
+    try:
+        info = osl.osl_server.get_full_project_status_info(include_designs=False, include_log_messages=True)
+    except Exception:  # noqa: BLE001
+        return []
+    out, stack = [], [info]
+    while stack:
+        node = stack.pop()
+        if isinstance(node, dict):
+            out += [m for m in node.get("log_messages", []) if isinstance(m, dict)]
+            stack += [v for v in node.values() if isinstance(v, (dict, list))]
+        elif isinstance(node, list):
+            stack += node
+    return out
 
 
 def arsm(
@@ -65,7 +83,11 @@ def arsm(
         system = osl.application.project.root_system.create_node(type_=nt.ARSM, name="ARSM")
         settings = system.get_property("OptimizerSettings")
         # Each iteration evaluates a small DOE (about n + 1 designs for n variables).
-        settings["settings"]["max_iteration"] = max(2, budget // (len(variables) + 1))
+        max_iter = max(2, budget // (len(variables) + 1))
+        settings["settings"]["max_iteration"] = max_iter
+        # ARSM's default minimum is 5 iterations; a smaller maximum fails optiSLang's check
+        # ("Min. number of iterations larger than max. number") and no design is ever sent.
+        settings["settings"]["min_iteration_test"] = min(settings["settings"].get("min_iteration_test", 5), max_iter)
         system.set_property("OptimizerSettings", settings)
         system.set_property("AutoSaveMode", "no_auto_save")
         system.set_property("UpdateResultFile", "never")
@@ -91,7 +113,10 @@ def arsm(
         project = osl.application.project
         project.start(wait_for_finished=False)
         t0, stopped = time.time(), "converged"
-        while project.root_system.get_status() != "Processing done":
+        while (status := project.root_system.get_status()) != "Processing done":
+            if status in FAILED_STATES:  # optiSLang rejected the setup: report it instead of waiting forever
+                msgs = [m["message"] for m in _log_messages(osl) if m.get("level") == "ERROR"]
+                raise RuntimeError(f"optiSLang ARSM {status.lower()}: {'; '.join(msgs) or 'no message'}")
             if len(evaluations) >= budget:
                 stopped = "budget"
                 break
