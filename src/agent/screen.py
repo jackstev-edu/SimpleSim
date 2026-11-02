@@ -107,15 +107,68 @@ def summarize(features: list[dict], rows: dict[str, dict], objective: str, sense
         notes.append("No ranking for " + ", ".join(f"feature {k}" for k in unranked)
                      + ": both of its designs failed; see errors.")
     ranking = [k for *_, k in sorted(keys)]
+    # The objective ranking can hide which feature controls a limit (a feature may move mass most and
+    # stress hardly at all), so rank the features per limited response too.
+    limit_ranking = {}
+    for r in dict.fromkeys(l["response"] for l in limits):
+        if not _num(ref_resp.get(r)):
+            continue
+        rk = [(-_swing(f["responses"][r]["low"], f["responses"][r]["high"], f["responses"][r]["ref"]), f["index"])
+              for f in out_features if r in f["responses"]
+              and (f["responses"][r]["low"] is not None or f["responses"][r]["high"] is not None)]
+        limit_ranking[r] = [k for _, k in sorted(rk)]
     sign = -1 if sense == "max" else 1
     ok = [(n, r["responses"][objective]) for n, r in rows.items()
           if r.get("responses") and _num(r["responses"].get(objective)) and feasible(r["responses"], limits)]
     best = min(ok, key=lambda t: sign * t[1])[0] if ok else None
+    if best is None and limit_ranking:
+        notes.append("No design meets the limits. To reach them, change the features that move the limited "
+                     "response most (limit_ranking), not the ones ranked first for the objective.")
     out = {"reference": {"values": ref_vals, "responses": ref_resp},
-           "features": out_features, "ranking": ranking, "best_feasible": best,
+           "features": out_features, "ranking": ranking, "limit_ranking": limit_ranking, "best_feasible": best,
            "errors": errors, "failed": len(errors)}
     if unranked:
         out["unranked"] = unranked
     if notes:
         out["note"] = " ".join(notes)
     return out
+
+
+# Mesh-size default for thin parts. The node estimate is calibrated on the saddle bracket
+# (16,369 nodes at 1 mm for 4,991 mm3, quadratic tets); check_mesh halves the size, and the fine
+# mesh must stay under the Student limit of 128K nodes, so we budget 110K for it.
+NODES_PER_MM3_AT_1MM = 3.3
+FINE_NODE_BUDGET = 110_000
+MAX_ELEMENT_SIZE_MM = 2.0
+
+
+def _dot(a, b):
+    return sum(x * y for x, y in zip(a, b))
+
+
+def min_wall_mm(faces: list[dict]) -> float | None:
+    """Thinnest wall: the smallest gap between two opposite-facing planar faces with material between them."""
+    planes = [f for f in faces if f.get("type") == "plane" and f.get("normal")]
+    best = None
+    for i, a in enumerate(planes):
+        ca = [(lo + hi) / 2 for lo, hi in zip(a["bbox_min_mm"], a["bbox_max_mm"])]
+        for b in planes[i + 1:]:
+            if _dot(a["normal"], b["normal"]) > -0.999:
+                continue
+            cb = [(lo + hi) / 2 for lo, hi in zip(b["bbox_min_mm"], b["bbox_max_mm"])]
+            d = _dot(a["normal"], [p - q for p, q in zip(ca, cb)])  # > 0: the faces point away from each other
+            if d <= 1e-6:
+                continue
+            # the faces must overlap when seen along the normal: their boxes, grown by d, intersect
+            if all(a["bbox_min_mm"][k] - d <= b["bbox_max_mm"][k] and b["bbox_min_mm"][k] - d <= a["bbox_max_mm"][k]
+                   for k in range(3)):
+                best = d if best is None else min(best, d)
+    return best
+
+
+def default_element_size(min_wall: float | None, volume_mm3: float) -> float:
+    """About two elements through the thinnest wall and at most 2 mm, but never finer than the size at which
+    check_mesh's halved mesh fits the node budget (that floor wins, even above 2 mm, for large parts)."""
+    budget = (NODES_PER_MM3_AT_1MM * volume_mm3 * 8 / FINE_NODE_BUDGET) ** (1 / 3)
+    half_wall = min_wall / 2 if min_wall else MAX_ELEMENT_SIZE_MM
+    return round(max(budget, min(MAX_ELEMENT_SIZE_MM, half_wall)), 2)

@@ -96,7 +96,13 @@ class GeometrySession:
     # --- inspection ---------------------------------------------------------
     @property
     def body(self):
-        bodies = self.design.bodies
+        bodies = list(self.design.bodies)
+        if not bodies:  # STEP assemblies put the body inside (nested) components
+            stack = list(self.design.components)
+            while stack:
+                comp = stack.pop()
+                bodies.extend(comp.bodies)
+                stack.extend(comp.components)
         if len(bodies) != 1:
             raise NotImplementedError(f"Only single-body parts are supported so far (found {len(bodies)})")
         return bodies[0]

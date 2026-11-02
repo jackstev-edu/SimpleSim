@@ -156,7 +156,7 @@ TOOLS = [
                         "required": ["face_id", "action", "value_mm"],
                     },
                 },
-                "element_size_mm": {"type": "number", "description": "Mesh size, default 2 mm"},
+                "element_size_mm": {"type": "number", "description": "Mesh size; default is the part's default_element_size_mm from describe_part"},
             },
             "required": ["name", "edits"],
         },
@@ -179,8 +179,8 @@ TOOLS = [
         "description": (
             "Quick screen of 1-4 candidate features: vary ONE feature at a time to its low and high end while the "
             "others stay at their reference value (the part's current value, else the middle of the range). That is "
-            "2n + 1 solves for n features (seconds_per_design each), run on the 2 mm mesh. Keep sharp inside corners filleted through fixed_edits. Returns per-feature effects on every "
-            "response, a ranking by effect on the objective, the best feasible design, and the error of every design that failed (errors, failed; a feature whose designs all failed is unranked, see note). The values are indicative "
+            "2n + 1 solves for n features (seconds_per_design each), run on the default mesh (default_element_size_mm). Keep sharp inside corners filleted through fixed_edits. Returns per-feature effects on every "
+            "response, a ranking by effect on the objective, limit_ranking (per limited response, the features that move it most), the best feasible design, and the error of every design that failed (errors, failed; a feature whose designs all failed is unranked, see note). The values are indicative "
             "only (one-at-a-time, coarse mesh, no interactions): use them to choose the variables and bounds for "
             "optimize, then run check_mesh on whatever you recommend. Before calling it, show the user the features, "
             "their ranges and the estimated time (2n + 1 designs x seconds_per_design) and wait for their OK. "
@@ -310,6 +310,7 @@ class Workbench:
         self.stop_event = threading.Event()  # set by the GUI Stop button; checked between designs
         self.progress: queue.Queue[dict] = queue.Queue()  # events for the GUI, one per finished design/solve
         self._timings: list[float] = []  # wall seconds per evaluated design
+        self.element_size_mm = screen.MAX_ELEMENT_SIZE_MM  # default mesh size, set from the part at load time
 
     def request_stop(self) -> None:
         """Ask the running first_look/optimize to end after the design in progress."""
@@ -342,15 +343,20 @@ class Workbench:
         self.material, self.safety_factor, self.price = materials.get(materials.DEFAULT), DEFAULT_SAFETY_FACTOR, None
         desc = self._run(self._describe)
         self.faces = desc["faces"]
+        self.element_size_mm = desc["default_element_size_mm"]
         return desc
 
     def _describe(self) -> dict:
         geo = self._session()
         geo.open(self.part)
         volume = geo.volume_mm3()
+        faces = geo.describe_faces()
+        wall = screen.min_wall_mm(faces)
         return {"volume_mm3": round(volume, 1), "material": self.material["name"],
                 "mass_kg": round(volume * self.material["density_kg_m3"] * 1e-9, 4),
-                "faces": geo.describe_faces(), "inside_corners": geo.inside_corners()}
+                "min_wall_mm": None if wall is None else round(wall, 3),
+                "default_element_size_mm": screen.default_element_size(wall, volume),
+                "faces": faces, "inside_corners": geo.inside_corners()}
 
     def _responses(self, d: dict) -> dict:
         """Derived design measures of a stored design: mass, safety factor and cost."""
@@ -443,7 +449,7 @@ class Workbench:
                              | {"value_mm": round(values[n], 4)} for n, v in zip(names, variables)]
             name = f"{prefix}_{count[0]:02d}"
             try:
-                r = self._evaluate(name, edits, 2.0)
+                r = self._evaluate(name, edits, self.element_size_mm)
             except Exception as e:  # noqa: BLE001 - arsm records it; the GUI still wants the event
                 self._emit("optimize", count[0], budget, name, error=f"{type(e).__name__}: {e}", best=best[0])
                 raise
@@ -496,7 +502,7 @@ class Workbench:
             edits = fixed + [{c: f[c] for c in ("face_id", "action", "other_face_id") if c in f}
                              | {"value_mm": round(v, 4)} for f, v in zip(features, values)]
             try:
-                r = self._evaluate(name, edits, 2.0)
+                r = self._evaluate(name, edits, self.element_size_mm)
             except Exception as e:  # noqa: BLE001 - one failed design must not end the screen
                 err = f"{type(e).__name__}: {e}"
                 rows[name] = {"values": values, "error": err}
@@ -551,7 +557,7 @@ class Workbench:
         elif name == "evaluate_design":
             if self.load_case is None:
                 raise RuntimeError("Set the load case first (set_load_case).")
-            out = self._run(self._evaluate, args["name"], args["edits"], args.get("element_size_mm", 2.0))
+            out = self._run(self._evaluate, args["name"], args["edits"], args.get("element_size_mm", self.element_size_mm))
             out = {**out, "seconds_per_design": self.seconds_per_design()}
         elif name == "check_mesh":
             d = self.designs[args["name"]]

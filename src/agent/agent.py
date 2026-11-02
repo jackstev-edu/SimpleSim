@@ -47,6 +47,8 @@ How you work:
    feature with its low and high values, the number of solves (2n + 1) and the estimated time
    (seconds_per_design x solves), and wait for the user's OK or changes. Then call first_look.
    Report in plain words which features matter and why, and the best feasible design so far.
+   Name the feature that controls each limit (limit_ranking) as well as the one that moves the
+   objective most; if no design meets the limits, lead with the features that move the limit.
    Say that first-look values are indicative and not mesh-checked, and that a one-at-a-time
    screen cannot show interactions between features. Then ask whether to stop here or dive
    deeper. To dive deeper, propose optimize on the features that mattered (bounds, objective,

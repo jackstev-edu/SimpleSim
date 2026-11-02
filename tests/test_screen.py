@@ -107,3 +107,39 @@ def test_summarize_sense_max_and_tie_break():
     s = screen.summarize([{"label": "a"}, {"label": "b"}], rows, "mass_kg", "max", lim)
     assert s["ranking"] == [1, 2]   # equal mass swing; feature 1 swings the safety factor more
     assert s["best_feasible"] in ("look_1_high", "look_2_high")
+
+
+def test_summarize_ranks_features_per_limit_and_notes_when_nothing_is_feasible():
+    # feature 1 moves mass most but barely the safety factor; feature 2 moves the safety factor most
+    rows = {"look_ref": {"values": [0, 0], "responses": _r(0.040, 0.48)},
+            "look_1_low": {"values": [-1, 0], "responses": _r(0.037, 0.46)},
+            "look_1_high": {"values": [1, 0], "responses": _r(0.044, 0.47)},
+            "look_2_low": {"values": [0, -1], "responses": _r(0.039, 0.36)},
+            "look_2_high": {"values": [0, 1], "responses": _r(0.042, 0.56)}}
+    s = screen.summarize([{"label": "right"}, {"label": "left"}], rows, "mass_kg", "min", SF)
+    assert s["ranking"] == [1, 2]
+    assert s["limit_ranking"] == {"safety_factor": [2, 1]}
+    assert s["best_feasible"] is None
+    assert "limit_ranking" in s["note"]
+
+
+def _plane(n, lo, hi):
+    return {"id": f"{n}{lo}", "type": "plane", "normal": n, "bbox_min_mm": lo, "bbox_max_mm": hi}
+
+
+def test_min_wall_finds_sheet_thickness_and_ignores_faces_pointing_at_each_other():
+    faces = [_plane([0, -1, 0], [0, 0, 0], [20, 0, 30]),       # sheet bottom, y = 0
+             _plane([0, 1, 0], [0, 1.5, 0], [20, 1.5, 30]),     # sheet top, y = 1.5 -> wall 1.5
+             _plane([0, -1, 0], [0, 6, 0], [20, 6, 30]),        # next flange bottom, faces the sheet top: a gap
+             _plane([0, 1, 0], [0, 8, 0], [20, 8, 30]),         # next flange top -> wall 2.0
+             _plane([1, 0, 0], [50, 0, 0], [50, 1, 30])]        # far away, no partner
+    assert screen.min_wall_mm(faces) == 1.5
+
+
+def test_default_element_size_is_half_wall_but_capped_by_node_budget_and_2mm():
+    assert screen.default_element_size(6.0, 32000) == 2.0     # thick L-bracket keeps 2 mm
+    assert screen.default_element_size(None, 32000) == 2.0    # no wall found
+    h = screen.default_element_size(1.33, 4991)               # thin saddle: budget wins over t/2
+    assert 1.0 < h < 1.2
+    assert screen.default_element_size(1.34, 300) == 0.67     # tiny part: half the wall
+    assert screen.default_element_size(6.0, 130190) > 3.0    # large SimJEB bracket: node budget beats 2 mm
