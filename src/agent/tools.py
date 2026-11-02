@@ -46,6 +46,23 @@ TOOLS = [
         "input_schema": {"type": "object", "properties": {}},
     },
     {
+        "name": "scale_part",
+        "description": (
+            "Scale the whole part uniformly about the origin (factor 10 = ten times larger in every direction, "
+            "1000x the volume and mass). Only when the user asks to resize the part. The scaled part replaces "
+            "the original: every later design is built from it. Face ids stay the same. Earlier design results "
+            "are cleared; the load case is kept but its force is NOT scaled, so confirm the force with the user "
+            "before solving (the same force on a part 10x larger gives about 100x lower stress). Returns the "
+            "new part description and the new default element size."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {"factor": {"type": "number", "exclusiveMinimum": 0,
+                                      "description": "Uniform scale factor, 0.01 to 100"}},
+            "required": ["factor"],
+        },
+    },
+    {
         "name": "list_materials",
         "description": (
             "List the materials in ANSYS's own material library with density (kg/m^3), Young's modulus (GPa), "
@@ -152,6 +169,7 @@ TOOLS = [
                             "action": {"type": "string", "enum": ["offset", "radius", "fillet"]},
                             "value_mm": {"type": "number"},
                             "other_face_id": {"type": "string", "description": "Second face, fillet only"},
+                            "also_face_ids": {"type": "array", "items": {"type": "string"}, "description": "Radius only: faces of other holes that get the same radius from this one value (e.g. all mounting holes). Both halves of a split hole are included automatically"},
                         },
                         "required": ["face_id", "action", "value_mm"],
                     },
@@ -197,6 +215,7 @@ TOOLS = [
                             "face_id": {"type": "string"},
                             "action": {"type": "string", "enum": ["offset", "radius", "fillet"]},
                             "other_face_id": {"type": "string", "description": "Second face, fillet only"},
+                            "also_face_ids": {"type": "array", "items": {"type": "string"}, "description": "Radius only: faces of other holes that get the same radius from this one value (e.g. all mounting holes). Both halves of a split hole are included automatically"},
                             "low": {"type": "number"},
                             "high": {"type": "number"},
                             "label": {"type": "string", "description": "Plain-language name for the user"},
@@ -248,6 +267,7 @@ TOOLS = [
                             "face_id": {"type": "string"},
                             "action": {"type": "string", "enum": ["offset", "radius", "fillet"]},
                             "other_face_id": {"type": "string", "description": "Second face, fillet only"},
+                            "also_face_ids": {"type": "array", "items": {"type": "string"}, "description": "Radius only: faces of other holes that get the same radius from this one value (e.g. all mounting holes). Both halves of a split hole are included automatically"},
                             "lower": {"type": "number"},
                             "upper": {"type": "number"},
                             "start": {"type": "number"},
@@ -278,7 +298,8 @@ TOOLS = [
     {
         "name": "finalize_design",
         "description": (
-            "Save an evaluated design as the deliverable part file (.scdocx, opens in SpaceClaim/ANSYS). "
+            "Save an evaluated design as the deliverable part file (.scdocx, opens in SpaceClaim/ANSYS), and re-solve it "
+            "once to save the full analysis (.mechdb) that the user can open in ANSYS Mechanical (about 30 s). "
             "Call when the user accepts a design."
         ),
         "input_schema": {
@@ -302,6 +323,7 @@ class Workbench:
         self.load_case: dict | None = None
         self.designs: dict[str, dict] = {}
         self.final_part: Path | None = None
+        self.final_analysis: Path | None = None  # .mechdb of the finalized design
         self.material = materials.get(materials.DEFAULT)
         self.safety_factor = DEFAULT_SAFETY_FACTOR
         self.price: dict | None = None  # {"usd_per_kg", "source"}: from the user or the price table
@@ -339,12 +361,36 @@ class Workbench:
         src = Path(path)
         self.part = self.out_dir / f"original{src.suffix.lower()}"
         shutil.copy(src, self.part)
-        self.load_case, self.designs, self.final_part = None, {}, None
+        self.load_case, self.designs, self.final_part, self.final_analysis = None, {}, None, None
         self.material, self.safety_factor, self.price = materials.get(materials.DEFAULT), DEFAULT_SAFETY_FACTOR, None
         desc = self._run(self._describe)
         self.faces = desc["faces"]
         self.element_size_mm = desc["default_element_size_mm"]
         return desc
+
+    def _scale(self, factor: float) -> dict:
+        """Scale the current original part and make the result the new original."""
+        if not 0.01 <= factor <= 100:
+            raise ValueError(f"Scale factor must be between 0.01 and 100 (got {factor})")
+        geo = self._session()
+        geo.open(self.part)
+        geo.scale(factor)
+        scaled = self.out_dir / ("original_x" + f"{factor:g}".replace(".", "p") + ".scdocx")
+        geo.save(scaled)
+        self.part = scaled
+        desc = self._describe()
+        self.faces = desc["faces"]
+        self.element_size_mm = desc["default_element_size_mm"]
+        self.designs, self.final_part, self.final_analysis = {}, None, None
+        ids = {f["id"] for f in self.faces}
+        note = "Part scaled; earlier design results were cleared."
+        if self.load_case and not set(self.load_case["fixed_face_ids"] + self.load_case["load_face_ids"]) <= ids:
+            self.load_case = None
+            note += " The load case faces no longer exist, so the load case was cleared: set it again."
+        elif self.load_case:
+            note += (f" The load case is kept, force unchanged at {self.load_case['force_N']} N: confirm with "
+                     "the user whether the force should change for the new size before solving.")
+        return {"scale_factor": factor, "note": note, **desc}
 
     def _describe(self) -> dict:
         geo = self._session()
@@ -400,9 +446,14 @@ class Workbench:
                     raise ValueError(f"offset needs a planar face; {e['face_id']} is {face['type']}")
                 geo.offset_face(e["face_id"], e["value_mm"], face["normal"])
             elif e["action"] == "radius":
-                if face["type"] != "cylinder":
-                    raise ValueError(f"radius needs a cylindrical face; {e['face_id']} is {face['type']}")
-                geo.set_radius(e["face_id"], e["value_mm"])
+                ids = []
+                for fid in [e["face_id"], *e.get("also_face_ids", [])]:
+                    if fid not in faces:
+                        raise KeyError(f"Unknown face id {fid}")
+                    if faces[fid]["type"] != "cylinder":
+                        raise ValueError(f"radius needs cylindrical faces; {fid} is {faces[fid]['type']}")
+                    ids += [i for i in screen.hole_faces(list(faces.values()), fid) if i not in ids]
+                geo.set_radius(ids, e["value_mm"])
         if not radii:
             return geo, None
         new = [f["id"] for f in geo.describe_faces() if f["id"] not in faces and f["type"] == "cylinder"]
@@ -445,7 +496,7 @@ class Workbench:
 
         def evaluate(values: dict[str, float]) -> dict[str, float]:
             count[0] += 1
-            edits = fixed + [{k: v[k] for k in ("face_id", "action", "other_face_id") if k in v}
+            edits = fixed + [{k: v[k] for k in ("face_id", "action", "other_face_id", "also_face_ids") if k in v}
                              | {"value_mm": round(values[n], 4)} for n, v in zip(names, variables)]
             name = f"{prefix}_{count[0]:02d}"
             try:
@@ -499,7 +550,7 @@ class Workbench:
             if self.stop_event.is_set():
                 stopped = "user"
                 break
-            edits = fixed + [{c: f[c] for c in ("face_id", "action", "other_face_id") if c in f}
+            edits = fixed + [{c: f[c] for c in ("face_id", "action", "other_face_id", "also_face_ids") if c in f}
                              | {"value_mm": round(v, 4)} for f, v in zip(features, values)]
             try:
                 r = self._evaluate(name, edits, self.element_size_mm)
@@ -527,6 +578,8 @@ class Workbench:
             raise ValueError("Design names may only use letters, digits, '_' and '-' (max 64 characters).")
         if name == "describe_part":
             out = self._run(self._describe)
+        elif name == "scale_part":
+            out = self._run(self._scale, float(args["factor"]))
         elif name == "list_materials":
             out = {"default": materials.DEFAULT, "current": self.material["name"],
                    "materials": {n: {k: v for k, v in m.items() if k != "library"}
@@ -592,7 +645,15 @@ class Workbench:
             path = self.out_dir / f"final_{args['name']}.scdocx"
             self._run(lambda: self._build(d["edits"])[0].save(path))
             self.final_part = path
-            out = {"saved": str(path)}
+            # Re-solve once on the design's own mesh and keep the whole analysis, so the user can open
+            # it in Mechanical (mesh, supports, load, stress and deformation plots).
+            mechdb = self.out_dir / f"final_{args['name']}.mechdb"
+            r = d["results"]
+            res = self._run(mechanical.solve, d["pmdb"], FIXED, LOAD, self.load_case["force_N"],
+                            r["element_size_mm"], d["local"], d["material"], mechdb)
+            self.final_analysis = mechdb
+            out = {"saved": str(path), "analysis": str(mechdb), "analysis_max_stress_MPa": res["max_stress_MPa"],
+                   "note": "The user can open the analysis with the 'Open analysis in Mechanical' button."}
         else:
             raise ValueError(f"Unknown tool {name}")
         return json.dumps(out, default=str)

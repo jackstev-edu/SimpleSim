@@ -143,3 +143,19 @@ def test_default_element_size_is_half_wall_but_capped_by_node_budget_and_2mm():
     assert 1.0 < h < 1.2
     assert screen.default_element_size(1.34, 300) == 0.67     # tiny part: half the wall
     assert screen.default_element_size(6.0, 130190) > 3.0    # large SimJEB bracket: node budget beats 2 mm
+
+
+def _cyl(fid, r, p, d=(0.0, 0.0, 1.0)):
+    return {"id": fid, "type": "cylinder", "radius_mm": r, "axis_point_mm": list(p), "axis_dir": list(d)}
+
+
+def test_hole_faces_groups_split_hole_halves():
+    faces = [_cyl("a", 5.0, (10, 0, 0)), _cyl("b", 5.0, (10, 0, 7.0), (0, 0, -1)),  # other half, axis point shifted
+             _cyl("c", 5.0, (30, 0, 0)),  # another hole, same radius, different axis
+             _cyl("d", 3.0, (10, 0, 0)),  # coaxial but different radius (counterbore)
+             {"id": "p", "type": "plane", "normal": [0, 0, 1]}]
+    assert screen.hole_faces(faces, "a") == ["a", "b"]
+    assert screen.hole_faces(faces, "b") == ["a", "b"]
+    assert screen.hole_faces(faces, "c") == ["c"]
+    assert screen.hole_faces(faces, "d") == ["d"]
+    assert screen.hole_faces(faces, "p") == ["p"]

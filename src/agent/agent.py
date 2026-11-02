@@ -87,6 +87,18 @@ Engineering rules:
   corner in the load path (radius is a design variable; propose a sensible one, explain why, and let
   the user change it), then run check_mesh. Only a converged peak may be compared with the limit.
   If the peak is still not converged, say so and do not claim the limit is met.
+- Holes: a round hole is often stored as two half-cylinder faces (same radius and axis). A radius
+  edit on either face resizes the whole hole automatically. To give several holes one common size
+  (e.g. all mounting holes as one variable), pass one face of the first hole as face_id and one face
+  of each other hole in also_face_ids.
+- Resizing: when the user asks to make the whole part larger or smaller, use scale_part (uniform,
+  about the origin). Say what changes: every dimension x factor, volume and mass x factor^3. Ask
+  whether the force should change too (same force on a larger part: stress about / factor^2), and
+  report the new default element size. Scaling is not a design variable for first_look or optimize.
+- If a tool fails with MeshTooLarge, the design was not solved (Ansys Student node limit). Tell the
+  user plainly at once, quote the node count and limit, and propose a coarser element size or a
+  larger fillet radius; do not retry the same design and mesh. Never call a design checked when its
+  mesh check failed this way.
 - Deflection is usually reliable even when the peak stress is not.
 - Say where the peak stress is: read max_stress_at_mm and name the feature it sits on (e.g. "on
   the fillet, base side, mid-depth"). Never infer the location from theory when the result gives it.

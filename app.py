@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 from pathlib import Path
 
 import gradio as gr
@@ -51,6 +52,9 @@ def _stream(history: list, user_text: str):
             mark = "❌" if ev["is_error"] else "✅"
             msg["metadata"] = {"title": f"{mark} {ev['name']}", "status": "done"}
             msg["content"] += f"\n\nResult:\n```\n{_short(ev['content'])}\n```"
+            if ev["is_error"] and "MeshTooLarge" in str(ev["content"]):
+                text = str(ev["content"]).split("MeshTooLarge:", 1)[-1].strip()
+                history.append({"role": "assistant", "content": f"⚠️ **Mesh over the Student limit, not solved.** {text}"})
         elif ev["type"] == "error":
             history.append({"role": "assistant", "content": f"⚠️ {ev['text']}"})
         yield history, wb.table()
@@ -97,6 +101,28 @@ def on_open_ansys():
     return gr.update(value=str(wb.final_part))
 
 
+def mechanical_exe() -> Path | None:
+    """Mechanical's own GUI program. Not the `ansys-mechanical` launcher: it fails until its install
+    path is configured (seen 2026-11-01)."""
+    root = os.environ.get("AWP_ROOT261", r"C:\Program Files\ANSYS Inc\ANSYS Student\v261")
+    exe = Path(root) / "aisol" / "bin" / "winx64" / "AnsysWBU.exe"
+    return exe if exe.exists() else None
+
+
+def on_open_mechanical():
+    """Open the finalized design's saved analysis in the Mechanical window."""
+    mechdb = wb.final_analysis
+    if mechdb is None or not mechdb.exists():
+        raise gr.Error("No saved analysis yet. Ask the agent to finalize a design first.")
+    exe = mechanical_exe()
+    if exe:
+        subprocess.Popen([str(exe), "-DSApplet", "-AppModeMech", "-file", str(mechdb)])
+    else:
+        os.startfile(mechdb)  # fall back to the program registered for .mechdb
+    gr.Info("Opening ANSYS Mechanical; it takes about a minute to start.")
+    return gr.update(value=str(mechdb))
+
+
 with gr.Blocks(title="SimpleSim design optimizer") as demo:
     gr.Markdown("## SimpleSim: simulation-driven bracket optimization\n"
                 "Upload your part, then tell the assistant how it is loaded and what you want to optimize.\n\n"
@@ -117,6 +143,8 @@ with gr.Blocks(title="SimpleSim design optimizer") as demo:
             table = gr.Dataframe(headers=TABLE_HEADERS, label="Evaluated designs", interactive=False)
             open_btn = gr.Button("Open final design in ANSYS")
             final_path = gr.Textbox(label="Final design file", interactive=False)
+            mech_btn = gr.Button("Open analysis in Mechanical")
+            analysis_path = gr.Textbox(label="Final analysis file", interactive=False)
 
     # One shared queue for every listener that drives the agent: a message sent while a turn is
     # running must wait, or two turns interleave in Agent.messages and the API rejects the history.
@@ -125,6 +153,7 @@ with gr.Blocks(title="SimpleSim design optimizer") as demo:
     send.click(take_text, box, [box, pending], queue=False).then(on_send, [pending, chat], [chat, table], **one_turn)
     box.submit(take_text, box, [box, pending], queue=False).then(on_send, [pending, chat], [chat, table], **one_turn)
     open_btn.click(on_open_ansys, None, final_path)
+    mech_btn.click(on_open_mechanical, None, analysis_path)
     stop_btn.click(on_stop, None, None, queue=False)
 
 if __name__ == "__main__":

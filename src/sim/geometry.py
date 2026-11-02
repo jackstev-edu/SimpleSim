@@ -125,7 +125,11 @@ class GeometrySession:
             if d["type"] == "plane":
                 d["normal"] = [round(c, 6) for c in f.normal()]
             elif d["type"] == "cylinder":
-                d["radius_mm"] = _mm(f.shape.geometry.radius)
+                cyl = f.shape.geometry
+                d["radius_mm"] = _mm(cyl.radius)
+                # The axis lets split holes (two half-cylinder faces, common in STEP files) be grouped.
+                d["axis_point_mm"] = _xyz(cyl.origin)
+                d["axis_dir"] = [round(c, 6) for c in cyl.dir_z]
             out.append(d)
         return out
 
@@ -173,13 +177,14 @@ class GeometrySession:
             self._face(face_id), Distance(distance_mm, UNITS.mm), UnitVector3D(direction)
         )
 
-    def set_radius(self, face_id: str, radius_mm: float) -> None:
-        """Resize a cylindrical face, e.g. a hole or a fillet."""
+    def set_radius(self, face_ids: str | list[str], radius_mm: float) -> None:
+        """Resize cylindrical faces together, e.g. both halves of a split hole, or several holes."""
+        ids = [face_ids] if isinstance(face_ids, str) else list(face_ids)
         ok = self.modeler.geometry_commands.offset_faces_set_radius(
-            self._face(face_id), Distance(radius_mm, UNITS.mm)
+            [self._face(i) for i in ids], Distance(radius_mm, UNITS.mm)
         )
         if not ok:
-            raise RuntimeError(f"SpaceClaim could not set radius {radius_mm} mm on face {face_id}")
+            raise RuntimeError(f"SpaceClaim could not set radius {radius_mm} mm on faces {ids}")
 
     def fillet_between(self, face_a: str, face_b: str, radius_mm: float) -> None:
         """Round the edge shared by two faces, e.g. a sharp inside corner (needs ANSYS 25R2+)."""
@@ -190,6 +195,12 @@ class GeometrySession:
             raise ValueError(f"Faces {face_a} and {face_b} do not share an edge")
         if not self.modeler.geometry_commands.fillet(shared, Distance(radius_mm, UNITS.mm)):
             raise RuntimeError(f"SpaceClaim could not fillet the {face_a}/{face_b} edge with r = {radius_mm} mm")
+
+    def scale(self, factor: float) -> None:
+        """Scale the whole part uniformly by `factor` (e.g. 10 = ten times larger in every direction)."""
+        if not factor > 0:
+            raise ValueError(f"Scale factor must be positive (got {factor})")
+        self.body.scale(factor)
 
     def name_faces(self, name: str, face_ids: list[str]) -> None:
         """Tag faces so Mechanical can find them (supports, loads)."""

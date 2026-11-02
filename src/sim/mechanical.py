@@ -19,6 +19,27 @@ from src.sim import materials
 # PyMechanical's embedding injects Model, Quantity, enums etc. into these globals.
 _app: App | None = None
 
+# Ansys Student size limit (structural). Above it MAPDL stops with "The version size limits (NODES)
+# have been exceeded", and its distributed worker processes never exit, so sol.Solve hangs forever
+# (seen 2026-11-01). So the mesh is checked here and an oversized design is never sent to the solver.
+STUDENT_NODE_LIMIT = 128_000
+
+
+class MeshTooLarge(ValueError):
+    """The mesh exceeds the Ansys Student node/element limit; the design was not solved."""
+
+
+def check_mesh_size(nodes: int, elements: int, element_size_mm: float,
+                    local_size: tuple[str, float] | None, limit: int = STUDENT_NODE_LIMIT) -> None:
+    """Raise MeshTooLarge, with what to change, when the mesh is over the Student limit."""
+    if nodes <= limit and elements <= limit:
+        return
+    local = f" and {local_size[1]} mm on the fillets" if local_size else ""
+    raise MeshTooLarge(
+        f"Mesh too large for the Ansys Student licence: {nodes:,} nodes / {elements:,} elements "
+        f"(limit {limit:,}) at {element_size_mm} mm{local}. The design was NOT solved. "
+        "Use a coarser element size (or a larger fillet radius, which sets a coarser fillet mesh).")
+
 
 def _get_app(version: int = 261) -> App:
     global _app
@@ -45,12 +66,14 @@ def solve(
     element_size_mm: float = 2.0,
     local_size: tuple[str, float] | None = None,
     material: dict | None = None,
+    save_to: str | Path | None = None,
 ) -> dict:
     """Fix the faces in named selection `fixed`, apply `force_N` on `load`, solve.
 
     local_size = (named selection, size in mm) refines the mesh on those faces only,
     e.g. fillets, which a global mesh fine enough to resolve would exceed the node limit.
-    material = an entry from materials.get(); None keeps Mechanical's default Structural Steel."""
+    material = an entry from materials.get(); None keeps Mechanical's default Structural Steel.
+    save_to = a .mechdb path: save the solved analysis there so it can be opened in Mechanical."""
     app = _get_app()
     t0 = time.time()
     app.new()
@@ -81,6 +104,7 @@ def solve(
         sizing.Location = ns[local_size[0]]
         sizing.ElementSize = Quantity(f"{local_size[1]} [mm]")  # noqa: F821
     model.Mesh.GenerateMesh()
+    check_mesh_size(model.Mesh.Nodes, model.Mesh.Elements, element_size_mm, local_size)
 
     support = analysis.AddFixedSupport()
     support.Location = ns[fixed]
@@ -102,6 +126,8 @@ def solve(
     # with the sign convention "force the support exerts", so compare magnitudes per axis.
     applied = sum(f * f for f in force_N) ** 0.5
     residual = sum((abs(r) - abs(f)) ** 2 for r, f in zip(reaction_N, force_N)) ** 0.5
+    if save_to is not None:  # the full analysis (mesh, supports, load, results) for the user to open in Mechanical
+        app.save_as(str(save_to), overwrite=True)
     return {
         "status": str(sol.Status),
         "material": material["name"] if material else materials.DEFAULT,
@@ -144,7 +170,13 @@ def refinement_check(pmdb: str | Path, fixed: str, load: str, force_N, element_s
     if on_solve:
         on_solve("coarse", coarse)
     fine_local = (local_size[0], local_size[1] / 2) if local_size else None
-    fine = solve(pmdb, fixed, load, force_N, element_size_mm / 2, fine_local, material)
+    try:
+        fine = solve(pmdb, fixed, load, force_N, element_size_mm / 2, fine_local, material)
+    except MeshTooLarge as e:
+        raise MeshTooLarge(
+            f"Mesh check not possible: the halved mesh is over the Student limit. {e} The coarse result "
+            f"stands but is NOT mesh-verified: {coarse['max_stress_MPa']:.1f} MPa peak, "
+            f"{coarse['nodes']:,} nodes at {element_size_mm} mm.") from e
     if on_solve:
         on_solve("fine", fine)
     change = abs(fine["max_stress_MPa"] - coarse["max_stress_MPa"]) / coarse["max_stress_MPa"]

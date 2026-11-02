@@ -166,6 +166,27 @@ def min_wall_mm(faces: list[dict]) -> float | None:
     return best
 
 
+def hole_faces(faces: list[dict], face_id: str, tol_mm: float = 0.01) -> list[str]:
+    """All cylinder faces of the same hole as `face_id`: same radius and same axis line.
+    CAD files often store one round hole as two half-cylinder faces; resizing only one breaks the hole."""
+    by_id = {f["id"]: f for f in faces}
+    a = by_id[face_id]
+    if a.get("type") != "cylinder" or "axis_dir" not in a:
+        return [face_id]
+    p, d = a["axis_point_mm"], a["axis_dir"]
+    out = []
+    for f in faces:
+        if f.get("type") != "cylinder" or "axis_dir" not in f:
+            continue
+        if abs(f["radius_mm"] - a["radius_mm"]) > tol_mm or abs(_dot(f["axis_dir"], d)) < 0.9999:
+            continue
+        w = [q - r for q, r in zip(f["axis_point_mm"], p)]  # the other axis point must lie on this axis line
+        along = _dot(w, d)
+        if sum((wi - along * di) ** 2 for wi, di in zip(w, d)) ** 0.5 <= tol_mm:
+            out.append(f["id"])
+    return out
+
+
 def default_element_size(min_wall: float | None, volume_mm3: float) -> float:
     """About two elements through the thinnest wall and at most 2 mm, but never finer than the size at which
     check_mesh's halved mesh fits the node budget (that floor wins, even above 2 mm, for large parts)."""
