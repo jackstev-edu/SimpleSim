@@ -1,1 +1,5 @@
-# Add dependencies here as the stack is decided
+# Shared by every role. Add role-specific packages under your own folder's requirements.
+pydantic>=2.6
+numpy>=1.26
+pandas>=2.2
+pytest>=8.0
