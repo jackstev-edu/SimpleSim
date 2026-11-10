@@ -1,0 +1,205 @@
+{
+  "schema_version": "0.1.0",
+  "spec": {
+    "schema_version": "0.1.0",
+    "bracket_family": "l_bracket_v0",
+    "objective": {
+      "metric": "mass_kg",
+      "direction": "minimize"
+    },
+    "constraints": [
+      {
+        "metric": "safety_factor",
+        "op": ">=",
+        "value": 2.0
+      },
+      {
+        "metric": "max_disp_mm",
+        "op": "<=",
+        "value": 0.3
+      }
+    ],
+    "parameters": [
+      {
+        "name": "thickness_mm",
+        "low_mm": 2.375,
+        "high_mm": 10.5
+      },
+      {
+        "name": "flange_length_mm",
+        "low_mm": 68.39999999999999,
+        "high_mm": 113.4
+      },
+      {
+        "name": "arm_width_mm",
+        "low_mm": 17.8125,
+        "high_mm": 32.8125
+      },
+      {
+        "name": "hole_diameter_mm",
+        "low_mm": 5.6525,
+        "high_mm": 11.602500000000001
+      },
+      {
+        "name": "fillet_radius_mm",
+        "low_mm": 0.95,
+        "high_mm": 13.125
+      }
+    ],
+    "load": {
+      "force_n": 500.0,
+      "angle_deg": -90.0
+    },
+    "material_key": "structural_steel",
+    "n_candidates": 50000,
+    "n_verify": 5,
+    "assumptions": [
+      "Load acts straight down at the hole",
+      "Mounting face fully fixed",
+      "Search bounds widened 5% beyond the training ranges"
+    ]
+  },
+  "baseline": {
+    "design_id": "baseline",
+    "design": {
+      "thickness_mm": 5.0,
+      "flange_length_mm": 90.0,
+      "arm_width_mm": 25.0,
+      "hole_diameter_mm": 8.5,
+      "fillet_radius_mm": 4.0
+    },
+    "source": "fake_formula",
+    "mass_kg": 0.12042900807076046,
+    "max_stress_mpa": 159.34844569714872,
+    "max_disp_mm": 0.0580008,
+    "safety_factor": 1.5688888517628845,
+    "feasible": false,
+    "violated": [
+      "safety_factor >= 2"
+    ]
+  },
+  "recommended": {
+    "design_id": "fake-0-01857",
+    "design": {
+      "thickness_mm": 2.7489121077696224,
+      "flange_length_mm": 69.34306034635263,
+      "arm_width_mm": 29.92299284930784,
+      "hole_diameter_mm": 11.159068610923082,
+      "fillet_radius_mm": 6.736935564101673
+    },
+    "source": "fake_formula",
+    "mass_kg": 0.06208578426870304,
+    "max_stress_mpa": 107.32552573919763,
+    "max_disp_mm": 0.013723348566513218,
+    "safety_factor": 2.3293619880092935,
+    "feasible": true,
+    "violated": []
+  },
+  "finalists": [
+    {
+      "design_id": "fake-0-01857",
+      "design": {
+        "thickness_mm": 2.7489121077696224,
+        "flange_length_mm": 69.34306034635263,
+        "arm_width_mm": 29.92299284930784,
+        "hole_diameter_mm": 11.159068610923082,
+        "fillet_radius_mm": 6.736935564101673
+      },
+      "source": "fake_formula",
+      "mass_kg": 0.06208578426870304,
+      "max_stress_mpa": 107.32552573919763,
+      "max_disp_mm": 0.013723348566513218,
+      "safety_factor": 2.3293619880092935,
+      "feasible": true,
+      "violated": []
+    },
+    {
+      "design_id": "fake-0-00228",
+      "design": {
+        "thickness_mm": 2.652497817477424,
+        "flange_length_mm": 74.39676076660086,
+        "arm_width_mm": 30.30391552724093,
+        "hole_diameter_mm": 9.739474240588219,
+        "fillet_radius_mm": 12.901683429934662
+      },
+      "source": "fake_formula",
+      "mass_kg": 0.06413042633712356,
+      "max_stress_mpa": 97.8858551548183,
+      "max_disp_mm": 0.019161832562913858,
+      "safety_factor": 2.5539951569569967,
+      "feasible": true,
+      "violated": []
+    },
+    {
+      "design_id": "fake-0-00212",
+      "design": {
+        "thickness_mm": 2.5390149307039698,
+        "flange_length_mm": 79.03442985936799,
+        "arm_width_mm": 30.8707995646529,
+        "hole_diameter_mm": 7.735624748877159,
+        "fillet_radius_mm": 12.302937827990721
+      },
+      "source": "fake_formula",
+      "mass_kg": 0.0656157170178651,
+      "max_stress_mpa": 109.82227947578967,
+      "max_disp_mm": 0.024679292066991737,
+      "safety_factor": 2.276405126476295,
+      "feasible": true,
+      "violated": []
+    },
+    {
+      "design_id": "fake-0-01122",
+      "design": {
+        "thickness_mm": 3.202814350296665,
+        "flange_length_mm": 69.42349111104666,
+        "arm_width_mm": 26.552866134011275,
+        "hole_diameter_mm": 10.021302371264557,
+        "fillet_radius_mm": 11.165137240125164
+      },
+      "source": "fake_formula",
+      "mass_kg": 0.06669279856985402,
+      "max_stress_mpa": 103.04684230066626,
+      "max_disp_mm": 0.021681903388728958,
+      "safety_factor": 2.4260811337678767,
+      "feasible": true,
+      "violated": []
+    },
+    {
+      "design_id": "fake-0-00076",
+      "design": {
+        "thickness_mm": 2.705017690216055,
+        "flange_length_mm": 77.13123547053569,
+        "arm_width_mm": 31.9878697245694,
+        "hole_diameter_mm": 6.619789862282244,
+        "fillet_radius_mm": 11.323737147734288
+      },
+      "source": "fake_formula",
+      "mass_kg": 0.07068704812274589,
+      "max_stress_mpa": 93.4067281659219,
+      "max_disp_mm": 0.017145086692040897,
+      "safety_factor": 2.676466726849864,
+      "feasible": true,
+      "violated": []
+    }
+  ],
+  "binding_constraint": "safety_factor >= 2",
+  "sensitivities": {
+    "thickness_mm": 0.8148263452197451,
+    "flange_length_mm": 0.32079255420925123,
+    "arm_width_mm": -0.3665839472433,
+    "hole_diameter_mm": -0.19427166638227278,
+    "fillet_radius_mm": -0.2986911332723726
+  },
+  "explanation": "Recommended fake-0-01857: mass 0.062 kg (-48% vs baseline), safety factor 2.33, displacement 0.014 mm. Binding constraint: safety_factor >= 2. Verified with fake_formula.",
+  "discovery_values": {
+    "thickness_mm": 2.7489121077696224,
+    "flange_length_mm": 69.34306034635263,
+    "arm_width_mm": 29.92299284930784,
+    "hole_diameter_mm": 11.159068610923082,
+    "fillet_radius_mm": 6.736935564101673
+  },
+  "warnings": [
+    "fake predictor: beam formula with a fixed 10% band, not a trained model",
+    "10 of 20 shortlisted candidates are outside the training range; their estimates are extrapolated"
+  ]
+}

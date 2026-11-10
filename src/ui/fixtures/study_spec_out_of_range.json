@@ -1,0 +1,59 @@
+{
+  "schema_version": "0.1.0",
+  "bracket_family": "l_bracket_v0",
+  "objective": {
+    "metric": "mass_kg",
+    "direction": "minimize"
+  },
+  "constraints": [
+    {
+      "metric": "safety_factor",
+      "op": ">=",
+      "value": 2.0
+    },
+    {
+      "metric": "max_disp_mm",
+      "op": "<=",
+      "value": 0.3
+    }
+  ],
+  "parameters": [
+    {
+      "name": "thickness_mm",
+      "low_mm": 2.375,
+      "high_mm": 10.5
+    },
+    {
+      "name": "flange_length_mm",
+      "low_mm": 68.39999999999999,
+      "high_mm": 113.4
+    },
+    {
+      "name": "arm_width_mm",
+      "low_mm": 17.8125,
+      "high_mm": 32.8125
+    },
+    {
+      "name": "hole_diameter_mm",
+      "low_mm": 5.6525,
+      "high_mm": 11.602500000000001
+    },
+    {
+      "name": "fillet_radius_mm",
+      "low_mm": 0.95,
+      "high_mm": 13.125
+    }
+  ],
+  "load": {
+    "force_n": 500.0,
+    "angle_deg": -90.0
+  },
+  "material_key": "structural_steel",
+  "n_candidates": 50000,
+  "n_verify": 5,
+  "assumptions": [
+    "Load acts straight down at the hole",
+    "Mounting face fully fixed",
+    "Search bounds widened 5% beyond the training ranges"
+  ]
+}

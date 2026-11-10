@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SimpleSim demo shell</title>
+<style>
+  :root {
+    --bg0: #101317; --bg1: #171b21; --bg2: #1e242c; --bg3: #283039; --line: #323c48;
+    --text: #d9dfe7; --muted: #8a96a4; --accent: #4cc2b0; --sel: #3d8bd9;
+    --ok: #5fbf77; --warn: #e2a93b; --bad: #e2705d; --pred: #5aa9e6; --fake: #a3aebb;
+    --param: #1c3350; --monitor: #151f33;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg0); color: var(--text); font: 13px/1.35 "Segoe UI", system-ui, sans-serif;
+    display: grid; grid-template-rows: 30px auto minmax(0, 1fr) 22px; min-width: 1000px; overflow: hidden;
+  }
+  button, select, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  /* Title bar with the persistent demo badge */
+  .titlebar { display: flex; align-items: center; gap: 10px; padding: 0 10px; background: #0b0d10; }
+  .logo { width: 14px; height: 14px; background: var(--accent); transform: rotate(45deg); flex: none; }
+  .titlebar b { font-weight: 600; }
+  .titlebar .study { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge { margin-left: auto; flex: none; border: 1px solid var(--warn); color: var(--warn); border-radius: 3px; padding: 1px 8px; font-size: 12px; font-weight: 600; letter-spacing: .02em; }
+
+  /* Ribbon */
+  .ribbon { background: var(--bg1); border-bottom: 1px solid var(--line); }
+  .tabs { display: flex; gap: 2px; padding: 4px 8px 0; background: #0b0d10; }
+  .tabs span { padding: 3px 14px; font-variant: small-caps; letter-spacing: .04em; color: var(--muted); border-radius: 3px 3px 0 0; }
+  .tabs span.on { background: var(--bg1); color: var(--text); }
+  .groups { display: flex; align-items: stretch; overflow: hidden; }
+  .group { display: flex; flex-direction: column; padding: 6px 12px 3px; border-right: 1px solid var(--line); }
+  .group .items { display: flex; gap: 10px; align-items: center; flex: 1; }
+  .group .gname { text-align: center; font-variant: small-caps; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .rb { display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: 0; padding: 2px 6px; border-radius: 3px; white-space: nowrap; }
+  .rb svg { width: 26px; height: 26px; }
+  .rb.small { flex-direction: row; gap: 6px; }
+  .rb.small svg { width: 16px; height: 16px; }
+  .rb.live { cursor: pointer; }
+  .rb.live:hover { background: var(--bg3); }
+  .stack { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+
+  /* Main grid: tree and viewport above the Variations panel, agent pane on the right */
+  .main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; min-height: 0; }
+  .work { display: grid; grid-template-columns: 258px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 330px; min-height: 0; min-width: 0; }
+  .tree { background: var(--bg1); border-right: 1px solid var(--line); overflow: auto; padding: 8px 6px; }
+  .tree ul { list-style: none; margin: 0; padding-left: 14px; border-left: 1px solid var(--line); margin-left: 6px; }
+  .tree > ul { border: 0; padding: 0; margin: 0; }
+  .tree li { padding: 2px 0; }
+  .tree .node { display: flex; flex-wrap: wrap; gap: 0 6px; align-items: baseline; }
+  .tree .head { font-weight: 600; }
+  .tree .head::before { content: ""; width: 0; height: 0; border: 4px solid transparent; border-top-color: var(--accent); border-bottom: 0; align-self: center; }
+  .tree .val { margin-left: auto; color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .tree .val.box { color: var(--text); border: 1px solid var(--line); background: var(--bg0); padding: 0 5px; border-radius: 2px; }
+  .tree .bind { color: var(--warn); }
+
+  .viewport { position: relative; background: radial-gradient(ellipse at 50% 40%, #2a2f36 0%, #191c21 75%); min-width: 0; min-height: 0; overflow: hidden; }
+  .viewport svg.scene { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .vp-label { position: absolute; left: 10px; top: 8px; display: flex; gap: 8px; align-items: center; }
+  .vp-label .name { color: var(--pred); font-weight: 600; }
+  .vp-dims { position: absolute; right: 10px; top: 8px; font-size: 12px; color: var(--muted); border-collapse: collapse; }
+  .vp-dims td { padding: 0 0 1px 10px; }
+  .vp-dims td:last-child { color: var(--text); text-align: right; font-variant-numeric: tabular-nums; }
+  .triad { position: absolute; left: 8px; bottom: 6px; width: 76px; height: 76px; }
+
+  /* Bottom panel: Parameters / Test Cases / Variations */
+  .bottom { grid-column: 1 / 3; display: flex; flex-direction: column; background: var(--bg1); border-top: 1px solid var(--line); min-height: 0; min-width: 0; }
+  .btabs { display: flex; background: var(--bg2); }
+  .btabs button { background: none; border: 0; border-right: 1px solid var(--line); padding: 4px 12px; font-variant: small-caps; letter-spacing: .04em; color: var(--muted); cursor: pointer; }
+  .btabs button[aria-selected="true"] { background: var(--bg1); color: var(--text); }
+  .pane { flex: 1; overflow: auto; min-height: 0; }
+  .pane[hidden] { display: none; }
+  table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .grid th { position: sticky; top: 0; z-index: 1; background: var(--bg2); font-weight: 600; text-align: center; padding: 5px 5px; border-bottom: 1px solid var(--sel); white-space: nowrap; max-width: 86px; overflow: hidden; text-overflow: ellipsis; }
+  .grid td { padding: 2px 5px; text-align: center; border-bottom: 1px solid var(--bg3); white-space: nowrap; }
+  .grid td.p { background: var(--param); }
+  .grid td.m { background: var(--monitor); }
+  .grid td small { display: block; color: var(--muted); font-size: 10.5px; line-height: 1.1; }
+  .grid tr.row { cursor: pointer; }
+  .grid tr.row:hover td { filter: brightness(1.2); }
+  .grid tr.sel td { box-shadow: inset 0 1px 0 var(--sel), inset 0 -1px 0 var(--sel); }
+  .grid tr.sel td:first-child { box-shadow: inset 2px 0 0 var(--sel), inset 0 1px 0 var(--sel), inset 0 -1px 0 var(--sel); }
+  .grid tr.rec td.p, .grid tr.rec td.m { background: #1d4a3f; }
+  .grid tr.rec td.name { color: var(--ok); font-weight: 600; }
+  .grid tr.fail td.m { background: #3a2022; }
+  .grid tr.oor td.inr { color: var(--warn); font-weight: 600; }
+  .grid tr.oor td.name { box-shadow: inset 3px 0 0 var(--warn); }
+  .grid tr.base td { color: var(--muted); font-style: italic; }
+  .grid tr.blank td.m { color: transparent; }
+  .yes { color: var(--ok); } .no { color: var(--bad); font-weight: 600; } .amber { color: var(--warn); }
+  .cb { display: inline-block; width: 13px; height: 13px; border: 1px solid var(--muted); border-radius: 2px; vertical-align: middle; }
+  .cb.on { background: var(--sel); border-color: var(--sel); box-shadow: inset 0 0 0 2px var(--bg1); }
+  .st { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--muted); vertical-align: middle; position: relative; }
+  .st.solved { border-color: var(--ok); }
+  .st.solved::after { content: ""; position: absolute; left: 3px; top: 0; width: 3px; height: 6px; border: solid var(--ok); border-width: 0 2px 2px 0; transform: rotate(40deg); }
+  .st.pending { border-color: var(--warn); }
+  .st.pending::after { content: ""; position: absolute; left: 4px; top: 1px; width: 3px; height: 4px; border: solid var(--warn); border-width: 0 0 2px 2px; }
+  .st.stopped::after { content: ""; position: absolute; left: 1px; top: 4px; width: 8px; height: 2px; background: var(--muted); transform: rotate(-45deg); }
+  .st.solving { border-color: var(--ok); border-right-color: transparent; }
+  .st.failed { border-color: var(--warn); }
+  .st.failed::after { content: ""; position: absolute; left: 4px; top: 1px; width: 2px; height: 5px; background: var(--warn); box-shadow: 0 7px 0 -0.5px var(--warn); }
+  .st.none { border: 0; border-radius: 0; height: 2px; width: 12px; background: var(--muted); }
+  .star { color: var(--muted); } .star.on { color: var(--ok); }
+  .bfoot { display: flex; align-items: center; gap: 14px; padding: 4px 10px; background: var(--bg0); border-top: 1px solid var(--line); }
+  .bfoot .cnt { display: inline-flex; align-items: center; gap: 5px; color: var(--pred); border-bottom: 1px solid var(--line); padding-bottom: 1px; }
+  .bfoot .right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+  .bfoot .feas { color: var(--muted); }
+
+  .chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 0 6px; border-radius: 8px; border: 1px solid currentColor; line-height: 15px; white-space: nowrap; font-style: normal; }
+  .chip.verified { color: var(--ok); } .chip.predicted { color: var(--pred); } .chip.fake { color: var(--fake); border-style: dashed; } .chip.spec { color: var(--muted); }
+
+  /* Agent pane */
+  .agent { display: flex; flex-direction: column; background: var(--bg1); border-left: 1px solid var(--line); min-height: 0; }
+  .ahead { padding: 8px 10px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--bg2); }
+  .ahead h2 { font-size: 13px; margin: 0; font-variant: small-caps; letter-spacing: .05em; flex: 1; }
+  .ahead select { background: var(--bg0); border: 1px solid var(--line); border-radius: 3px; padding: 3px 4px; }
+  .ahead label { color: var(--muted); display: flex; gap: 6px; align-items: center; }
+  .btn { background: var(--bg3); border: 1px solid var(--line); border-radius: 3px; padding: 4px 12px; cursor: pointer; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #06231f; font-weight: 700; }
+  .btn:hover { filter: brightness(1.12); }
+  .log { flex: 1; overflow: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+  .msg { flex: none; max-width: 94%; padding: 7px 10px; border-radius: 6px; background: var(--bg2); border: 1px solid var(--line); overflow-wrap: anywhere; }
+  .msg.user { align-self: flex-end; background: #1d3a5c; border-color: #2c5586; }
+  .msg .who { display: flex; gap: 8px; align-items: center; font-size: 11px; color: var(--muted); margin-bottom: 3px; text-transform: uppercase; letter-spacing: .05em; }
+  .msg ul { margin: 4px 0 0; padding-left: 18px; }
+  .msg .w { margin-top: 6px; padding: 4px 8px; border-left: 3px solid var(--warn); background: #33290f; color: var(--warn); border-radius: 0 3px 3px 0; }
+  .msg .note { margin-top: 6px; color: var(--muted); font-size: 12px; }
+  .msg table { border-collapse: collapse; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .msg td { padding: 1px 12px 1px 0; }
+  .msg td small { color: var(--muted); }
+  .empty { color: var(--muted); padding: 16px; }
+
+  /* Error banner sits above everything and never blocks the controls */
+  .banner { position: fixed; left: 50%; top: 40px; transform: translateX(-50%); z-index: 10; width: min(720px, 92vw); background: #3a1d1b; border: 1px solid var(--bad); border-radius: 5px; padding: 10px 14px; box-shadow: 0 6px 24px #000a; }
+  .banner[hidden] { display: none; }
+  .banner h3 { margin: 0 0 4px; font-size: 13px; color: var(--bad); }
+  .banner ul { margin: 4px 0; padding-left: 18px; }
+  .banner .pick { margin-top: 8px; }
+  .statusbar { display: flex; gap: 16px; align-items: center; padding: 0 10px; background: #0b0d10; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; }
+
+  @media (max-width: 1250px) {
+    .main { grid-template-columns: minmax(0, 1fr) 300px; }
+    .work { grid-template-columns: 200px minmax(0, 1fr); }
+    .group { padding: 6px 7px 3px; } .group .items { gap: 4px; }
+    .vp-dims { display: none; }
+  }
+</style>
+</head>
+<body data-demo="idle">
+
+<div class="titlebar">
+  <span class="logo" aria-hidden="true"></span><b>SimpleSim</b>
+  <span class="study" id="studyName"></span>
+  <span class="badge" role="note">DEMO: data from contract fixtures, Ansys not connected</span>
+</div>
+
+<div class="ribbon" aria-label="Ribbon">
+  <div class="tabs"><span>Design</span><span>Prepare</span><span class="on">Simulation</span><span>Help</span></div>
+  <div class="groups">
+    <div class="group"><div class="items">
+      <div class="rb"><svg viewBox="0 0 26 26"><polygon points="13,2 23,7.5 23,18.5 13,24 3,18.5 3,7.5" fill="none" stroke="#4cc2b0" stroke-width="2"/><circle cx="13" cy="13" r="4" fill="#4cc2b0"/></svg>Structural</div>
+      <div class="stack">
+        <div class="rb small"><svg viewBox="0 0 16 16"><path d="M5 1v14M5 3l-4 3M5 7l-4 3M5 11l-4 3" stroke="#4cc2b0" stroke-width="1.6" fill="none"/><rect x="7" y="5" width="8" height="6" fill="#8a96a4"/></svg>Support</div>
+        <div class="rb small"><svg viewBox="0 0 16 16"><path d="M8 1v10" stroke="#e2a93b" stroke-width="2"/><path d="M3.5 9 8 15l4.5-6z" fill="#e2a93b"/></svg>Force</div>
+      </div>
+    </div><div class="gname">Physics</div></div>
+    <div class="group"><div class="items">
+      <div class="rb"><svg viewBox="0 0 26 26"><path d="M3 22V4M3 22h20" stroke="#8a96a4" stroke-width="1.6" fill="none"/><path d="M5 17l5-6 4 4 7-9" stroke="#5aa9e6" stroke-width="2" fill="none"/></svg>Monitors</div>
+      <button class="rb live" data-tab="variations" type="button" tabindex="-1"><svg viewBox="0 0 26 26"><rect x="3" y="4" width="20" height="18" fill="none" stroke="#8a96a4" stroke-width="1.6"/><path d="M3 10h20M3 16h20M10 4v18M17 4v18" stroke="#8a96a4" stroke-width="1.2"/><rect x="3" y="4" width="20" height="6" fill="#5aa9e6" opacity=".6"/></svg>Tables</button>
+    </div><div class="gname">Results</div></div>
+    <div class="group"><div class="items"><div class="stack">
+      <button class="rb small live" data-tab="parameters" type="button" tabindex="-1"><svg viewBox="0 0 16 16"><path d="M1 4h14M1 12h14" stroke="#8a96a4" stroke-width="1.4"/><circle cx="5" cy="4" r="2.4" fill="#4cc2b0"/><circle cx="11" cy="12" r="2.4" fill="#4cc2b0"/></svg>Parameters</button>
+      <button class="rb small live" data-tab="variations" type="button" tabindex="-1"><svg viewBox="0 0 16 16"><path d="M2 8h4l4-5h4M6 8l4 5h4M6 8h8" stroke="#8a96a4" stroke-width="1.4" fill="none"/><circle cx="2.5" cy="8" r="2" fill="#4cc2b0"/></svg>Variations</button>
+    </div></div><div class="gname">Study</div></div>
+    <div class="group"><div class="items">
+      <div class="rb"><svg viewBox="0 0 26 26"><rect x="3" y="6" width="12" height="14" fill="none" stroke="#8a96a4" stroke-width="1.6"/><path d="M10 13h12M18 8.5l5 4.5-5 4.5" stroke="#4cc2b0" stroke-width="2" fill="none"/></svg>Discovery</div>
+    </div><div class="gname">Transfer</div></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="work">
+    <nav class="tree" id="tree" aria-label="Study tree"></nav>
+    <section class="viewport" id="viewport" aria-label="Viewport"></section>
+    <section class="bottom" aria-label="Variations panel">
+      <div class="btabs" role="tablist">
+        <button role="tab" data-tab="parameters" aria-selected="false" type="button" tabindex="-1">Parameters</button>
+        <button role="tab" data-tab="testcases" aria-selected="false" type="button" tabindex="-1">Test Cases</button>
+        <button role="tab" data-tab="variations" aria-selected="true" type="button" tabindex="-1">Variations</button>
+      </div>
+      <div class="pane" id="pane-parameters" hidden></div>
+      <div class="pane" id="pane-testcases" hidden></div>
+      <div class="pane" id="pane-variations"></div>
+      <div class="bfoot" id="bfoot"></div>
+    </section>
+  </div>
+  <aside class="agent" aria-label="Agent">
+    <div class="ahead">
+      <h2>Agent</h2>
+      <label>Fixture
+        <select id="fixture">
+          <option value="normal">Normal</option>
+          <option value="infeasible">Infeasible</option>
+          <option value="out_of_range">Out of range</option>
+        </select>
+      </label>
+      <button class="btn primary" id="run" type="button">Run demo</button>
+    </div>
+    <div class="log" id="log" aria-live="polite"></div>
+  </aside>
+</div>
+
+<div class="statusbar" id="statusbar"></div>
+
+<div class="banner" id="banner" role="alert" hidden>
+  <h3 id="bannerTitle"></h3>
+  <div id="bannerBody"></div>
+  <div class="pick" id="pick" hidden>
+    <label>Choose the three JSON files (study_spec, prediction, result) from <code>src/ui/fixtures/</code>:
+      <input type="file" id="files" accept=".json,application/json" multiple></label>
+  </div>
+</div>
+
+<script>
+"use strict";
+// Names mirror contracts/models.py: PARAM_NAMES and MetricName.
+const PARAMS = ["thickness_mm", "flange_length_mm", "arm_width_mm", "hole_diameter_mm", "fillet_radius_mm"];
+const METRICS = ["mass_kg", "max_stress_mpa", "max_disp_mm", "safety_factor"];
+const PARAM_LABEL = { thickness_mm: "Thickness", flange_length_mm: "Flange length", arm_width_mm: "Arm width", hole_diameter_mm: "Hole diameter", fillet_radius_mm: "Fillet radius" };
+const METRIC_LABEL = { mass_kg: "Mass", max_stress_mpa: "Max. Von Mises Stress", max_disp_mm: "Max. Displacement", safety_factor: "Factor of Safety" };
+const GOAL_WORD = { mass_kg: "mass", max_stress_mpa: "max stress", max_disp_mm: "max displacement", safety_factor: "safety factor" };
+const GOAL_UNIT = { mass_kg: " kg", max_stress_mpa: " MPa", max_disp_mm: " mm", safety_factor: "" };
+const SUFFIX = { normal: "", infeasible: "_infeasible", out_of_range: "_out_of_range" };
+const MOUNT_HEIGHT_MM = 60; // fixed leg height of the v0 family (contracts/README.md), geometry only
+const STEP_MS = 600;
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const S = { spec: null, pred: null, res: null, rows: [], msgs: [], shown: 0, sel: "baseline", run: 0, tab: "variations" };
+
+// ---- Units: the contract carries mm and MPa, Discovery shows m and Pa. Conversion only, no other maths.
+function sig(v, n = 3) {
+  if (v === 0) return "0";
+  const a = Math.abs(v);
+  // Discovery switches to exponent form for very small and very large values.
+  if (a < 1e-4 || a >= 1e6) return v.toExponential(n - 1).replace("e+", "e");
+  return String(Number(v.toPrecision(n)));
+}
+const U = {
+  mm: (v, n) => sig(v / 1000, n) + " m",
+  mpa: (v) => sig(v * 1e6) + " Pa",
+  kg: (v) => sig(v) + " kg",
+  n: (v) => sig(v) + " N",
+  sf: (v) => sig(v),
+};
+const metricText = (metric, v) => metric === "mass_kg" ? U.kg(v) : metric === "max_stress_mpa" ? U.mpa(v) : metric === "max_disp_mm" ? U.mm(v) : U.sf(v);
+
+// ---- Validation against the field names in contracts/models.py. Missing fields are errors, never defaults.
+const isNum = (v) => typeof v === "number" && Number.isFinite(v);
+const isStr = (v) => typeof v === "string";
+const isBool = (v) => typeof v === "boolean";
+const isObj = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+function field(errs, obj, name, test, what, where) {
+  if (!isObj(obj) || !(name in obj)) { errs.push(`${where}: missing field "${name}"`); return false; }
+  if (!test(obj[name])) { errs.push(`${where}.${name}: expected ${what}`); return false; }
+  return true;
+}
+function checkDesign(errs, d, where) {
+  if (!isObj(d)) { errs.push(`${where}: expected an object of the five dimensions`); return; }
+  for (const p of PARAMS) field(errs, d, p, isNum, "a number", where);
+}
+function checkSpec(errs, s, where) {
+  if (!isObj(s)) { errs.push(`${where}: expected a StudySpec object`); return; }
+  field(errs, s, "bracket_family", isStr, "a string", where);
+  field(errs, s, "material_key", isStr, "a string", where);
+  field(errs, s, "n_verify", isNum, "a number", where);
+  if (field(errs, s, "objective", isObj, "an object", where)) {
+    field(errs, s.objective, "metric", (v) => METRICS.includes(v), "a metric name", where + ".objective");
+    field(errs, s.objective, "direction", isStr, "a string", where + ".objective");
+  }
+  if (field(errs, s, "constraints", Array.isArray, "a list", where)) s.constraints.forEach((c, i) => {
+    const w = `${where}.constraints[${i}]`;
+    field(errs, c, "metric", (v) => METRICS.includes(v), "a metric name", w);
+    field(errs, c, "op", (v) => v === ">=" || v === "<=", '">=" or "<="', w);
+    field(errs, c, "value", isNum, "a number", w);
+  });
+  if (field(errs, s, "parameters", Array.isArray, "a list", where)) s.parameters.forEach((p, i) => {
+    const w = `${where}.parameters[${i}]`;
+    field(errs, p, "name", (v) => PARAMS.includes(v), "a parameter name", w);
+    field(errs, p, "low_mm", isNum, "a number", w);
+    field(errs, p, "high_mm", isNum, "a number", w);
+  });
+  if (field(errs, s, "load", isObj, "an object", where)) {
+    field(errs, s.load, "force_n", isNum, "a number", where + ".load");
+    field(errs, s.load, "angle_deg", isNum, "a number", where + ".load");
+  }
+  field(errs, s, "assumptions", Array.isArray, "a list", where);
+}
+function checkEstimate(errs, c, name, where) {
+  if (field(errs, c, name, isObj, "an Estimate object", where)) for (const k of ["value", "p05", "p95"]) field(errs, c[name], k, isNum, "a number", `${where}.${name}`);
+}
+function checkPrediction(errs, p, where) {
+  if (!isObj(p)) { errs.push(`${where}: expected a Prediction object`); return; }
+  field(errs, p, "model_name", isStr, "a string", where);
+  field(errs, p, "trained_on_runs", isNum, "a number", where);
+  field(errs, p, "warnings", Array.isArray, "a list", where);
+  if (field(errs, p, "shortlist", Array.isArray, "a list", where)) p.shortlist.forEach((c, i) => {
+    const w = `${where}.shortlist[${i}]`;
+    field(errs, c, "design_id", isStr, "a string", w);
+    if (isObj(c)) checkDesign(errs, c.design, w + ".design");
+    field(errs, c, "mass_kg", isNum, "a number", w);
+    for (const e of ["max_stress_mpa", "max_disp_mm", "safety_factor"]) checkEstimate(errs, c, e, w);
+    field(errs, c, "feasible_p95", isBool, "true or false", w);
+    field(errs, c, "in_training_range", isBool, "true or false", w);
+  });
+}
+function checkVerified(errs, v, where) {
+  if (!isObj(v)) { errs.push(`${where}: expected a Verified object`); return; }
+  field(errs, v, "design_id", isStr, "a string", where);
+  checkDesign(errs, v.design, where + ".design");
+  field(errs, v, "source", isStr, "a string", where);
+  for (const m of METRICS) field(errs, v, m, isNum, "a number", where);
+  field(errs, v, "feasible", isBool, "true or false", where);
+  field(errs, v, "violated", Array.isArray, "a list", where);
+}
+function checkResult(errs, r, where) {
+  if (!isObj(r)) { errs.push(`${where}: expected a Result object`); return; }
+  if (field(errs, r, "spec", isObj, "an object", where)) checkSpec(errs, r.spec, where + ".spec");
+  if (field(errs, r, "baseline", isObj, "an object", where)) checkVerified(errs, r.baseline, where + ".baseline");
+  // recommended must be present; null is the valid "nothing feasible" value.
+  if (!("recommended" in r)) errs.push(`${where}: missing field "recommended"`);
+  else if (r.recommended !== null) checkVerified(errs, r.recommended, where + ".recommended");
+  if (field(errs, r, "finalists", Array.isArray, "a list", where)) r.finalists.forEach((f, i) => checkVerified(errs, f, `${where}.finalists[${i}]`));
+  field(errs, r, "explanation", isStr, "a string", where);
+  if (field(errs, r, "discovery_values", isObj, "an object", where)) checkDesign(errs, r.discovery_values, where + ".discovery_values");
+  field(errs, r, "warnings", Array.isArray, "a list", where);
+}
+
+// ---- Loading: fetch first, file picker when the browser blocks file:// requests.
+async function fetchJson(path) {
+  let resp;
+  try { resp = await fetch(path, { cache: "no-store" }); }
+  catch (e) { const err = new Error(`${path}: could not be fetched`); err.blocked = true; throw err; }
+  if (!resp.ok) throw new Error(`${path}: HTTP ${resp.status}`);
+  const text = await resp.text();
+  try { return JSON.parse(text); } catch (e) { throw new Error(`${path}: not valid JSON (${e.message})`); }
+}
+async function loadFixture(key) {
+  S.run++; // cancels a demo that is still playing
+  const sfx = key in SUFFIX ? SUFFIX[key] : "_" + key;
+  const names = ["study_spec", "prediction", "result"].map((k) => `fixtures/${k}${sfx}.json`);
+  try {
+    const [spec, pred, res] = await Promise.all(names.map(fetchJson));
+    accept(spec, pred, res, names);
+  } catch (e) {
+    clearAll();
+    if (e.blocked && location.protocol === "file:") showBanner("Fixtures need a file picker", ["This page was opened from disk, and the browser blocks fetch on file:// pages. Pick the files below, or run python -m http.server in src/ui."], true);
+    else showBanner("Could not load the fixture", [e.message], true);
+  }
+}
+async function loadPicked(fileList) {
+  const got = {}, errs = [], names = {};
+  for (const f of fileList) {
+    let data;
+    try { data = JSON.parse(await f.text()); } catch (e) { errs.push(`${f.name}: not valid JSON (${e.message})`); continue; }
+    // Tell the three files apart by their top-level contract fields.
+    const kind = isObj(data) && "shortlist" in data ? "pred" : isObj(data) && "finalists" in data ? "res" : isObj(data) && "objective" in data ? "spec" : null;
+    if (!kind) errs.push(`${f.name}: not a study_spec, prediction or result file`);
+    else { got[kind] = data; names[kind] = f.name; }
+  }
+  for (const [k, label] of [["spec", "study_spec"], ["pred", "prediction"], ["res", "result"]]) if (!got[k]) errs.push(`no ${label} file selected`);
+  S.run++;
+  if (errs.length) { clearAll(); showBanner("Could not use the selected files", errs, true); return; }
+  accept(got.spec, got.pred, got.res, [names.spec, names.pred, names.res]);
+}
+function accept(spec, pred, res, names) {
+  const errs = [];
+  checkSpec(errs, spec, names[0]);
+  checkPrediction(errs, pred, names[1]);
+  checkResult(errs, res, names[2]);
+  if (errs.length) { clearAll(); showBanner("Fixture does not match the contract", errs, location.protocol === "file:"); return; }
+  hideBanner();
+  Object.assign(S, { spec, pred, res, sel: "baseline" });
+  build(names);
+  S.rows.forEach((r) => { r.show = r.ver ? "verified" : "predicted"; });
+  S.shown = S.msgs.length; // static load shows the finished state; Run demo replays it
+  document.body.dataset.demo = "idle";
+  renderAll();
+  $("statusbar").innerHTML = `<span>Loaded ${names.map(esc).join(", ")}</span><span>Units shown as m, Pa, N; contract fields are mm and MPa</span>`;
+}
+function showBanner(title, lines, withPicker) {
+  $("bannerTitle").textContent = title;
+  const more = lines.length > 8 ? `<li>and ${lines.length - 8} more</li>` : "";
+  $("bannerBody").innerHTML = `<ul>${lines.slice(0, 8).map((l) => `<li>${esc(l)}</li>`).join("")}${more}</ul>`;
+  $("pick").hidden = !withPicker;
+  $("banner").hidden = false;
+}
+function hideBanner() { $("banner").hidden = true; }
+function clearAll() {
+  Object.assign(S, { spec: null, pred: null, res: null, rows: [], msgs: [], shown: 0, sel: "baseline" });
+  document.body.dataset.demo = "idle";
+  $("statusbar").textContent = "No data loaded";
+  renderAll();
+}
+
+// ---- Model: join shortlist candidates with verified finalists by design_id.
+function build(names) {
+  const { pred, res } = S;
+  const cands = new Map(pred.shortlist.map((c, j) => [c.design_id, { c, j }]));
+  const rows = [], seen = new Set();
+  // Finalists first, in the agent's order, then the rest of the shortlist.
+  res.finalists.forEach((v, i) => {
+    const hit = cands.get(v.design_id);
+    rows.push({ id: v.design_id, ver: v, verPath: `${names[2]} finalists[${i}]`, cand: hit ? hit.c : null, candPath: hit ? `${names[1]} shortlist[${hit.j}]` : null });
+    seen.add(v.design_id);
+  });
+  pred.shortlist.forEach((c, j) => { if (!seen.has(c.design_id)) rows.push({ id: c.design_id, ver: null, cand: c, candPath: `${names[1]} shortlist[${j}]` }); });
+  rows.forEach((r, k) => { r.name = "DV" + (k + 1); r.isRec = !!res.recommended && res.recommended.design_id === r.id; r.show = "none"; });
+  S.rows = rows;
+  S.baseRow = { id: "baseline", name: "Baseline", ver: res.baseline, verPath: `${names[2]} baseline`, cand: null, show: "verified", isBase: true };
+  S.msgs = buildMessages(names);
+}
+const isFake = (s) => /fake/i.test(s);
+function buildMessages(names) {
+  const { spec, pred, res } = S;
+  const sp = res.spec; // the goal is the spec the result was computed for
+  const cons = sp.constraints.map((c) => `${GOAL_WORD[c.metric]} ${c.op} ${c.value}${GOAL_UNIT[c.metric]}`).join(" and ");
+  const dir = sp.objective.direction.charAt(0).toUpperCase() + sp.objective.direction.slice(1);
+  const goal = `${dir} ${GOAL_WORD[sp.objective.metric]} of the ${sp.bracket_family} bracket in ${sp.material_key}. Keep ${cons}, under a ${sp.load.force_n} N load at ${sp.load.angle_deg} deg.`;
+  // Chips come from what the data says about itself: model name, sources and warnings.
+  const predChip = isFake(pred.model_name) || pred.warnings.some(isFake) ? "fake" : "predicted";
+  const sources = [...new Set([...res.finalists.map((f) => f.source), res.baseline.source])];
+  const verChip = sources.some(isFake) ? "fake" : "verified";
+  const source = res.finalists.length ? res.finalists[0].source : res.baseline.source;
+  const missing = res.finalists.filter((f) => !pred.shortlist.some((c) => c.design_id === f.design_id)).length;
+  const out = pred.shortlist.filter((c) => !c.in_training_range).length;
+  const recCand = res.recommended && pred.shortlist.find((c) => c.design_id === res.recommended.design_id);
+
+  const msgs = [{ who: "user", text: goal }];
+  if (JSON.stringify(spec) !== JSON.stringify(sp)) msgs[0].warns = [`${names[0]} differs from the spec inside ${names[2]}; the tree shows the first, the goal the second.`];
+  msgs.push({ who: "agent", chip: "spec", text: sp.assumptions.length ? "Assumptions:" : "No assumptions recorded in the spec.", list: sp.assumptions });
+  msgs.push({
+    who: "agent", chip: predChip, action: "shortlist",
+    text: `Shortlisting with ${pred.model_name}, trained on ${pred.trained_on_runs} runs`,
+    warns: pred.warnings.filter((w) => !res.warnings.includes(w)).concat(out ? [`${out} of ${pred.shortlist.length} shortlisted rows have in_training_range false.`] : []),
+  });
+  msgs.push({
+    who: "agent", chip: verChip, action: "verify",
+    text: `Verifying ${sp.n_verify} finalists with ${source}`,
+    note: missing ? `${missing} of ${res.finalists.length} finalists are not in the ${names[1]} shortlist, so those rows show solver values only.` : null,
+  });
+  const endWarns = res.warnings.slice();
+  if (!res.recommended) endWarns.push("No design met every constraint, so there is no recommendation.");
+  if (recCand && !recCand.in_training_range) endWarns.push("The recommended design is outside the training range; its prediction was extrapolated.");
+  msgs.push({ who: "agent", chip: verChip, text: res.explanation, warns: endWarns });
+  msgs.push({
+    who: "agent", chip: verChip, text: res.recommended ? "Enter in Discovery:" : "Enter in Discovery (baseline fallback):", values: res.discovery_values,
+    warns: res.recommended ? [] : ["These are the baseline values, not a recommendation."],
+  });
+  return msgs;
+}
+
+// ---- Rendering
+function renderAll() { renderTree(); renderTable(); renderParams(); renderCases(); renderChat(); renderViewport(); }
+const rowById = (id) => id === "baseline" ? S.baseRow : S.rows.find((r) => r.id === id);
+const chip = (kind) => `<span class="chip ${kind}">${kind.charAt(0).toUpperCase() + kind.slice(1)}</span>`;
+
+function renderTree() {
+  const s = S.spec;
+  $("studyName").textContent = s ? `${s.bracket_family} study` : "";
+  if (!s) { $("tree").innerHTML = '<div class="empty">No study loaded.</div>'; return; }
+  const range = (p) => p.low_mm === p.high_mm ? "fixed " + U.mm(p.low_mm) : `${sig(p.low_mm / 1000)} to ${U.mm(p.high_mm)}`;
+  const limit = (m) => {
+    const parts = s.constraints.filter((c) => c.metric === m).map((c) => `${c.op === ">=" ? "≥" : "≤"} ${metricText(m, c.value)}`);
+    if (s.objective.metric === m) parts.push(s.objective.direction);
+    return parts.join(", ") || "monitor only";
+  };
+  // Mark the monitor named by result.binding_constraint.
+  const bind = S.res && S.res.binding_constraint ? S.res.binding_constraint.split(" ")[0] : null;
+  $("tree").innerHTML = `<ul>
+    <li><div class="node head">Design</div><ul><li><div class="node">${esc(s.bracket_family)}</div></li></ul></li>
+    <li><div class="node head">Physics</div><ul>
+      <li><div class="node">Material <span class="val">${esc(s.material_key)}</span></div></li>
+      <li><div class="node">Support <span class="val">fixed</span></div></li>
+      <li><div class="node">Force <span class="val box" title="load.force_n, load.angle_deg">${U.n(s.load.force_n)} at ${esc(s.load.angle_deg)}&deg;</span></div></li>
+    </ul></li>
+    <li><div class="node head">Parameters</div><ul>${s.parameters.map((p) => `<li><div class="node" title="${p.name}: ${p.low_mm} to ${p.high_mm} mm">${esc(p.name)} <span class="val">${range(p)}</span></div></li>`).join("")}</ul></li>
+    <li><div class="node head">Monitors</div><ul>${METRICS.map((m) => `<li><div class="node${m === bind ? " bind" : ""}" title="${m === bind ? "binding constraint: " + esc(S.res.binding_constraint) : m}">${m} <span class="val">${limit(m)}</span></div></li>`).join("")}</ul></li>
+  </ul>`;
+}
+
+// One monitor cell: solver value once verified, otherwise the estimate with its p05 to p95 band.
+function monitorCell(r, metric) {
+  const fmt = (v) => metricText(metric, v);
+  if (r.show === "none") return '<td class="m">&nbsp;<small>&nbsp;</small></td>';
+  if (r.show === "verified" && r.ver) return `<td class="m" title="${esc(r.verPath)}.${metric} = ${r.ver[metric]}">${fmt(r.ver[metric])}<small>solver</small></td>`;
+  const e = r.cand[metric];
+  if (metric === "mass_kg") return `<td class="m" title="${esc(r.candPath)}.mass_kg = ${e}">${fmt(e)}<small>&nbsp;</small></td>`;
+  return `<td class="m" title="${esc(r.candPath)}.${metric} = ${e.value} (p05 ${e.p05}, p95 ${e.p95})">${fmt(e.value)}<small>${sig(metric === "max_stress_mpa" ? e.p05 * 1e6 : metric === "max_disp_mm" ? e.p05 / 1000 : e.p05)} to ${sig(metric === "max_stress_mpa" ? e.p95 * 1e6 : metric === "max_disp_mm" ? e.p95 / 1000 : e.p95)}</small></td>`;
+}
+function rowHtml(r) {
+  const verified = r.show === "verified" && r.ver, blank = r.show === "none";
+  const design = (r.ver || r.cand).design;
+  // Verified rows use the solver's feasible flag, predicted rows use feasible_p95.
+  const feas = blank ? null : verified ? r.ver.feasible : r.cand.feasible_p95;
+  const feasTitle = blank ? "" : verified ? `${r.verPath}.feasible` + (r.ver.violated.length ? "; violated: " + r.ver.violated.join(", ") : "") : `${r.candPath}.feasible_p95`;
+  const inr = r.cand ? r.cand.in_training_range : null;
+  const rec = r.isRec && verified;
+  const cls = ["row", S.sel === r.id ? "sel" : "", rec ? "rec" : "", feas === false ? "fail" : "", inr === false && !blank ? "oor" : "", r.isBase ? "base" : "", blank ? "blank" : ""].join(" ");
+  const status = blank ? "none" : verified ? "solved" : "pending";
+  return `<tr class="${cls}" data-id="${esc(r.id)}" tabindex="${S.sel === r.id ? 0 : -1}" aria-selected="${S.sel === r.id}">
+    <td><span class="cb${verified ? " on" : ""}"></span></td>
+    <td><span class="st ${status}" title="${blank ? "not started" : verified ? "solved by " + esc(r.ver.source) : "pending: predicted, not yet solved"}"></span></td>
+    <td><span class="star${rec ? " on" : ""}" title="${rec ? "recommended" : ""}">${rec ? "★" : "☆"}</span></td>
+    <td class="name" title="${esc(r.id)}">${esc(r.name)}</td>
+    ${PARAMS.map((p) => `<td class="p" title="${p} = ${design[p]} mm">${U.mm(design[p])}</td>`).join("")}
+    ${METRICS.map((m) => monitorCell(r, m)).join("")}
+    <td class="m ${feas === null ? "" : feas ? "yes" : "no"}" title="${esc(feasTitle)}">${feas === null ? "" : feas ? "Yes" : "No"}</td>
+    <td class="m inr" title="${r.cand ? esc(r.candPath) + ".in_training_range" : "not in the prediction shortlist"}">${blank ? "" : inr === null ? "n/a" : inr ? "Yes" : "No"}</td>
+    <td class="m">${blank ? "" : chip(verified ? "verified" : "predicted")}</td>
+  </tr>`;
+}
+function renderTable() {
+  const pane = $("pane-variations"), hadFocus = pane.contains(document.activeElement);
+  if (!S.res) { pane.innerHTML = '<div class="empty">No variations loaded.</div>'; $("bfoot").innerHTML = ""; return; }
+  const head = ["", "", "★", "Name", ...PARAMS.map((p) => PARAM_LABEL[p]), ...METRICS.map((m) => METRIC_LABEL[m]), "Feasible", "In range", "State"];
+  const top = pane.scrollTop;
+  pane.innerHTML = `<table class="grid" aria-label="Variations"><thead><tr>${head.map((h, i) => `<th scope="col" title="${h}">${i === 0 ? '<span class="cb on"></span>' : i === 1 ? '<span class="st stopped"></span>' : h}</th>`).join("")}</tr></thead>
+    <tbody>${rowHtml(S.baseRow)}${S.rows.map(rowHtml).join("")}</tbody></table>`;
+  pane.scrollTop = top;
+  if (hadFocus) { const tr = pane.querySelector("tr.sel"); if (tr) tr.focus({ preventScroll: true }); }
+  // Footer counts: verified rows are solved, predicted rows are pending, the rest are not started.
+  const n = (f) => S.rows.filter(f).length;
+  const solved = n((r) => r.show === "verified" && r.ver), pending = n((r) => r.show === "predicted" || (r.show === "verified" && !r.ver)), idle = n((r) => r.show === "none");
+  const okCount = n((r) => r.show === "verified" && r.ver && r.ver.feasible);
+  const src = [...new Set(S.res.finalists.map((f) => f.source))].join(", ") || S.res.baseline.source;
+  const cnt = (cls, v, t) => `<span class="cnt" title="${t}"><span class="st ${cls}"></span>${v}</span>`;
+  $("bfoot").innerHTML = cnt("solved", solved, "solved: verified rows") + cnt("pending", pending, "pending: predicted rows") + cnt("stopped", 0, "stopped") + cnt("solving", 0, "solving") + cnt("failed", 0, "failed solves") + cnt("none", idle, "not started")
+    + `<span class="feas">${okCount} of ${solved} solved rows feasible</span>`
+    + `<span class="right">${solved ? `<span>Solved locally</span><span class="chip ${isFake(src) ? "fake" : "verified"}" title="source field of the finalists">${esc(src)}</span>` : ""}</span>`;
+}
+function renderParams() {
+  const s = S.spec, pane = $("pane-parameters");
+  if (!s || !S.res) { pane.innerHTML = '<div class="empty">No parameters loaded.</div>'; return; }
+  const r = rowById(S.sel) || S.baseRow, d = (r.ver || r.cand).design;
+  pane.innerHTML = `<table class="grid"><thead><tr><th>Name</th><th>Low</th><th>High</th><th>Baseline</th><th>${esc(r.name)}</th></tr></thead><tbody>${s.parameters.map((p) =>
+    `<tr><td class="name">${esc(p.name)}</td><td class="p">${U.mm(p.low_mm)}</td><td class="p">${U.mm(p.high_mm)}</td><td class="m">${U.mm(S.res.baseline.design[p.name])}</td><td class="m">${U.mm(d[p.name])}</td></tr>`).join("")}</tbody></table>`;
+}
+function renderCases() {
+  const s = S.spec, pane = $("pane-testcases");
+  if (!s) { pane.innerHTML = '<div class="empty">No test cases loaded.</div>'; return; }
+  pane.innerHTML = `<table class="grid"><thead><tr><th>Name</th><th>Force</th><th>Angle</th><th>Material</th></tr></thead><tbody>
+    <tr><td class="name">TC1</td><td class="p">${U.n(s.load.force_n)}</td><td class="p">${esc(s.load.angle_deg)}&deg;</td><td class="p">${esc(s.material_key)}</td></tr></tbody></table>`;
+}
+function renderChat() {
+  const log = $("log");
+  if (!S.msgs.length) { log.innerHTML = '<div class="empty">No conversation loaded.</div>'; return; }
+  log.innerHTML = S.msgs.slice(0, S.shown).map((m) => {
+    let body = esc(m.text);
+    if (m.list && m.list.length) body += `<ul>${m.list.map((a) => `<li>${esc(a)}</li>`).join("")}</ul>`;
+    // Discovery values in m to match the table, with the contract mm value beside it.
+    if (m.values) body += `<table>${PARAMS.map((p) => `<tr><td>${PARAM_LABEL[p]}</td><td>${U.mm(m.values[p], 4)}</td><td><small>${sig(m.values[p], 4)} mm</small></td></tr>`).join("")}</table>`;
+    if (m.note) body += `<div class="note">${esc(m.note)}</div>`;
+    for (const w of m.warns || []) body += `<div class="w">${esc(w)}</div>`;
+    return `<div class="msg ${m.who}"><div class="who">${m.who === "user" ? "You" : "Agent " + chip(m.chip)}</div>${body}</div>`;
+  }).join("");
+  log.scrollTop = log.scrollHeight;
+}
+
+// ---- Viewport: flat L-plate drawn from the five dimensions, extruded by thickness in an oblique view.
+function renderViewport() {
+  const vp = $("viewport"), r = S.res ? rowById(S.sel) || S.baseRow : null;
+  if (!r) { vp.innerHTML = '<div class="empty">No design loaded.</div>'; return; }
+  const d = (r.ver || r.cand).design, load = S.res.spec.load;
+  const t = d.thickness_mm, L = d.flange_length_mm, w = d.arm_width_mm, hole = d.hole_diameter_mm;
+  const H = MOUNT_HEIGHT_MM, rad = Math.max(0, Math.min(d.fillet_radius_mm, H - w, L - w)); // clamp so the arc always fits
+  // Profile in mm with y up, written to screen coordinates by negating y.
+  const profile = `M0,0 L${L},0 L${L},${-w} L${w + rad},${-w} A${rad},${rad} 0 0 1 ${w},${-(w + rad)} L${w},${-H} L0,${-H} Z`;
+  const dx = t * 0.7, dy = -t * 0.45, steps = 14; // depth offset of the back face
+  let slabs = "";
+  for (let i = steps; i >= 1; i--) slabs += `<path d="${profile}" transform="translate(${(dx * i / steps).toFixed(2)},${(dy * i / steps).toFixed(2)})" fill="#4d5661" stroke="#4d5661" stroke-width=".4"/>`;
+  const hx = L - w / 2, hy = -w / 2; // hole centred across the arm near the free end
+  let grid = "";
+  for (let u = -60; u <= 200; u += 10) grid += `<line x1="${u}" y1="-60" x2="${u}" y2="60"/>`;
+  for (let v = -60; v <= 60; v += 10) grid += `<line x1="-60" y1="${v}" x2="200" y2="${v}"/>`;
+  // Force arrow follows load.angle_deg; -90 points straight down.
+  const a = load.angle_deg * Math.PI / 180, ux = Math.cos(a), uy = -Math.sin(a);
+  const tip = [hx - ux * (hole / 2 + 1.5), hy - uy * (hole / 2 + 1.5)], tail = [tip[0] - ux * 24, tip[1] - uy * 24];
+  let hatch = "";
+  for (let y = 0; y <= H; y += 6) hatch += `<line x1="0" y1="${-y}" x2="-5" y2="${-y + 4}"/>`;
+  const hot = r.isRec && r.show === "verified";
+  const fx = w + rad * 0.29, fy = -(w + rad * 0.29); // midpoint of the fillet arc
+  vp.innerHTML = `
+  <svg class="scene" viewBox="-32 -84 192 112" preserveAspectRatio="xMidYMid meet" role="img" aria-label="L-bracket for ${esc(r.name)}">
+    <defs>
+      <clipPath id="face"><path d="${profile}"/></clipPath>
+      <clipPath id="bore"><circle cx="${hx}" cy="${hy}" r="${hole / 2}"/></clipPath>
+      <radialGradient id="hotspot"><stop offset="0" stop-color="#ff7a3c" stop-opacity=".95"/><stop offset=".45" stop-color="#e2a93b" stop-opacity=".5"/><stop offset="1" stop-color="#e2a93b" stop-opacity="0"/></radialGradient>
+      <radialGradient id="fade"><stop offset=".3" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient>
+      <mask id="floorMask"><ellipse cx="64" cy="4" rx="110" ry="40" fill="url(#fade)"/></mask>
+    </defs>
+    <g mask="url(#floorMask)"><g transform="matrix(1 0 -0.9 0.42 0 4)" stroke="#55606c" stroke-width=".25" opacity=".8">${grid}</g></g>
+    ${slabs}
+    <path d="${profile}" fill="#86919e" stroke="#aab4c0" stroke-width=".5"/>
+    ${hot ? `<circle cx="${fx}" cy="${fy}" r="${Math.max(rad, 5) * 1.9}" fill="url(#hotspot)" clip-path="url(#face)"/>` : ""}
+    <circle cx="${hx}" cy="${hy}" r="${hole / 2}" fill="#3b424b"/>
+    <circle cx="${hx + dx}" cy="${hy + dy}" r="${hole / 2}" fill="#1c2026" clip-path="url(#bore)"/>
+    <circle cx="${hx}" cy="${hy}" r="${hole / 2}" fill="none" stroke="#aab4c0" stroke-width=".5"/>
+    <g stroke="#4cc2b0" stroke-width=".7">${hatch}<line x1="0" y1="0" x2="0" y2="${-H}" stroke-width="1.2"/></g>
+    <text x="-8" y="${-H - 3}" fill="#4cc2b0" font-size="4.2" text-anchor="middle">Support</text>
+    <g stroke="#e2a93b" stroke-width="1.3" fill="#e2a93b">
+      <line x1="${tail[0]}" y1="${tail[1]}" x2="${tip[0] - ux * 4}" y2="${tip[1] - uy * 4}"/>
+      <polygon stroke="none" points="${tip[0]},${tip[1]} ${tip[0] - ux * 6 - uy * 2.6},${tip[1] - uy * 6 + ux * 2.6} ${tip[0] - ux * 6 + uy * 2.6},${tip[1] - uy * 6 - ux * 2.6}"/>
+    </g>
+    <text x="${tail[0] + 3}" y="${tail[1] + 2}" fill="#e2a93b" font-size="4.6">${U.n(load.force_n)}</text>
+    ${hot ? `<line x1="${fx + 2}" y1="${fy - 2}" x2="${fx + 20}" y2="${fy - 22}" stroke="#ff9a5c" stroke-width=".4"/><text x="${fx + 21}" y="${fy - 23}" fill="#ff9a5c" font-size="4.2">stress hotspot at the fillet (illustrative)</text>` : ""}
+  </svg>
+  <div class="vp-label"><span class="name">${esc(r.name)}</span><span>${esc(r.id)}</span>${r.show === "none" ? "" : chip(r.show === "verified" && r.ver ? "verified" : "predicted")}${hot ? '<span class="chip verified">Recommended</span>' : ""}</div>
+  <table class="vp-dims">${PARAMS.map((p) => `<tr><td>${PARAM_LABEL[p]}</td><td>${U.mm(d[p])}</td></tr>`).join("")}</table>
+  <svg class="triad" viewBox="0 0 76 76" aria-hidden="true">
+    <circle cx="38" cy="38" r="36" fill="#0b0d10" opacity=".55"/>
+    <g stroke-width="2" font-size="10" font-weight="700">
+      <line x1="34" y1="44" x2="60" y2="44" stroke="#e2705d"/><text x="62" y="48" fill="#e2705d">X</text>
+      <line x1="34" y1="44" x2="34" y2="18" stroke="#5fbf77"/><text x="30" y="14" fill="#5fbf77">Y</text>
+      <line x1="34" y1="44" x2="20" y2="56" stroke="#5aa9e6"/><text x="10" y="66" fill="#5aa9e6">Z</text>
+    </g>
+  </svg>`;
+}
+
+// ---- Interaction
+function select(id, focus) {
+  S.sel = id;
+  renderTable(); renderParams(); renderViewport();
+  if (focus) { const tr = $("pane-variations").querySelector("tr.sel"); if (tr) tr.focus(); }
+}
+function showTab(tab) {
+  S.tab = tab;
+  for (const b of document.querySelectorAll(".btabs button")) b.setAttribute("aria-selected", String(b.dataset.tab === tab));
+  for (const k of ["parameters", "testcases", "variations"]) $("pane-" + k).hidden = k !== tab;
+}
+$("pane-variations").addEventListener("click", (e) => { const tr = e.target.closest("tr.row"); if (tr) select(tr.dataset.id, true); });
+$("pane-variations").addEventListener("keydown", (e) => {
+  const tr = e.target.closest("tr.row"); if (!tr) return;
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(tr.dataset.id, true); }
+  // Arrow keys walk the rows, so Tab leaves the table in one step.
+  const next = e.key === "ArrowDown" ? tr.nextElementSibling : e.key === "ArrowUp" ? tr.previousElementSibling : null;
+  if (next) { e.preventDefault(); select(next.dataset.id, true); }
+});
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); });
+$("fixture").addEventListener("change", (e) => loadFixture(e.target.value));
+$("files").addEventListener("change", (e) => loadPicked(e.target.files));
+$("run").addEventListener("click", runDemo);
+
+// Plays the chat one message per step and fills the table as the matching step runs.
+async function runDemo() {
+  if (!S.res) return;
+  const token = ++S.run;
+  const wait = (ms) => new Promise((ok, stop) => setTimeout(() => token === S.run ? ok() : stop("cancelled"), ms));
+  try {
+    document.body.dataset.demo = "running";
+    showTab("variations");
+    S.rows.forEach((r) => { r.show = "none"; });
+    S.shown = 0; S.sel = "baseline";
+    renderAll();
+    for (let i = 0; i < S.msgs.length; i++) {
+      await wait(STEP_MS);
+      S.shown = i + 1; renderChat();
+      const m = S.msgs[i];
+      if (m.action === "shortlist") for (const r of S.rows) if (r.cand) { r.show = "predicted"; renderTable(); await wait(70); }
+      if (m.action === "verify") for (const r of S.rows) if (r.ver) { r.show = "verified"; renderTable(); await wait(220); }
+    }
+    const rec = S.rows.find((r) => r.isRec);
+    if (rec) select(rec.id); else renderViewport();
+    document.body.dataset.demo = "done";
+  } catch (e) { if (e !== "cancelled") throw e; }
+}
+
+// ?fixture=name picks the starting fixture, which also makes the error path easy to show.
+const start = new URLSearchParams(location.search).get("fixture") || "normal";
+if (start in SUFFIX) $("fixture").value = start;
+loadFixture(start);
+</script>
+</body>
+</html>
