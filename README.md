@@ -38,6 +38,10 @@ notebooks/      exploration and experiments
 docs/           design notes and GenAI use log
 ```
 
+## Launch the demo GUI
+
+Double-click **`Launch SimpleSim GUI.bat`** (Windows) or **`Launch SimpleSim GUI.command`** (macOS) at the top of the repo, or run `python launch_gui.py`. It opens the Discovery-style demo in your browser; it needs only Python, no packages. Details in [src/ui/README.md](src/ui/README.md).
+
 ## Setup
 
 ```bash
