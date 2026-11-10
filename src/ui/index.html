@@ -4,203 +4,337 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SimpleSim demo shell</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23121212'/%3E%3Cdefs%3E%3ClinearGradient id='ssg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%235fe0cb'/%3E%3Cstop offset='1' stop-color='%232f8fef'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg fill='none' stroke-linecap='round' stroke-width='2.7' transform='skewX(-9) translate(2.3 0)'%3E%3Cpath d='M10 5C10 2.2 2 2.2 2 6.6C2 10.8 10 9.4 10 13.8C10 18 2 18 2 15.2' transform='translate(3.2 1.9)' stroke='url(%23ssg)'/%3E%3Cpath d='M10 5C10 2.2 2 2.2 2 6.6C2 10.8 10 9.4 10 13.8C10 18 2 18 2 15.2' transform='translate(10.3 1.9)' stroke='%23121212' stroke-width='5.2'/%3E%3Cpath d='M10 5C10 2.2 2 2.2 2 6.6C2 10.8 10 9.4 10 13.8C10 18 2 18 2 15.2' transform='translate(10.3 1.9)' stroke='%23fff'/%3E%3C/g%3E%3Ccircle cx='21.3' cy='4.7' r='1.5' fill='%23f5a21f'/%3E%3C/svg%3E">
 <style>
   :root {
-    --bg0: #101317; --bg1: #171b21; --bg2: #1e242c; --bg3: #283039; --line: #323c48;
-    --text: #d9dfe7; --muted: #8a96a4; --accent: #4cc2b0; --sel: #3d8bd9;
-    --ok: #5fbf77; --warn: #e2a93b; --bad: #e2705d; --pred: #5aa9e6; --fake: #a3aebb;
-    --param: #1c3350; --monitor: #151f33;
+    --bar: #121212; --rib: #262626; --win: #1b1b1b; --line: #3e3e3e; --text: #efefef; --muted: #a0a0a0;
+    --blue: #3aa0ff; --sel: #1d5c9e; --navy: #0f2a68; --green: #27b535; --amber: #f2a531; --red: #f2665f;
+    --purple: #a850d8; --orange: #f5a21f; --pred: #6db6ff; --fake: #b9b9b9;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body {
-    background: var(--bg0); color: var(--text); font: 13px/1.35 "Segoe UI", system-ui, sans-serif;
-    display: grid; grid-template-rows: 30px auto minmax(0, 1fr) 22px; min-width: 1000px; overflow: hidden;
+    background: #000; color: var(--text); font: 13px/1.3 "Source Sans 3", "Source Sans Pro", "Segoe UI", system-ui, sans-serif;
+    display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 30px 27px auto minmax(0, 1fr) 23px; min-width: 1000px; overflow: hidden; user-select: none;
   }
   button, select, input { font: inherit; color: inherit; }
-  :focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  :focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+  svg.ic { flex: none; display: block; }
 
-  /* Title bar with the persistent demo badge */
-  .titlebar { display: flex; align-items: center; gap: 10px; padding: 0 10px; background: #0b0d10; }
-  .logo { width: 14px; height: 14px; background: var(--accent); transform: rotate(45deg); flex: none; }
-  .titlebar b { font-weight: 600; }
-  .titlebar .study { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .badge { margin-left: auto; flex: none; border: 1px solid var(--warn); color: var(--warn); border-radius: 3px; padding: 1px 8px; font-size: 12px; font-weight: 600; letter-spacing: .02em; }
+  /* Application title bar */
+  .titlebar { display: flex; align-items: center; gap: 12px; padding: 0 12px 0 6px; background: var(--bar); white-space: nowrap; }
+  .titlebar .doc { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; }
+  .titlebar .grow { flex: 1; }
+  .search { display: flex; align-items: center; gap: 6px; width: 150px; height: 22px; padding: 0 6px; border: 1px solid #2f6fb5; background: #1c1c1c; color: var(--muted); }
+  .signin { display: flex; align-items: center; gap: 6px; color: #d8d8d8; }
+  .wc { display: flex; gap: 16px; align-items: center; }
+
+  /* Ribbon tab strip with slanted dividers */
+  .tabrow { display: flex; align-items: stretch; background: var(--bar); padding-left: 6px; isolation: isolate; min-width: 0; }
+  .burger { width: 22px; align-self: center; height: 14px; border-top: 2px solid #eee; border-bottom: 2px solid #eee; position: relative; margin-right: 14px; flex: none; }
+  .burger::after { content: ""; position: absolute; left: 0; right: 0; top: 4px; border-top: 2px solid #eee; }
+  .tab { position: relative; display: flex; align-items: center; gap: 5px; padding: 0 16px 0 14px; font-variant: small-caps; font-size: 15px; letter-spacing: .03em; color: #e2e2e2; white-space: nowrap; }
+  .tab::before { content: ""; position: absolute; inset: 0; transform: skewX(-24deg); border-left: 1px solid #5a5a5a; z-index: -1; }
+  .tab.on::before { background: var(--rib); border-left-color: #777; border-right: 1px solid #777; }
+  .badge { margin: 3px 10px 3px auto; align-self: center; flex: none; border: 1px solid var(--amber); color: var(--amber); padding: 0 8px; font-size: 12px; font-weight: 600; line-height: 18px; white-space: nowrap; }
 
   /* Ribbon */
-  .ribbon { background: var(--bg1); border-bottom: 1px solid var(--line); }
-  .tabs { display: flex; gap: 2px; padding: 4px 8px 0; background: #0b0d10; }
-  .tabs span { padding: 3px 14px; font-variant: small-caps; letter-spacing: .04em; color: var(--muted); border-radius: 3px 3px 0 0; }
-  .tabs span.on { background: var(--bg1); color: var(--text); }
-  .groups { display: flex; align-items: stretch; overflow: hidden; }
-  .group { display: flex; flex-direction: column; padding: 6px 12px 3px; border-right: 1px solid var(--line); }
-  .group .items { display: flex; gap: 10px; align-items: center; flex: 1; }
-  .group .gname { text-align: center; font-variant: small-caps; color: var(--muted); font-size: 12px; margin-top: 2px; }
-  .rb { display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: 0; padding: 2px 6px; border-radius: 3px; white-space: nowrap; }
-  .rb svg { width: 26px; height: 26px; }
-  .rb.small { flex-direction: row; gap: 6px; }
-  .rb.small svg { width: 16px; height: 16px; }
-  .rb.live { cursor: pointer; }
-  .rb.live:hover { background: var(--bg3); }
-  .stack { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+  .ribbon { display: flex; background: var(--rib); border-bottom: 1px solid #000; height: 97px; min-width: 0; }
+  .chev { flex: none; width: 18px; background: none; border: 0; cursor: pointer; font-size: 17px; font-weight: 700; padding: 0; }
+  .groups { display: flex; flex: 1; overflow: hidden; scroll-behavior: smooth; min-width: 0; }
+  .group { display: flex; flex-direction: column; flex: none; padding: 5px 4px 2px; border-right: 1px solid #111; box-shadow: 1px 0 0 #3a3a3a; }
+  .items { display: flex; flex: 1; align-items: flex-start; }
+  .gname { text-align: center; font-variant: small-caps; font-size: 13.5px; letter-spacing: .04em; color: #e0e0e0; line-height: 15px; }
+  .rb { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 1px 4px 0; background: none; border: 0; border-radius: 2px; white-space: nowrap; height: 68px; }
+  .rb .car { margin-top: 3px; }
+  .car { display: block; width: 0; height: 0; border: 4.5px solid transparent; border-top: 5px solid currentColor; border-bottom: 0; }
+  .stack { display: flex; flex-direction: column; padding-top: 1px; }
+  .rs { display: flex; align-items: center; gap: 6px; height: 23px; padding: 0 4px; background: none; border: 0; border-radius: 2px; white-space: nowrap; }
+  .rs .car { margin-left: auto; }
+  .rs span { margin-right: 3px; }
+  .dim { color: #7f7f7f; } .dim svg.ic { opacity: .4; filter: grayscale(1); }
+  .live { cursor: pointer; } .live:hover, .rb.open { background: #3a3a3a; }
+  .menu { position: fixed; z-index: 30; background: #1e1e1e; border: 1px solid #5a5a5a; padding: 3px 0; box-shadow: 0 6px 20px #000c; }
+  .menu[hidden] { display: none; }
+  .menu div { display: flex; align-items: center; gap: 8px; padding: 3px 14px 3px 8px; white-space: nowrap; }
+  .menu div:hover { background: var(--sel); }
 
-  /* Main grid: tree and viewport above the Variations panel, agent pane on the right */
-  .main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; min-height: 0; }
-  .work { display: grid; grid-template-columns: 258px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 330px; min-height: 0; min-width: 0; }
-  .tree { background: var(--bg1); border-right: 1px solid var(--line); overflow: auto; padding: 8px 6px; }
-  .tree ul { list-style: none; margin: 0; padding-left: 14px; border-left: 1px solid var(--line); margin-left: 6px; }
-  .tree > ul { border: 0; padding: 0; margin: 0; }
-  .tree li { padding: 2px 0; }
-  .tree .node { display: flex; flex-wrap: wrap; gap: 0 6px; align-items: baseline; }
-  .tree .head { font-weight: 600; }
-  .tree .head::before { content: ""; width: 0; height: 0; border: 4px solid transparent; border-top-color: var(--accent); border-bottom: 0; align-self: center; }
-  .tree .val { margin-left: auto; color: var(--muted); font-size: 12px; white-space: nowrap; }
-  .tree .val.box { color: var(--text); border: 1px solid var(--line); background: var(--bg0); padding: 0 5px; border-radius: 2px; }
-  .tree .bind { color: var(--warn); }
+  /* Viewport: everything below the ribbon floats over the 3D scene */
+  .vp { position: relative; overflow: hidden; min-height: 0; background: radial-gradient(ellipse at 50% 42%, #353535 0%, #282828 45%, #141414 100%); }
+  .scenebox { position: absolute; left: 300px; right: 376px; top: 0; bottom: 390px; }
+  .vp.agent-off .scenebox { right: 8px; } .vp.var-off .scenebox { bottom: 110px; }
+  .scenebox svg { width: 100%; height: 100%; overflow: visible; }
+  .hud { position: absolute; text-shadow: 0 1px 2px #000; }
 
-  .viewport { position: relative; background: radial-gradient(ellipse at 50% 40%, #2a2f36 0%, #191c21 75%); min-width: 0; min-height: 0; overflow: hidden; }
-  .viewport svg.scene { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .vp-label { position: absolute; left: 10px; top: 8px; display: flex; gap: 8px; align-items: center; }
-  .vp-label .name { color: var(--pred); font-weight: 600; }
-  .vp-dims { position: absolute; right: 10px; top: 8px; font-size: 12px; color: var(--muted); border-collapse: collapse; }
-  .vp-dims td { padding: 0 0 1px 10px; }
-  .vp-dims td:last-child { color: var(--text); text-align: right; font-variant-numeric: tabular-nums; }
-  .triad { position: absolute; left: 8px; bottom: 6px; width: 76px; height: 76px; }
+  .tree { left: 6px; top: 4px; font-size: 13.5px; white-space: nowrap; }
+  .thead { display: flex; align-items: center; gap: 6px; height: 24px; margin-bottom: 2px; }
+  .thead .wheel { width: 14px; height: 14px; border-radius: 50%; background: conic-gradient(#f33, #fc3, #3c3, #3cf, #36f, #c3f, #f33); box-shadow: inset 0 0 0 3.5px transparent; -webkit-mask: radial-gradient(circle, transparent 3px, #000 3.5px); mask: radial-gradient(circle, transparent 3px, #000 3.5px); }
+  .thead .cap { color: var(--muted); margin-left: 2px; }
+  .thead .docname { color: var(--blue); font-weight: 700; }
+  .tree ul { list-style: none; margin: 0; padding: 0; }
+  .tree > ul { margin-left: 18px; }
+  .tree ul ul { margin-left: 8px; }
+  .tree ul ul li { position: relative; padding-left: 26px; }
+  .tree ul ul li::before { content: ""; position: absolute; left: 0; top: 10px; width: 22px; border-top: 1px solid #9a9a9a; }
+  .tree ul ul li::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; border-left: 1px solid #9a9a9a; }
+  .tree ul ul li:last-child::after { bottom: auto; height: 10px; }
+  .node { display: flex; align-items: center; gap: 6px; height: 20px; }
+  .node.head { gap: 5px; }
+  .node.head::before { content: ""; border: 5px solid transparent; border-top: 6px solid var(--blue); border-bottom: 0; }
+  .vbox { border: 1px solid #2f7fd0; background: #141414; padding: 0 6px; line-height: 17px; margin-left: 3px; text-shadow: none; }
+  .vplain { color: #c4c4c4; margin-left: 3px; }
+  .node.bind > span:first-of-type, .node.bind .vbox { color: var(--amber); border-color: var(--amber); }
 
-  /* Bottom panel: Parameters / Test Cases / Variations */
-  .bottom { grid-column: 1 / 3; display: flex; flex-direction: column; background: var(--bg1); border-top: 1px solid var(--line); min-height: 0; min-width: 0; }
-  .btabs { display: flex; background: var(--bg2); }
-  .btabs button { background: none; border: 0; border-right: 1px solid var(--line); padding: 4px 12px; font-variant: small-caps; letter-spacing: .04em; color: var(--muted); cursor: pointer; }
-  .btabs button[aria-selected="true"] { background: var(--bg1); color: var(--text); }
-  .pane { flex: 1; overflow: auto; min-height: 0; }
+  .readout { right: 384px; top: 6px; text-align: right; font-size: 13.5px; }
+  .vp.agent-off .readout { right: 12px; }
+  .readout .ricons { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 4px; }
+  .readout .rname b { color: var(--blue); }
+  .readout .rchips { margin: 2px 0 4px; display: flex; gap: 5px; justify-content: flex-end; }
+  .readout table { margin-left: auto; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .readout td { padding: 0 0 0 12px; text-align: right; }
+  .readout td:first-child { color: #c4c4c4; }
+  .readout .und { border-bottom: 2px solid var(--blue); color: var(--blue); font-weight: 600; }
+
+  .handle { position: absolute; left: 0; top: 58%; width: 17px; height: 44px; padding: 0; border: 0; background: #ececec; border-radius: 0 10px 10px 0; cursor: pointer; }
+  .handle::before { content: ""; position: absolute; left: 4px; top: 13px; width: 2px; height: 18px; background: #333; box-shadow: 4px 0 0 #333, 8px 0 0 #333; }
+  .viewwheel { position: absolute; left: -8px; bottom: -12px; width: 138px; height: 138px; }
+  .toolwheel { position: absolute; right: -8px; bottom: -12px; width: 146px; height: 146px; }
+  .stage { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
+  .stage .scaret { border: 6px solid transparent; border-bottom: 7px solid #eee; border-top: 0; }
+  .stage .sname { font-size: 13.5px; line-height: 17px; }
+  .stage svg { display: block; }
+  .stage [data-tab] { cursor: pointer; }
+  .explore { display: flex; align-items: center; gap: 6px; color: #bbb; font-size: 18px; line-height: 22px; }
+  .explore b { display: block; width: 150px; height: 23px; background: var(--orange); color: #111; font-weight: 400; font-variant: small-caps; font-size: 16px; letter-spacing: .05em; text-align: center; clip-path: polygon(5% 0, 95% 0, 100% 100%, 0 100%); }
+
+  /* Floating windows nested in the viewport */
+  .win { position: absolute; display: flex; flex-direction: column; background: var(--win); border: 1px solid #505050; box-shadow: 0 10px 30px #000b; min-width: 260px; min-height: 130px; z-index: 5; }
+  .win[hidden] { display: none; }
+  .win.max { left: 8px !important; top: 8px !important; right: 8px !important; bottom: 8px !important; width: auto !important; height: auto !important; }
+  #winVar { left: 8px; right: 376px; bottom: 118px; height: 268px; }
+  #winAgent { right: 8px; top: 8px; width: 360px; bottom: 150px; }
+  .wtabs { display: flex; align-items: stretch; height: 27px; flex: none; background: #262626; cursor: move; touch-action: none; }
+  .wtabs .t { font-variant: small-caps; font-size: 14.5px; letter-spacing: .03em; padding: 0 9px; border: 0; border-right: 1px solid #4a4a4a; background: none; color: #c8c8c8; display: flex; align-items: center; }
+  .wtabs button.t { cursor: pointer; }
+  .wtabs .t[aria-selected="true"], .wtabs span.t { background: var(--win); color: #fff; }
+  .wctl { margin-left: auto; display: flex; }
+  .wctl button { width: 30px; border: 0; background: none; cursor: pointer; display: grid; place-items: center; padding: 0; }
+  .wctl button:hover { background: #3a3a3a; }
+  .wtools { display: flex; gap: 9px; align-items: center; padding: 0 8px; height: 36px; flex: none; }
+  .wtools .sep { flex: 1; }
+  .pane { flex: 1; overflow: auto; min-height: 0; margin: 0 4px; border: 1px solid #2f6fb5; background: #161616; }
   .pane[hidden] { display: none; }
-  table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 12px; font-variant-numeric: tabular-nums; }
-  .grid th { position: sticky; top: 0; z-index: 1; background: var(--bg2); font-weight: 600; text-align: center; padding: 5px 5px; border-bottom: 1px solid var(--sel); white-space: nowrap; max-width: 86px; overflow: hidden; text-overflow: ellipsis; }
-  .grid td { padding: 2px 5px; text-align: center; border-bottom: 1px solid var(--bg3); white-space: nowrap; }
-  .grid td.p { background: var(--param); }
-  .grid td.m { background: var(--monitor); }
-  .grid td small { display: block; color: var(--muted); font-size: 10.5px; line-height: 1.1; }
+
+  table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  .grid th { position: sticky; top: 0; z-index: 1; background: #1d1d1d; font-weight: 700; text-align: center; height: 25px; padding: 0 5px; border-bottom: 2px solid var(--blue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .grid th.pc { max-width: 66px; } .grid th.mc { max-width: 88px; }
+  .grid td { background: #1c1c1c; height: 27px; padding: 0 5px; text-align: center; border-bottom: 1px solid #343434; white-space: nowrap; }
+  .grid td small { display: block; color: #9db3d9; font-size: 10px; line-height: 10px; }
+  .grid tr.pred td small { color: #8b8b8b; }
+  .grid tr.pred td.m { background: #131a22; }
+  .grid tr.ver td { background: var(--sel); }
+  .grid tr.ver td.m { background: var(--navy); }
+  .grid tr.fail.pred td.m { background: #2b171a; }
+  .grid tr.fail.ver td.m { background: #4b1b27; }
+  .grid tr.base td { background: #24425f; color: #c9d3de; font-style: italic; }
+  .grid tr.base td.m { background: #172a4d; }
+  .grid tr.base.fail td.m { background: #3b2030; }
   .grid tr.row { cursor: pointer; }
-  .grid tr.row:hover td { filter: brightness(1.2); }
-  .grid tr.sel td { box-shadow: inset 0 1px 0 var(--sel), inset 0 -1px 0 var(--sel); }
-  .grid tr.sel td:first-child { box-shadow: inset 2px 0 0 var(--sel), inset 0 1px 0 var(--sel), inset 0 -1px 0 var(--sel); }
-  .grid tr.rec td.p, .grid tr.rec td.m { background: #1d4a3f; }
-  .grid tr.rec td.name { color: var(--ok); font-weight: 600; }
-  .grid tr.fail td.m { background: #3a2022; }
-  .grid tr.oor td.inr { color: var(--warn); font-weight: 600; }
-  .grid tr.oor td.name { box-shadow: inset 3px 0 0 var(--warn); }
-  .grid tr.base td { color: var(--muted); font-style: italic; }
-  .grid tr.blank td.m { color: transparent; }
-  .yes { color: var(--ok); } .no { color: var(--bad); font-weight: 600; } .amber { color: var(--warn); }
-  .cb { display: inline-block; width: 13px; height: 13px; border: 1px solid var(--muted); border-radius: 2px; vertical-align: middle; }
-  .cb.on { background: var(--sel); border-color: var(--sel); box-shadow: inset 0 0 0 2px var(--bg1); }
-  .st { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--muted); vertical-align: middle; position: relative; }
-  .st.solved { border-color: var(--ok); }
-  .st.solved::after { content: ""; position: absolute; left: 3px; top: 0; width: 3px; height: 6px; border: solid var(--ok); border-width: 0 2px 2px 0; transform: rotate(40deg); }
-  .st.pending { border-color: var(--warn); }
-  .st.pending::after { content: ""; position: absolute; left: 4px; top: 1px; width: 3px; height: 4px; border: solid var(--warn); border-width: 0 0 2px 2px; }
-  .st.stopped::after { content: ""; position: absolute; left: 1px; top: 4px; width: 8px; height: 2px; background: var(--muted); transform: rotate(-45deg); }
-  .st.solving { border-color: var(--ok); border-right-color: transparent; }
-  .st.failed { border-color: var(--warn); }
-  .st.failed::after { content: ""; position: absolute; left: 4px; top: 1px; width: 2px; height: 5px; background: var(--warn); box-shadow: 0 7px 0 -0.5px var(--warn); }
-  .st.none { border: 0; border-radius: 0; height: 2px; width: 12px; background: var(--muted); }
-  .star { color: var(--muted); } .star.on { color: var(--ok); }
-  .bfoot { display: flex; align-items: center; gap: 14px; padding: 4px 10px; background: var(--bg0); border-top: 1px solid var(--line); }
-  .bfoot .cnt { display: inline-flex; align-items: center; gap: 5px; color: var(--pred); border-bottom: 1px solid var(--line); padding-bottom: 1px; }
-  .bfoot .right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+  .grid tr.row:hover td { filter: brightness(1.18); }
+  .grid tr.sel td { box-shadow: inset 0 2px 0 var(--blue), inset 0 -2px 0 var(--blue); }
+  .grid tr.sel td:first-child { box-shadow: inset 2px 0 0 var(--blue), inset 0 2px 0 var(--blue), inset 0 -2px 0 var(--blue); }
+  .grid tr.sel td:last-child { box-shadow: inset -2px 0 0 var(--blue), inset 0 2px 0 var(--blue), inset 0 -2px 0 var(--blue); }
+  .grid tr.rec td.name { color: #8dff9a; font-weight: 700; }
+  .grid tr.oor td.inr { color: var(--amber); font-weight: 700; }
+  .grid tr.oor td.name { border-left: 3px solid var(--amber); }
+  .grid td.num { font-weight: 700; }
+  .yes { color: #7ee08a; } .no { color: var(--red); font-weight: 700; }
+  .cb { display: inline-block; width: 14px; height: 14px; border: 1.5px solid #4f9ee8; background: #1c1c1c; vertical-align: middle; position: relative; }
+  .cb.on { background: #2f8fef; border-color: #cfe6ff; }
+  .cb.on::after { content: ""; position: absolute; left: 3.5px; top: 0; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(40deg); }
+  .st { display: inline-block; width: 15px; height: 15px; border-radius: 50%; border: 1.6px solid var(--muted); vertical-align: middle; position: relative; }
+  .st.solved { border-color: var(--green); }
+  .st.solved::after { content: ""; position: absolute; left: 4px; top: 1.5px; width: 3px; height: 6px; border: solid var(--green); border-width: 0 1.6px 1.6px 0; transform: rotate(40deg); }
+  .st.pending { border-color: var(--amber); }
+  .st.pending::after { content: ""; position: absolute; left: 5px; top: 2px; width: 3px; height: 4px; border: solid var(--amber); border-width: 0 0 1.6px 1.6px; }
+  .st.stopped { border-color: #e8e8e8; }
+  .st.stopped::after { content: ""; position: absolute; left: 1.5px; top: 5px; width: 9px; height: 1.6px; background: #e8e8e8; transform: rotate(-45deg); }
+  .st.solving { border-color: var(--green); border-right-color: transparent; transform: rotate(30deg); }
+  .st.failed { border-color: var(--amber); }
+  .st.failed::after { content: ""; position: absolute; left: 5px; top: 2px; width: 1.8px; height: 5px; background: var(--amber); box-shadow: 0 6.5px 0 -0.2px var(--amber); }
+  .st.none { border: 0; border-radius: 0; height: 2px; width: 13px; background: var(--blue); }
+  .st.info { border-color: #e8e8e8; }
+  .st.info::after { content: "i"; position: absolute; inset: 0; font: 700 10px/12px Georgia, serif; text-align: center; color: #e8e8e8; }
+  .star { color: var(--green); font-size: 15px; line-height: 1; } .star.on { color: #ffd84a; } .grid th .star { color: #fff; }
+  .bfoot { display: flex; align-items: center; gap: 13px; padding: 0 10px; height: 34px; flex: none; white-space: nowrap; overflow: hidden; }
+  .bfoot .cnt { display: inline-flex; align-items: center; gap: 4px; color: var(--blue); border-bottom: 2px solid #2a4f78; padding-bottom: 1px; }
+  .bfoot .cnt .st { width: 13px; height: 13px; }
+  .bfoot .cnt .st.none { height: 2px; }
+  .bfoot .reset { display: inline-flex; align-items: center; gap: 4px; }
   .bfoot .feas { color: var(--muted); }
+  .bfoot .right { margin-left: auto; display: flex; gap: 9px; align-items: center; }
 
-  .chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 0 6px; border-radius: 8px; border: 1px solid currentColor; line-height: 15px; white-space: nowrap; font-style: normal; }
-  .chip.verified { color: var(--ok); } .chip.predicted { color: var(--pred); } .chip.fake { color: var(--fake); border-style: dashed; } .chip.spec { color: var(--muted); }
+  .chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 0 6px; border-radius: 8px; border: 1px solid currentColor; line-height: 14px; white-space: nowrap; font-style: normal; text-shadow: none; }
+  .chip.verified, .chip.recommended { color: #7ee08a; } .chip.predicted { color: var(--pred); } .chip.fake { color: var(--fake); border-style: dashed; } .chip.spec { color: var(--muted); }
+  .grid tr.ver .chip.verified { background: #0d2a14; }
 
-  /* Agent pane */
-  .agent { display: flex; flex-direction: column; background: var(--bg1); border-left: 1px solid var(--line); min-height: 0; }
-  .ahead { padding: 8px 10px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--bg2); }
-  .ahead h2 { font-size: 13px; margin: 0; font-variant: small-caps; letter-spacing: .05em; flex: 1; }
-  .ahead select { background: var(--bg0); border: 1px solid var(--line); border-radius: 3px; padding: 3px 4px; }
-  .ahead label { color: var(--muted); display: flex; gap: 6px; align-items: center; }
-  .btn { background: var(--bg3); border: 1px solid var(--line); border-radius: 3px; padding: 4px 12px; cursor: pointer; }
-  .btn.primary { background: var(--accent); border-color: var(--accent); color: #06231f; font-weight: 700; }
-  .btn:hover { filter: brightness(1.12); }
-  .log { flex: 1; overflow: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
-  .msg { flex: none; max-width: 94%; padding: 7px 10px; border-radius: 6px; background: var(--bg2); border: 1px solid var(--line); overflow-wrap: anywhere; }
-  .msg.user { align-self: flex-end; background: #1d3a5c; border-color: #2c5586; }
-  .msg .who { display: flex; gap: 8px; align-items: center; font-size: 11px; color: var(--muted); margin-bottom: 3px; text-transform: uppercase; letter-spacing: .05em; }
-  .msg ul { margin: 4px 0 0; padding-left: 18px; }
-  .msg .w { margin-top: 6px; padding: 4px 8px; border-left: 3px solid var(--warn); background: #33290f; color: var(--warn); border-radius: 0 3px 3px 0; }
-  .msg .note { margin-top: 6px; color: var(--muted); font-size: 12px; }
+  /* Agent window */
+  .wtools label { display: flex; gap: 6px; align-items: center; color: #d0d0d0; }
+  .wtools select { background: #141414; border: 1px solid #2f7fd0; padding: 2px 4px; height: 24px; }
+  .btn-run { background: var(--orange); color: #111; border: 0; height: 24px; padding: 0 14px; font-variant: small-caps; font-size: 15px; letter-spacing: .04em; cursor: pointer; clip-path: polygon(7% 0, 93% 0, 100% 100%, 0 100%); }
+  .btn-run:hover { filter: brightness(1.1); }
+  .btn-run:focus-visible { outline: 2px solid #fff; outline-offset: -3px; }
+  .log { flex: 1; overflow: auto; min-height: 0; margin: 0 4px 4px; border: 1px solid #2f6fb5; background: #161616; padding: 8px; display: flex; flex-direction: column; gap: 8px; user-select: text; }
+  .msg { flex: none; max-width: 95%; padding: 6px 9px; background: #232323; border: 1px solid #3c3c3c; overflow-wrap: anywhere; }
+  .msg.user { align-self: flex-end; background: var(--sel); border-color: #3f86cf; }
+  .msg .who { display: flex; gap: 8px; align-items: center; font-variant: small-caps; font-size: 13px; letter-spacing: .05em; color: var(--muted); margin-bottom: 2px; }
+  .msg.user .who { color: #cfe3f8; }
+  .msg ul { margin: 3px 0 0; padding-left: 18px; }
+  .msg .w { margin-top: 6px; padding: 3px 8px; border-left: 3px solid var(--amber); background: #33280d; color: var(--amber); }
+  .msg .note { margin-top: 5px; color: var(--muted); font-size: 12px; }
   .msg table { border-collapse: collapse; margin-top: 4px; font-variant-numeric: tabular-nums; }
   .msg td { padding: 1px 12px 1px 0; }
   .msg td small { color: var(--muted); }
-  .empty { color: var(--muted); padding: 16px; }
+  .empty { color: var(--muted); padding: 14px; }
+
+  /* Agent window tabs: Graphs and Recommendations */
+  .apane { flex: 1; overflow: auto; min-height: 0; margin: 0 4px 4px; border: 1px solid #2f6fb5; background: #161616; padding: 8px 9px; user-select: text; }
+  .apane[hidden], .log[hidden] { display: none; }
+  .apane p { margin: 0 0 6px; }
+  .apane .goal { color: #f0efec; }
+  .legend { display: flex; flex-wrap: wrap; gap: 3px 12px; color: #c3c2b7; font-size: 12px; margin-bottom: 8px; }
+  .key { display: inline-flex; align-items: center; gap: 4px; }
+  .key .wash { width: 15px; height: 10px; background: rgba(217, 89, 38, .2); border-top: 1.2px dashed #c3c2b7; }
+  .key .sw { width: 11px; height: 11px; border-radius: 2px; }
+  .charts { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px 18px; }
+  .chart { margin: 0; max-width: 580px; }
+  .chart figcaption { display: flex; flex-direction: column; margin-bottom: 3px; }
+  .chart figcaption b { color: #f0efec; font-size: 13.5px; }
+  .chart figcaption span { color: #898781; font-size: 12px; }
+  .chart svg { display: block; width: 100%; height: auto; font-family: inherit; font-variant-numeric: tabular-nums; }
+  .chart svg[data-ch] { cursor: crosshair; }
+  .chart .legend { margin: 2px 0 2px; }
+  .vnote, .mutedp { color: #898781; font-size: 12px; }
+  .vnote { margin-top: 8px; }
+  .tip { position: fixed; z-index: 50; pointer-events: none; background: #0d0d0d; border: 1px solid #4a4a46; padding: 6px 9px; font-size: 12.5px; min-width: 170px; box-shadow: 0 6px 18px #000c; }
+  .tip[hidden] { display: none; }
+  .tip b { display: block; color: #f0efec; }
+  .tip .tsub { display: block; color: #898781; font-size: 11.5px; margin-bottom: 3px; }
+  .tip div { display: flex; justify-content: space-between; gap: 16px; color: #c3c2b7; }
+  .tip strong { color: #f0efec; font-variant-numeric: tabular-nums; }
+  #recs > * { max-width: 760px; }
+  #recs h3 { margin: 12px 0 5px; font-size: 14.5px; font-weight: 400; font-variant: small-caps; letter-spacing: .04em; color: #fff; border-bottom: 1px solid #2f6fb5; padding-bottom: 2px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  #recs h3:first-child { margin-top: 0; }
+  #recs h4 { margin: 10px 0 4px; font-size: 13px; font-weight: 600; color: #c3c2b7; }
+  #recs .acts { margin-left: auto; display: flex; gap: 10px; font-variant: normal; letter-spacing: 0; }
+  .lnk { background: none; border: 0; padding: 0; color: var(--blue); cursor: pointer; font-size: 12px; text-decoration: underline; }
+  table.rt { border-collapse: collapse; width: 100%; font-size: 12.5px; font-variant-numeric: tabular-nums; margin-bottom: 8px; }
+  .rt th { text-align: right; font-weight: 600; color: #c3c2b7; border-bottom: 1px solid #4a4a46; padding: 2px 4px; white-space: nowrap; }
+  .rt td { text-align: right; padding: 2px 4px; border-bottom: 1px solid #2a2a2a; white-space: nowrap; }
+  .rt th:first-child, .rt td:first-child { text-align: left; }
+  .rt tr.bindrow td { background: #33280d; }
+  .rt td.no { color: var(--red); }
+  .eq { margin: 6px 0; padding: 5px 8px 7px; background: #1f1f1f; border-left: 3px solid #2f6fb5; overflow-x: auto; }
+  .eq.bind { border-left-color: var(--amber); }
+  .eq .cap { color: #a8a8a2; font-size: 12px; margin-bottom: 4px; }
+  .eq math { font-size: 15.5px; margin: 5px 0; color: #f0efec; }
+  .eq code { display: none; margin-top: 5px; font: 11px/1.35 Consolas, "Cascadia Mono", monospace; color: #9fc5f0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .show-tex .eq code { display: block; }
+  .chip.bindchip { color: var(--amber); }
+  table.where { border-collapse: collapse; font-size: 12.5px; margin: 8px 0 2px; }
+  .where td { padding: 2px 10px 2px 0; vertical-align: baseline; color: #c3c2b7; }
+  .where td:first-child { white-space: nowrap; color: #f0efec; }
+  .where math { font-size: 14px; }
+  ol.steps { margin: 0; padding-left: 20px; }
+  ol.steps li { margin-bottom: 7px; color: #d6d5cf; }
+  ol.steps b { color: #fff; }
+
+  .statusbar { display: flex; gap: 14px; align-items: center; padding: 0 10px; background: var(--bar); color: #dcdcdc; font-size: 13px; white-space: nowrap; overflow: hidden; }
+  .statusbar .grow { flex: 1; }
+  .statusbar .files { color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
 
   /* Error banner sits above everything and never blocks the controls */
-  .banner { position: fixed; left: 50%; top: 40px; transform: translateX(-50%); z-index: 10; width: min(720px, 92vw); background: #3a1d1b; border: 1px solid var(--bad); border-radius: 5px; padding: 10px 14px; box-shadow: 0 6px 24px #000a; }
+  .banner { position: fixed; left: 50%; top: 162px; transform: translateX(-50%); z-index: 40; width: min(720px, 92vw); background: #2a1616; border: 1px solid var(--red); padding: 10px 14px; box-shadow: 0 8px 28px #000c; user-select: text; }
   .banner[hidden] { display: none; }
-  .banner h3 { margin: 0 0 4px; font-size: 13px; color: var(--bad); }
+  .banner h3 { margin: 0 0 4px; font-size: 14px; color: var(--red); }
   .banner ul { margin: 4px 0; padding-left: 18px; }
   .banner .pick { margin-top: 8px; }
-  .statusbar { display: flex; gap: 16px; align-items: center; padding: 0 10px; background: #0b0d10; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; }
 
   @media (max-width: 1250px) {
-    .main { grid-template-columns: minmax(0, 1fr) 300px; }
-    .work { grid-template-columns: 200px minmax(0, 1fr); }
-    .group { padding: 6px 7px 3px; } .group .items { gap: 4px; }
-    .vp-dims { display: none; }
+    #winAgent { width: 322px; }
+    #winVar { left: 8px; right: 338px; }
+    .scenebox { left: 262px; right: 338px; }
+    #winAgent .wtabs .t { padding: 0 6px; font-size: 13.5px; }
+    .readout { display: none; }
+    .viewwheel, .toolwheel { display: none; }
+    .tree { font-size: 12.5px; }
+    .search, .signin { display: none; }
+  }
+  @media (max-height: 820px) {
+    .stage, .viewwheel, .toolwheel { display: none; }
+    #winVar { bottom: 8px; height: 250px; }
+    #winAgent { bottom: 8px; }
+    .scenebox { bottom: 262px; }
+    .node { height: 18px; } .tree ul ul li::before { top: 9px; } .tree ul ul li:last-child::after { height: 9px; }
   }
 </style>
 </head>
 <body data-demo="idle">
 
 <div class="titlebar">
-  <span class="logo" aria-hidden="true"></span><b>SimpleSim</b>
-  <span class="study" id="studyName"></span>
+  <svg class="sslogo" viewBox="0 0 24 24" width="25" height="25" role="img" aria-label="SimpleSim logo"><defs><linearGradient id="ssg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5fe0cb"/><stop offset="1" stop-color="#2f8fef"/></linearGradient></defs><g fill="none" stroke-linecap="round" stroke-width="2.7" transform="skewX(-9) translate(2.3 0)"><path d="M10 5C10 2.2 2 2.2 2 6.6C2 10.8 10 9.4 10 13.8C10 18 2 18 2 15.2" transform="translate(3.2 1.9)" stroke="url(#ssg)"/><path d="M10 5C10 2.2 2 2.2 2 6.6C2 10.8 10 9.4 10 13.8C10 18 2 18 2 15.2" transform="translate(10.3 1.9)" stroke="#121212" stroke-width="5.2"/><path d="M10 5C10 2.2 2 2.2 2 6.6C2 10.8 10 9.4 10 13.8C10 18 2 18 2 15.2" transform="translate(10.3 1.9)" stroke="#fff"/></g><circle cx="21.3" cy="4.7" r="1.5" fill="#f5a21f"/></svg>
+  <svg viewBox="0 0 46 16" width="46" height="16" aria-hidden="true"><path d="M3 8h9a4 4 0 0 1 0 6h-2" fill="none" stroke="#eee" stroke-width="1.8"/><path d="M7 4 2.5 8 7 12z" fill="#eee"/><path d="M43 8h-9a4 4 0 0 0 0 6h2" fill="none" stroke="#777" stroke-width="1.8"/><path d="M39 4l4.500 4-4.500 4z" fill="#777"/></svg>
+  <span class="doc" id="docTitle">SimpleSim Demo</span>
+  <span class="grow"></span>
+  <span class="search"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="9.500" cy="6.500" r="4.500" fill="none" stroke="#ddd" stroke-width="1.500"/><path d="M6 10 1.500 14.500" stroke="#ddd" stroke-width="1.800"/></svg>Search</span>
+  <span class="signin"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="5" r="3" fill="none" stroke="#ddd" stroke-width="1.400"/><path d="M2 15c0-4 3-5.500 6-5.500s6 1.500 6 5.500" fill="none" stroke="#ddd" stroke-width="1.400"/></svg>Sign In</span>
+  <span class="wc" aria-hidden="true"><svg viewBox="0 0 60 14" width="60" height="14"><path d="M1 11h11" stroke="#eee" stroke-width="2"/><rect x="25" y="2" width="10" height="9" fill="none" stroke="#eee" stroke-width="2"/><path d="M48 2l10 10M58 2 48 12" stroke="#eee" stroke-width="2"/></svg></span>
+</div>
+
+<div class="tabrow">
+  <span class="burger" aria-hidden="true"></span>
+  <div id="tabs" style="display:flex;min-width:0;overflow:hidden"></div>
   <span class="badge" role="note">DEMO: data from contract fixtures, Ansys not connected</span>
 </div>
 
 <div class="ribbon" aria-label="Ribbon">
-  <div class="tabs"><span>Design</span><span>Prepare</span><span class="on">Simulation</span><span>Help</span></div>
-  <div class="groups">
-    <div class="group"><div class="items">
-      <div class="rb"><svg viewBox="0 0 26 26"><polygon points="13,2 23,7.5 23,18.5 13,24 3,18.5 3,7.5" fill="none" stroke="#4cc2b0" stroke-width="2"/><circle cx="13" cy="13" r="4" fill="#4cc2b0"/></svg>Structural</div>
-      <div class="stack">
-        <div class="rb small"><svg viewBox="0 0 16 16"><path d="M5 1v14M5 3l-4 3M5 7l-4 3M5 11l-4 3" stroke="#4cc2b0" stroke-width="1.6" fill="none"/><rect x="7" y="5" width="8" height="6" fill="#8a96a4"/></svg>Support</div>
-        <div class="rb small"><svg viewBox="0 0 16 16"><path d="M8 1v10" stroke="#e2a93b" stroke-width="2"/><path d="M3.5 9 8 15l4.5-6z" fill="#e2a93b"/></svg>Force</div>
-      </div>
-    </div><div class="gname">Physics</div></div>
-    <div class="group"><div class="items">
-      <div class="rb"><svg viewBox="0 0 26 26"><path d="M3 22V4M3 22h20" stroke="#8a96a4" stroke-width="1.6" fill="none"/><path d="M5 17l5-6 4 4 7-9" stroke="#5aa9e6" stroke-width="2" fill="none"/></svg>Monitors</div>
-      <button class="rb live" data-tab="variations" type="button" tabindex="-1"><svg viewBox="0 0 26 26"><rect x="3" y="4" width="20" height="18" fill="none" stroke="#8a96a4" stroke-width="1.6"/><path d="M3 10h20M3 16h20M10 4v18M17 4v18" stroke="#8a96a4" stroke-width="1.2"/><rect x="3" y="4" width="20" height="6" fill="#5aa9e6" opacity=".6"/></svg>Tables</button>
-    </div><div class="gname">Results</div></div>
-    <div class="group"><div class="items"><div class="stack">
-      <button class="rb small live" data-tab="parameters" type="button" tabindex="-1"><svg viewBox="0 0 16 16"><path d="M1 4h14M1 12h14" stroke="#8a96a4" stroke-width="1.4"/><circle cx="5" cy="4" r="2.4" fill="#4cc2b0"/><circle cx="11" cy="12" r="2.4" fill="#4cc2b0"/></svg>Parameters</button>
-      <button class="rb small live" data-tab="variations" type="button" tabindex="-1"><svg viewBox="0 0 16 16"><path d="M2 8h4l4-5h4M6 8l4 5h4M6 8h8" stroke="#8a96a4" stroke-width="1.4" fill="none"/><circle cx="2.5" cy="8" r="2" fill="#4cc2b0"/></svg>Variations</button>
-    </div></div><div class="gname">Study</div></div>
-    <div class="group"><div class="items">
-      <div class="rb"><svg viewBox="0 0 26 26"><rect x="3" y="6" width="12" height="14" fill="none" stroke="#8a96a4" stroke-width="1.6"/><path d="M10 13h12M18 8.5l5 4.5-5 4.5" stroke="#4cc2b0" stroke-width="2" fill="none"/></svg>Discovery</div>
-    </div><div class="gname">Transfer</div></div>
-  </div>
+  <button class="chev" id="chevL" type="button" tabindex="-1" aria-label="Scroll ribbon left">&lsaquo;</button>
+  <div class="groups" id="groups"></div>
+  <button class="chev" id="chevR" type="button" tabindex="-1" aria-label="Scroll ribbon right">&rsaquo;</button>
 </div>
+<div class="menu" id="structMenu" hidden></div>
 
-<div class="main">
-  <div class="work">
-    <nav class="tree" id="tree" aria-label="Study tree"></nav>
-    <section class="viewport" id="viewport" aria-label="Viewport"></section>
-    <section class="bottom" aria-label="Variations panel">
-      <div class="btabs" role="tablist">
-        <button role="tab" data-tab="parameters" aria-selected="false" type="button" tabindex="-1">Parameters</button>
-        <button role="tab" data-tab="testcases" aria-selected="false" type="button" tabindex="-1">Test Cases</button>
-        <button role="tab" data-tab="variations" aria-selected="true" type="button" tabindex="-1">Variations</button>
-      </div>
-      <div class="pane" id="pane-parameters" hidden></div>
-      <div class="pane" id="pane-testcases" hidden></div>
-      <div class="pane" id="pane-variations"></div>
-      <div class="bfoot" id="bfoot"></div>
-    </section>
-  </div>
-  <aside class="agent" aria-label="Agent">
-    <div class="ahead">
-      <h2>Agent</h2>
+<main class="vp" id="vp">
+  <div class="scenebox" id="scenebox"></div>
+  <nav class="hud tree" id="tree" aria-label="Study tree"></nav>
+  <div class="hud readout" id="readout" aria-label="Selected variation"></div>
+  <button class="handle" id="handle" type="button" tabindex="-1" title="Show or hide the Agent window" aria-label="Show or hide the Agent window"></button>
+  <div class="viewwheel" id="viewwheel" aria-hidden="true"></div>
+  <div class="toolwheel" id="toolwheel" aria-hidden="true"></div>
+  <div class="stage" id="stage"></div>
+
+  <section class="win" id="winVar" aria-label="Variations window">
+    <div class="wtabs" role="tablist">
+      <button class="t" role="tab" data-tab="parameters" aria-selected="false" type="button" tabindex="-1">Parameters</button>
+      <button class="t" role="tab" data-tab="testcases" aria-selected="false" type="button" tabindex="-1">Test Cases</button>
+      <button class="t" role="tab" data-tab="variations" aria-selected="true" type="button" tabindex="-1">Variations</button>
+      <span class="wctl"><button type="button" tabindex="-1" data-max="winVar" aria-label="Maximise window"></button><button type="button" tabindex="-1" data-close="winVar" aria-label="Close window"></button></span>
+    </div>
+    <div class="wtools" id="varTools" aria-hidden="true"></div>
+    <div class="pane" id="pane-parameters" hidden></div>
+    <div class="pane" id="pane-testcases" hidden></div>
+    <div class="pane" id="pane-variations"></div>
+    <div class="bfoot" id="bfoot"></div>
+  </section>
+
+  <section class="win" id="winAgent" aria-label="Agent window">
+    <div class="wtabs" role="tablist">
+      <button class="t" role="tab" data-atab="chat" aria-selected="true" type="button">Agent</button>
+      <button class="t" role="tab" data-atab="graphs" aria-selected="false" type="button">Graphs</button>
+      <button class="t" role="tab" data-atab="recs" aria-selected="false" type="button">Recommendations</button>
+      <span class="wctl"><button type="button" tabindex="-1" data-max="winAgent" aria-label="Maximise window"></button><button type="button" tabindex="-1" data-close="winAgent" aria-label="Close window"></button></span>
+    </div>
+    <div class="wtools">
       <label>Fixture
         <select id="fixture">
           <option value="normal">Normal</option>
@@ -208,13 +342,24 @@
           <option value="out_of_range">Out of range</option>
         </select>
       </label>
-      <button class="btn primary" id="run" type="button">Run demo</button>
+      <span class="sep"></span>
+      <button class="btn-run" id="run" type="button">Run demo</button>
     </div>
     <div class="log" id="log" aria-live="polite"></div>
-  </aside>
+    <div class="apane" id="graphs" hidden></div>
+    <div class="apane" id="recs" hidden></div>
+  </section>
+</main>
+
+<div class="statusbar">
+  <svg viewBox="0 0 70 14" width="70" height="14" aria-hidden="true"><path d="M2 11 12 4l-3 5zM20 11l10-7-3 5z" fill="#cfcfcf"/><path d="M48 3h1M52 3h10M48 7h1M52 7h10M48 11h1M52 11h10" stroke="#eee" stroke-width="2"/></svg>
+  <span id="hint">Click a variation to show that design. Arrow keys move between rows.</span>
+  <span class="grow"></span>
+  <span class="files" id="loaded"></span>
+  <svg viewBox="0 0 96 14" width="96" height="14" aria-hidden="true"><path d="M4 11l6-8 6 8zM26 3l6 8 6-8z" fill="#cfcfcf"/><path d="M52 1v11l3-3 2.500 4.500 2-1L57 8h4z" fill="#f5a21f"/><rect x="76" y="3" width="13" height="9" fill="none" stroke="#cfcfcf" stroke-width="1.400" stroke-dasharray="2 1.500"/></svg>
 </div>
 
-<div class="statusbar" id="statusbar"></div>
+<div class="tip" id="tip" hidden></div>
 
 <div class="banner" id="banner" role="alert" hidden>
   <h3 id="bannerTitle"></h3>
@@ -241,6 +386,131 @@ const STEP_MS = 600;
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const S = { spec: null, pred: null, res: null, rows: [], msgs: [], shown: 0, sel: "baseline", run: 0, tab: "variations" };
+
+// ---- Icons: our own flat glyphs on a 24 px grid, coloured to read like a CAE ribbon.
+const PU = "#a850d8", GY = "#9c9c9c", WH = "#e8e8e8", GR = "#27b535", OR = "#f5a21f", RD = "#e5463c", BL = "#3aa0ff";
+const cube = (a, b, c) => `<path d="M12 3l8 4.500-8 4.500-8-4.500z" fill="${a}"/><path d="M4 7.500l8 4.500v9l-8-4.500z" fill="${b}"/><path d="M20 7.500l-8 4.500v9l8-4.500z" fill="${c}"/>`;
+const gear = (c) => `<circle cx="12" cy="12" r="7.600" fill="none" stroke="${c}" stroke-width="5" stroke-dasharray="3.300 2.670"/><circle cx="12" cy="12" r="5" fill="none" stroke="${c}" stroke-width="3"/>`;
+const branch = (c) => `<circle cx="4.500" cy="12" r="2.300" fill="none" stroke="${c}" stroke-width="1.500"/><path d="M7 12h4l4-6h6M11 12l4 6h6M11 12h10" fill="none" stroke="${c}" stroke-width="1.500"/>`;
+const spark = `<path d="M2 17l5-7 4 5 5-9 6 8" fill="none" stroke="${PU}" stroke-width="2.200"/><path d="M2 12l5 5 4-8" fill="none" stroke="${OR}" stroke-width="2.200"/>`;
+const IC = {
+  gear: gear(PU), gearGrey: gear(GY), branch: branch(WH), spark,
+  fluid: `<path d="M2 9c4-5 7 3 11 0s6-3 9-1M2 15c4-5 7 3 11 0s6-3 9-1" fill="none" stroke="${GY}" stroke-width="2.400"/>`,
+  thermal: `<path d="M12 3.500v10" stroke="${RD}" stroke-width="3.400" stroke-linecap="round"/><circle cx="12" cy="17.500" r="4.200" fill="${RD}"/><path d="M15 5h2M15 8h2M15 11h2" stroke="${WH}" stroke-width="1"/>`,
+  em: `<circle cx="12" cy="12" r="2.600" fill="${GY}"/><path d="M7.500 7.500a6.400 6.400 0 0 0 0 9M16.500 7.500a6.400 6.400 0 0 1 0 9M4.600 4.600a10.500 10.500 0 0 0 0 14.800M19.400 4.600a10.500 10.500 0 0 1 0 14.800" fill="none" stroke="${GY}" stroke-width="1.700"/>`,
+  sym: `<path d="M12 2v20" stroke="${WH}" stroke-width="1.400" stroke-dasharray="2.500 2"/><path d="M10 6v12H3z" fill="${GR}"/><path d="M14 6v12h7z" fill="${OR}"/>`,
+  review: `<circle cx="10" cy="10" r="6" fill="none" stroke="${WH}" stroke-width="2"/><path d="M14.500 14.500 21 21" stroke="${WH}" stroke-width="2.600"/>`,
+  simopt: cube(OR, RD, BL) + `<circle cx="18" cy="18" r="4" fill="#262626" stroke="${WH}" stroke-width="1.400"/>`,
+  freq: `<path d="M2 12c1.500-10 3.500-10 5 0s3.500 10 5 0 3.500-10 5 0 3.500 10 5 0" fill="none" stroke="${WH}" stroke-width="1.800"/>`,
+  topo: `<circle cx="12" cy="12" r="8.500" fill="none" stroke="${WH}" stroke-width="1.600"/><path d="M5 15l6-8 2 5 6-4" fill="none" stroke="${WH}" stroke-width="1.600"/>`,
+  scene: `<rect x="2.500" y="2.500" width="13" height="13" fill="none" stroke="${WH}" stroke-width="1.400"/><rect x="8" y="8" width="13.500" height="13.500" fill="#262626" stroke="${WH}" stroke-width="1.400"/><path d="M10 19.500v-9.500h9.500z" fill="${BL}"/><path d="M19.500 10v9.500H10z" fill="${RD}"/><path d="M12 19.500l7.500-7.500v7.500z" fill="${OR}"/>`,
+  charts: `<path d="M3 3v18h18" fill="none" stroke="${WH}" stroke-width="1.600"/><path d="M5 17l5-6 4 3 6-9" fill="none" stroke="${GR}" stroke-width="2"/><circle cx="14" cy="14" r="2" fill="${RD}"/>`,
+  monitors: spark + `<path d="M19 15v7M15.500 18.500h7" stroke="${GR}" stroke-width="2"/>`,
+  tables: `<rect x="2.500" y="3.500" width="19" height="17" fill="none" stroke="${WH}" stroke-width="1.500"/><path d="M2.500 9.500h19M2.500 15h19M9 3.500v17M15.500 3.500v17" stroke="${WH}" stroke-width="1.200"/><rect x="3.200" y="4.200" width="5.200" height="4.600" fill="${RD}"/><rect x="9.600" y="4.200" width="5.300" height="4.600" fill="${GR}"/><rect x="16.100" y="4.200" width="4.700" height="4.600" fill="${BL}"/>`,
+  sizeprev: `<path d="M3 21v-6h6V9h6V3h6v18z" fill="#8d8d8d"/><path d="M12 11l5-2.500 5 2.500v6l-5 2.500-5-2.500z" fill="${RD}"/>`,
+  global: cube("#b9a6ff", "#7a63d8", "#4f3fb0") + `<circle cx="18.500" cy="18.500" r="3.500" fill="${OR}"/>`,
+  local: cube("#ffd9a0", "#b9a6ff", "#7a63d8"),
+  resolution: `<path d="M3 4h18v16H3z" fill="#8d8d8d"/><path d="M3 4l18 16V4z" fill="${RD}"/>`,
+  study: cube("#f04a8a", "#3aa0ff", "#6fd24a"),
+  variations: branch(WH) + `<circle cx="21" cy="6" r="1.800" fill="${WH}"/><circle cx="21" cy="18" r="1.800" fill="${WH}"/>`,
+  show: `<rect x="5" y="2.500" width="14" height="19" fill="#f2f2f2"/><path d="M8 7h8M8 11h8M8 15h5" stroke="${GR}" stroke-width="1.800"/>`,
+  transfer: `<rect x="2.500" y="5" width="12" height="14" fill="none" stroke="${WH}" stroke-width="1.600"/><path d="M8 12h13M17 7.500l4.500 4.500-4.500 4.500" fill="none" stroke="#4cc2b0" stroke-width="2.200"/>`,
+  material: `<path d="M5 18 12 12l7-6M12 12l7 7" stroke="${WH}" stroke-width="1.300"/><circle cx="5" cy="18" r="2.600" fill="${WH}"/><circle cx="19" cy="6" r="2.600" fill="${WH}"/><circle cx="19" cy="19" r="2.300" fill="${GY}"/><circle cx="12" cy="12" r="2.800" fill="${PU}"/>`,
+  support: `<path d="M13 2v20" stroke="${PU}" stroke-width="3"/><path d="M12 5 6 9M12 10l-6 4M12 15l-6 4M12 20l-6 3" stroke="${PU}" stroke-width="1.600"/>`,
+  force: `<path d="M12 2v10" stroke="${WH}" stroke-width="1.800"/><path d="M6.500 11h11L12 19z" fill="${PU}"/><path d="M3 21h18" stroke="${PU}" stroke-width="2"/>`,
+  slider: `<path d="M2 12h20" stroke="${WH}" stroke-width="1.400"/><rect x="8" y="7" width="5" height="10" fill="${BL}"/>`,
+  mon: `<path d="M2 16l5-8 4 6 4-9 7 11" fill="none" stroke="${OR}" stroke-width="2"/>`,
+  target: `<circle cx="12" cy="12" r="6.500" fill="none" stroke="${WH}" stroke-width="1.600"/><path d="M12 1v6M12 17v6M1 12h6M17 12h6" stroke="${WH}" stroke-width="1.600"/>`,
+  eye: `<path d="M1.500 12C5 6 19 6 22.500 12 19 18 5 18 1.500 12z" fill="${WH}"/><circle cx="12" cy="12" r="3.600" fill="#222"/>`,
+  play: `<path d="M5 3l14 9-14 9z" fill="none" stroke="${WH}" stroke-width="2"/>`,
+  doc: `<path d="M5 2h9l5 5v15H5z" fill="none" stroke="${WH}" stroke-width="1.600"/><path d="M9 14l3 3 6-7" fill="none" stroke="${BL}" stroke-width="2"/>`,
+  popout: `<rect x="2.500" y="4.500" width="19" height="15" fill="none" stroke="${WH}" stroke-width="1.800"/><path d="M9 15l8-7M12 8h5v5" fill="none" stroke="${WH}" stroke-width="1.800"/>`,
+  close: `<path d="M5 5l14 14M19 5 5 19" stroke="${WH}" stroke-width="2.600"/>`,
+  kebab: `<circle cx="12" cy="5" r="2" fill="${WH}"/><circle cx="12" cy="12" r="2" fill="${WH}"/><circle cx="12" cy="19" r="2" fill="${WH}"/>`,
+  list: `<path d="M3 6h2M8 6h13M3 12h2M8 12h13M3 18h2M8 18h13" stroke="${WH}" stroke-width="2"/>`,
+  reset: `<path d="M5 12a7 7 0 1 0 2.500-5.400" fill="none" stroke="${WH}" stroke-width="2.200"/><path d="M3 3v7h7z" fill="${WH}"/>`,
+  // Variations toolbar
+  addrow: `<rect x="2.500" y="5" width="16" height="7" fill="none" stroke="${WH}" stroke-width="1.600"/><path d="M18 14v8M14 18h8" stroke="${GR}" stroke-width="2.200"/>`,
+  addbranch: branch(WH) + `<path d="M19 16v7M15.500 19.500h7" stroke="${GR}" stroke-width="2"/>`,
+  rows: `<path d="M3 5h18v4H3zM3 11h18v4H3zM3 17h18v3H3z" fill="none" stroke="${GY}" stroke-width="1.500"/>`,
+  rowsgo: `<path d="M3 5h18M3 10h18M3 15h12" stroke="${WH}" stroke-width="2"/><circle cx="19" cy="18" r="3.500" fill="${GR}"/>`,
+  tableeye: `<rect x="3" y="3" width="15" height="13" fill="${GR}"/><path d="M3 8h15M3 12h15M8 3v13M13 3v13" stroke="#1b1b1b" stroke-width="1"/><path d="M9 18c3-4 9-4 12 0-3 4-9 4-12 0z" fill="${WH}"/><circle cx="15" cy="18" r="1.800" fill="#222"/>`,
+  copy: `<rect x="4" y="3" width="11" height="14" fill="#555"/><rect x="9" y="7" width="11" height="14" fill="${WH}"/>`,
+  cols: `<rect x="3" y="4" width="18" height="16" fill="none" stroke="${WH}" stroke-width="1.600"/><path d="M12 2v20" stroke="${WH}" stroke-width="1.600" stroke-dasharray="3 2"/><path d="M6 9l3 3-3 3M18 9l-3 3 3 3" fill="none" stroke="${WH}" stroke-width="1.400"/>`,
+  exporter: `<rect x="3" y="8" width="13" height="13" fill="none" stroke="${GR}" stroke-width="1.600"/><path d="M3 13h13M3 17h13M8 8v13" stroke="${GR}" stroke-width="1.200"/><path d="M10 9c1-5 6-6 9-5M16 1l4 3-3.500 3.500" fill="none" stroke="${WH}" stroke-width="2"/>`,
+  cubeg: cube("#8fdc8f", "#3d9b45", "#2a7a33"),
+  trash: `<path d="M6 8h12l-1 14H7z" fill="none" stroke="${WH}" stroke-width="1.700"/><path d="M4 8h16M10 4h4M10 11v8M14 11v8" stroke="${WH}" stroke-width="1.700"/>`,
+  // Tab strip
+  tDesign: `<path d="M4 3h7v18H4z" fill="${WH}"/><path d="M11 5c9 0 9 14 0 14" fill="none" stroke="${WH}" stroke-width="2.200"/>`,
+  tDisplay: `<path d="M4 20l3-7 9-9 4 4-9 9z" fill="none" stroke="${WH}" stroke-width="2"/>`,
+  tMeasure: `<path d="M3 5v14M7 8v8M11 5v14" stroke="${WH}" stroke-width="2"/><path d="M14 8h6v8" fill="none" stroke="${WH}" stroke-width="2"/>`,
+  tFacets: `<path d="M3 20V8l5 6 4-10 4 10 5-6v12z" fill="none" stroke="${WH}" stroke-width="2"/>`,
+  tRepair: `<path d="M4 20 14 10M13 4a5 5 0 1 0 7 7l-3-1-3-3z" fill="none" stroke="${WH}" stroke-width="2.400"/>`,
+  tPrepare: cube(WH, "#aaa", "#777"),
+  tSim: gear(WH) ,
+  tHelp: `<circle cx="12" cy="12" r="9.500" fill="${WH}"/><path d="M9 9.500a3 3 0 1 1 4.500 2.600c-1 .600-1.500 1.200-1.500 2.400" fill="none" stroke="#141414" stroke-width="2.200"/><circle cx="12" cy="17.500" r="1.300" fill="#141414"/>`,
+};
+const ic = (name, size = 18) => `<svg class="ic" viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true">${IC[name]}</svg>`;
+
+// ---- Static chrome: tab strip, ribbon, toolbars and the corner wheels. Visual only unless marked live.
+const TABS = [["Design", "tDesign"], ["Display", "tDisplay"], ["Measure", "tMeasure"], ["Facets", "tFacets"], ["Repair", "tRepair"], ["Prepare", "tPrepare"], ["Simulation", "tSim"], ["Help", "tHelp"]];
+const RIBBON = [
+  { name: "Physics", items: [
+    { big: "Structural", icon: "gear", menu: true },
+    { big: "Fluid Flow", icon: "fluid", dim: true },
+    { big: "Solid Thermal", icon: "thermal" },
+    { big: "Electromagnetics", icon: "em", dim: true },
+    { stack: [{ t: "Symmetry", icon: "sym" }, { t: "Review", icon: "review", dim: true, car: true }] },
+    { stack: [{ t: "Simulation Options", icon: "simopt", car: true }, { t: "Natural Frequency", icon: "freq", car: true }, { t: "Topology Optimization", icon: "topo", car: true }] },
+  ] },
+  { name: "Results", items: [{ big: "Scene", icon: "scene" }, { big: "Charts", icon: "charts", nocar: true }, { big: "Monitors", icon: "monitors" }, { big: "Tables", icon: "tables", tab: "variations" }] },
+  { name: "Fidelity", items: [{ big: "Size Preview", icon: "sizeprev", nocar: true }, { stack: [{ t: "Global", icon: "global", car: true }, { t: "Local", icon: "local" }, { t: "Resolution", icon: "resolution" }] }] },
+  { name: "Study", items: [{ big: "Simulation", icon: "study" }, { stack: [{ t: "Parameters", icon: "branch", car: true, tab: "parameters" }, { t: "Variations", icon: "variations", car: true, tab: "variations" }] }] },
+  { name: "Display", items: [{ big: "Show", icon: "show" }] },
+  { name: "Transfer", items: [{ big: "Discovery", icon: "transfer", nocar: true }] },
+];
+const STRUCT_MENU = [["Support", "support"], ["Force", "force"], ["Pressure", "gear"], ["Displacement", "gear"], ["Moment", "gear"], ["Mass", "gear"], ["Velocity", "gear"], ["Acceleration", "gear"], ["Bearing Load", "gear"], ["Bolt Preload", "gear"], ["Contact", "gear"], ["Joint", "gear"], ["Spring", "gear"]];
+function buildChrome() {
+  $("tabs").innerHTML = TABS.map(([t, i]) => `<span class="tab${t === "Simulation" ? " on" : ""}">${ic(i, 15)}${t}</span>`).join("");
+  const item = (it) => {
+    if (it.stack) return `<div class="stack">${it.stack.map((s) => {
+      const body = `${ic(s.icon, 19)}<span>${s.t}</span>${s.car ? '<i class="car"></i>' : ""}`;
+      return s.tab ? `<button class="rs live" type="button" tabindex="-1" data-tab="${s.tab}">${body}</button>` : `<div class="rs${s.dim ? " dim" : ""}">${body}</div>`;
+    }).join("")}</div>`;
+    const body = `${ic(it.icon, 32)}<span>${it.big}</span>${it.nocar ? "" : '<i class="car"></i>'}`;
+    if (it.menu) return `<button class="rb live" type="button" tabindex="-1" id="structBtn" aria-haspopup="true">${body}</button>`;
+    if (it.tab) return `<button class="rb live" type="button" tabindex="-1" data-tab="${it.tab}">${body}</button>`;
+    return `<div class="rb${it.dim ? " dim" : ""}">${body}</div>`;
+  };
+  $("groups").innerHTML = RIBBON.map((g) => `<div class="group"><div class="items">${g.items.map(item).join("")}</div><div class="gname">${g.name}</div></div>`).join("");
+  $("structMenu").innerHTML = STRUCT_MENU.map(([t, i]) => `<div>${ic(i, 16)}${t}</div>`).join("");
+  $("varTools").innerHTML = ["addrow", "addbranch", "rows", "rowsgo", "tableeye", "copy", "spark", "cols", "exporter", "cubeg", "trash"].map((n) => ic(n, 25)).join("");
+  for (const b of document.querySelectorAll("[data-max]")) b.innerHTML = ic("popout", 15);
+  for (const b of document.querySelectorAll("[data-close]")) b.innerHTML = ic("close", 15);
+  // View control, bottom left: triad drawn with the same camera as the scene.
+  const ax = (v) => { const [x, y] = camera().rot(...v); return [60 + x * 24, 80 - y * 24]; };
+  const [xx, xy] = ax([1, 0, 0]), [yx, yy] = ax([0, 1, 0]), [zx, zy] = ax([0, 0, 1]);
+  $("viewwheel").innerHTML = `<svg viewBox="0 0 138 138" width="138" height="138">
+    <circle cx="62" cy="76" r="66" fill="#0b0b0b" opacity=".62"/><circle cx="60" cy="80" r="40" fill="none" stroke="#000" stroke-opacity=".5" stroke-width="1.500"/>
+    <g transform="translate(26 14) scale(.9)">${cube("#ffd08a", "#e39a2c", "#b87412")}</g>
+    <g transform="translate(60 8) scale(.9)"><path d="M3 12 12 4l9 8v9H3z" fill="#f2f2f2"/><rect x="10" y="14" width="5" height="7" fill="#2f8fef"/><path d="M16 2l1.500 3 3 1-3 1-1.500 3-1.500-3-3-1 3-1z" fill="${OR}"/></g>
+    <g transform="translate(90 30) scale(.9)"><path d="M12 3l8 4.500v9L12 21l-8-4.500v-9z" fill="none" stroke="${PU}" stroke-width="2"/><path d="M4 7.500l8 4.500 8-4.500M12 12v9" fill="none" stroke="${PU}" stroke-width="2"/></g>
+    <g transform="translate(104 62) scale(.85)"><circle cx="12" cy="12" r="9" fill="none" stroke="#f0f0f0" stroke-width="2.500"/><circle cx="12" cy="12" r="3" fill="${OR}"/><path d="M12 3v5M12 16v5M3 12h5M16 12h5" stroke="#f0f0f0" stroke-width="2"/></g>
+    <g transform="translate(106 94) scale(.7)" fill="#777"><rect x="2" y="2" width="9" height="9"/><rect x="13" y="13" width="9" height="9"/><rect x="13" y="2" width="9" height="9" opacity=".4"/><rect x="2" y="13" width="9" height="9" opacity=".4"/></g>
+    <rect x="52" y="73" width="15" height="13" rx="2" fill="#8fb8d8"/><circle cx="60" cy="80" r="3.200" fill="${RD}"/>
+    <g stroke-width="2.200" font-size="10" font-weight="700" font-family="Segoe UI, sans-serif">
+      <line x1="60" y1="80" x2="${xx}" y2="${xy}" stroke="#e5463c"/><text x="${xx + 3}" y="${xy + 4}" fill="#e5463c">X</text>
+      <line x1="60" y1="80" x2="${yx}" y2="${yy}" stroke="#3ccf4e"/><text x="${yx - 3}" y="${yy - 4}" fill="#3ccf4e">Y</text>
+      <line x1="60" y1="80" x2="${zx}" y2="${zy}" stroke="#3aa0ff"/><text x="${zx - 11}" y="${zy + 8}" fill="#3aa0ff">Z</text>
+    </g></svg>`;
+  // Tool wheel, bottom right: decorative, the centre dot turns green once rows are solved.
+  const spots = [[42, 34, "local"], [74, 22, "study"], [106, 34, "spark"], [30, 66, "em"], [118, 66, "reset"], [36, 100, "tFacets"], [108, 104, "monitors"], [72, 116, "show"]];
+  $("toolwheel").innerHTML = `<svg viewBox="0 0 146 146" width="146" height="146">
+    <circle cx="80" cy="78" r="70" fill="#0b0b0b" opacity=".62"/><circle cx="76" cy="74" r="33" fill="none" stroke="#3b3b3b" stroke-width="1.500"/>
+    <path d="M52 18a62 62 0 0 1 44-2" fill="none" stroke="#2f8fef" stroke-width="3"/>
+    ${spots.map(([x, y, n]) => `<g transform="translate(${x - 9} ${y - 9}) scale(.75)" opacity=".9">${IC[n]}</g>`).join("")}
+    <circle cx="76" cy="74" r="15" id="power" fill="#1d5c9e"/><path d="M76 65v8M70.500 68.500a8 8 0 1 0 11 0" fill="none" stroke="#fff" stroke-width="2"/></svg>`;
+}
 
 // ---- Units: the contract carries mm and MPa, Discovery shows m and Pa. Conversion only, no other maths.
 function sig(v, n = 3) {
@@ -358,7 +628,7 @@ async function loadFixture(key) {
     accept(spec, pred, res, names);
   } catch (e) {
     clearAll();
-    if (e.blocked && location.protocol === "file:") showBanner("Fixtures need a file picker", ["This page was opened from disk, and the browser blocks fetch on file:// pages. Pick the files below, or run python -m http.server in src/ui."], true);
+    if (e.blocked && location.protocol === "file:") showBanner("Fixtures need a file picker", ["This page was opened from disk, and the browser blocks fetch on file:// pages. Pick the files below, or use the launcher at the top of the repo."], true);
     else showBanner("Could not load the fixture", [e.message], true);
   }
 }
@@ -390,7 +660,7 @@ function accept(spec, pred, res, names) {
   S.shown = S.msgs.length; // static load shows the finished state; Run demo replays it
   document.body.dataset.demo = "idle";
   renderAll();
-  $("statusbar").innerHTML = `<span>Loaded ${names.map(esc).join(", ")}</span><span>Units shown as m, Pa, N; contract fields are mm and MPa</span>`;
+  $("loaded").textContent = `${names.join(", ")} | shown in m, Pa, N from contract mm, MPa`;
 }
 function showBanner(title, lines, withPicker) {
   $("bannerTitle").textContent = title;
@@ -403,7 +673,7 @@ function hideBanner() { $("banner").hidden = true; }
 function clearAll() {
   Object.assign(S, { spec: null, pred: null, res: null, rows: [], msgs: [], shown: 0, sel: "baseline" });
   document.body.dataset.demo = "idle";
-  $("statusbar").textContent = "No data loaded";
+  $("loaded").textContent = "No data loaded";
   renderAll();
 }
 
@@ -419,7 +689,7 @@ function build(names) {
     seen.add(v.design_id);
   });
   pred.shortlist.forEach((c, j) => { if (!seen.has(c.design_id)) rows.push({ id: c.design_id, ver: null, cand: c, candPath: `${names[1]} shortlist[${j}]` }); });
-  rows.forEach((r, k) => { r.name = "DV" + (k + 1); r.isRec = !!res.recommended && res.recommended.design_id === r.id; r.show = "none"; });
+  rows.forEach((r, k) => { r.n = k + 1; r.name = "DV" + (k + 1); r.isRec = !!res.recommended && res.recommended.design_id === r.id; r.show = "none"; });
   S.rows = rows;
   S.baseRow = { id: "baseline", name: "Baseline", ver: res.baseline, verPath: `${names[2]} baseline`, cand: null, show: "verified", isBase: true };
   S.msgs = buildMessages(names);
@@ -465,55 +735,60 @@ function buildMessages(names) {
 }
 
 // ---- Rendering
-function renderAll() { renderTree(); renderTable(); renderParams(); renderCases(); renderChat(); renderViewport(); }
+function renderAll() { renderTree(); renderTable(); renderParams(); renderCases(); renderChat(); renderScene(); renderReadout(); renderGraphs(); renderRecs(); }
 const rowById = (id) => id === "baseline" ? S.baseRow : S.rows.find((r) => r.id === id);
 const chip = (kind) => `<span class="chip ${kind}">${kind.charAt(0).toUpperCase() + kind.slice(1)}</span>`;
+const isVerified = (r) => r.show === "verified" && !!r.ver;
 
 function renderTree() {
-  const s = S.spec;
-  $("studyName").textContent = s ? `${s.bracket_family} study` : "";
-  if (!s) { $("tree").innerHTML = '<div class="empty">No study loaded.</div>'; return; }
+  const s = S.spec, el = $("tree");
+  $("docTitle").textContent = (s ? s.bracket_family + " - " : "") + "SimpleSim Demo";
+  if (!s) { el.innerHTML = '<div class="empty">No study loaded.</div>'; return; }
   const range = (p) => p.low_mm === p.high_mm ? "fixed " + U.mm(p.low_mm) : `${sig(p.low_mm / 1000)} to ${U.mm(p.high_mm)}`;
-  const limit = (m) => {
-    const parts = s.constraints.filter((c) => c.metric === m).map((c) => `${c.op === ">=" ? "≥" : "≤"} ${metricText(m, c.value)}`);
-    if (s.objective.metric === m) parts.push(s.objective.direction);
-    return parts.join(", ") || "monitor only";
-  };
+  const limit = (m) => s.constraints.filter((c) => c.metric === m).map((c) => `<span class="vbox">${c.op === ">=" ? "≥" : "≤"} ${metricText(m, c.value)}</span>`).join("")
+    + (s.objective.metric === m ? `<span class="vplain">${esc(s.objective.direction)}</span>` : "") || '<span class="vplain">monitor only</span>';
   // Mark the monitor named by result.binding_constraint.
   const bind = S.res && S.res.binding_constraint ? S.res.binding_constraint.split(" ")[0] : null;
-  $("tree").innerHTML = `<ul>
-    <li><div class="node head">Design</div><ul><li><div class="node">${esc(s.bracket_family)}</div></li></ul></li>
-    <li><div class="node head">Physics</div><ul>
-      <li><div class="node">Material <span class="val">${esc(s.material_key)}</span></div></li>
-      <li><div class="node">Support <span class="val">fixed</span></div></li>
-      <li><div class="node">Force <span class="val box" title="load.force_n, load.angle_deg">${U.n(s.load.force_n)} at ${esc(s.load.angle_deg)}&deg;</span></div></li>
-    </ul></li>
-    <li><div class="node head">Parameters</div><ul>${s.parameters.map((p) => `<li><div class="node" title="${p.name}: ${p.low_mm} to ${p.high_mm} mm">${esc(p.name)} <span class="val">${range(p)}</span></div></li>`).join("")}</ul></li>
-    <li><div class="node head">Monitors</div><ul>${METRICS.map((m) => `<li><div class="node${m === bind ? " bind" : ""}" title="${m === bind ? "binding constraint: " + esc(S.res.binding_constraint) : m}">${m} <span class="val">${limit(m)}</span></div></li>`).join("")}</ul></li>
-  </ul>`;
+  const node = (icon, label, val, cls = "", title = "") => `<li><div class="node${cls}" title="${esc(title)}">${ic(icon, 16)}<span>${esc(label)}</span>${val}</div></li>`;
+  el.innerHTML = `
+    <div class="thead">${ic("target", 15)}${ic("eye", 16)}<span class="wheel"></span>${ic("play", 13)}${ic("doc", 16)}<span class="cap">Design</span><span class="docname">${esc(s.bracket_family)}*</span>${ic("popout", 14)}</div>
+    <ul>
+      <li><div class="node head">${ic("gear", 18)}Physics</div><ul>
+        ${node("material", "Material", `<span class="vplain">${esc(s.material_key)}</span>`, "", "material_key")}
+        ${node("support", "Support", '<span class="vplain">fixed</span>')}
+        ${node("force", "Force", `<span class="vbox">${U.n(s.load.force_n)}</span><span class="vplain">at ${esc(s.load.angle_deg)}&deg;</span>`, "", "load.force_n, load.angle_deg")}
+      </ul></li>
+      <li><div class="node head">${ic("branch", 18)}Parameters</div><ul>
+        ${s.parameters.map((p) => node("slider", p.name, `<span class="vbox">${range(p)}</span>`, "", `${p.name}: ${p.low_mm} to ${p.high_mm} mm`)).join("")}
+      </ul></li>
+      <li><div class="node head">${ic("spark", 18)}Monitors</div><ul>
+        ${METRICS.map((m) => node("mon", m, limit(m), m === bind ? " bind" : "", m === bind ? "binding constraint: " + S.res.binding_constraint : m)).join("")}
+      </ul></li>
+    </ul>`;
 }
 
 // One monitor cell: solver value once verified, otherwise the estimate with its p05 to p95 band.
 function monitorCell(r, metric) {
   const fmt = (v) => metricText(metric, v);
-  if (r.show === "none") return '<td class="m">&nbsp;<small>&nbsp;</small></td>';
-  if (r.show === "verified" && r.ver) return `<td class="m" title="${esc(r.verPath)}.${metric} = ${r.ver[metric]}">${fmt(r.ver[metric])}<small>solver</small></td>`;
+  if (r.show === "none") return '<td class="m"></td>';
+  if (isVerified(r)) return `<td class="m" title="${esc(r.verPath)}.${metric} = ${r.ver[metric]}">${fmt(r.ver[metric])}</td>`;
   const e = r.cand[metric];
-  if (metric === "mass_kg") return `<td class="m" title="${esc(r.candPath)}.mass_kg = ${e}">${fmt(e)}<small>&nbsp;</small></td>`;
-  return `<td class="m" title="${esc(r.candPath)}.${metric} = ${e.value} (p05 ${e.p05}, p95 ${e.p95})">${fmt(e.value)}<small>${sig(metric === "max_stress_mpa" ? e.p05 * 1e6 : metric === "max_disp_mm" ? e.p05 / 1000 : e.p05)} to ${sig(metric === "max_stress_mpa" ? e.p95 * 1e6 : metric === "max_disp_mm" ? e.p95 / 1000 : e.p95)}</small></td>`;
+  if (metric === "mass_kg") return `<td class="m" title="${esc(r.candPath)}.mass_kg = ${e}">${fmt(e)}</td>`;
+  const k = metric === "max_stress_mpa" ? 1e6 : metric === "max_disp_mm" ? 1e-3 : 1; // unit factor for the band
+  return `<td class="m" title="${esc(r.candPath)}.${metric} = ${e.value} (p05 ${e.p05}, p95 ${e.p95})">${fmt(e.value)}<small>${sig(e.p05 * k)} to ${sig(e.p95 * k)}</small></td>`;
 }
 function rowHtml(r) {
-  const verified = r.show === "verified" && r.ver, blank = r.show === "none";
+  const verified = isVerified(r), blank = r.show === "none";
   const design = (r.ver || r.cand).design;
   // Verified rows use the solver's feasible flag, predicted rows use feasible_p95.
   const feas = blank ? null : verified ? r.ver.feasible : r.cand.feasible_p95;
   const feasTitle = blank ? "" : verified ? `${r.verPath}.feasible` + (r.ver.violated.length ? "; violated: " + r.ver.violated.join(", ") : "") : `${r.candPath}.feasible_p95`;
   const inr = r.cand ? r.cand.in_training_range : null;
   const rec = r.isRec && verified;
-  const cls = ["row", S.sel === r.id ? "sel" : "", rec ? "rec" : "", feas === false ? "fail" : "", inr === false && !blank ? "oor" : "", r.isBase ? "base" : "", blank ? "blank" : ""].join(" ");
+  const cls = ["row", blank ? "blank" : verified ? "ver" : "pred", S.sel === r.id ? "sel" : "", rec ? "rec" : "", feas === false ? "fail" : "", inr === false && !blank ? "oor" : "", r.isBase ? "base" : ""].join(" ");
   const status = blank ? "none" : verified ? "solved" : "pending";
   return `<tr class="${cls}" data-id="${esc(r.id)}" tabindex="${S.sel === r.id ? 0 : -1}" aria-selected="${S.sel === r.id}">
-    <td><span class="cb${verified ? " on" : ""}"></span></td>
+    <td class="num">${verified ? '<span class="cb on"></span>' : r.n}</td>
     <td><span class="st ${status}" title="${blank ? "not started" : verified ? "solved by " + esc(r.ver.source) : "pending: predicted, not yet solved"}"></span></td>
     <td><span class="star${rec ? " on" : ""}" title="${rec ? "recommended" : ""}">${rec ? "★" : "☆"}</span></td>
     <td class="name" title="${esc(r.id)}">${esc(r.name)}</td>
@@ -526,38 +801,42 @@ function rowHtml(r) {
 }
 function renderTable() {
   const pane = $("pane-variations"), hadFocus = pane.contains(document.activeElement);
-  if (!S.res) { pane.innerHTML = '<div class="empty">No variations loaded.</div>'; $("bfoot").innerHTML = ""; return; }
-  const head = ["", "", "★", "Name", ...PARAMS.map((p) => PARAM_LABEL[p]), ...METRICS.map((m) => METRIC_LABEL[m]), "Feasible", "In range", "State"];
+  if (!S.res) { pane.innerHTML = '<div class="empty">No variations loaded.</div>'; $("bfoot").innerHTML = ""; renderStage(); renderGraphs(); return; }
+  const n = (f) => S.rows.filter(f).length;
+  const solved = n(isVerified), pending = n((r) => r.show !== "none" && !isVerified(r)), idle = n((r) => r.show === "none");
+  const th = (cls, label, inner) => `<th scope="col" class="${cls}" title="${label}">${inner || label}</th>`;
+  const head = th("", "Selected", `<span class="cb${solved ? " on" : ""}"></span>`) + th("", "Status", '<span class="st info"></span>') + th("", "Favourite", '<span class="star">★</span>') + th("", "Name")
+    + PARAMS.map((p) => th("pc", PARAM_LABEL[p])).join("") + METRICS.map((m) => th("mc", METRIC_LABEL[m])).join("") + th("", "Feasible") + th("", "In range") + th("", "State");
   const top = pane.scrollTop;
-  pane.innerHTML = `<table class="grid" aria-label="Variations"><thead><tr>${head.map((h, i) => `<th scope="col" title="${h}">${i === 0 ? '<span class="cb on"></span>' : i === 1 ? '<span class="st stopped"></span>' : h}</th>`).join("")}</tr></thead>
-    <tbody>${rowHtml(S.baseRow)}${S.rows.map(rowHtml).join("")}</tbody></table>`;
+  pane.innerHTML = `<table class="grid" aria-label="Variations"><thead><tr>${head}</tr></thead><tbody>${rowHtml(S.baseRow)}${S.rows.map(rowHtml).join("")}</tbody></table>`;
   pane.scrollTop = top;
   if (hadFocus) { const tr = pane.querySelector("tr.sel"); if (tr) tr.focus({ preventScroll: true }); }
   // Footer counts: verified rows are solved, predicted rows are pending, the rest are not started.
-  const n = (f) => S.rows.filter(f).length;
-  const solved = n((r) => r.show === "verified" && r.ver), pending = n((r) => r.show === "predicted" || (r.show === "verified" && !r.ver)), idle = n((r) => r.show === "none");
-  const okCount = n((r) => r.show === "verified" && r.ver && r.ver.feasible);
+  const okCount = n((r) => isVerified(r) && r.ver.feasible);
   const src = [...new Set(S.res.finalists.map((f) => f.source))].join(", ") || S.res.baseline.source;
   const cnt = (cls, v, t) => `<span class="cnt" title="${t}"><span class="st ${cls}"></span>${v}</span>`;
   $("bfoot").innerHTML = cnt("solved", solved, "solved: verified rows") + cnt("pending", pending, "pending: predicted rows") + cnt("stopped", 0, "stopped") + cnt("solving", 0, "solving") + cnt("failed", 0, "failed solves") + cnt("none", idle, "not started")
-    + `<span class="feas">${okCount} of ${solved} solved rows feasible</span>`
-    + `<span class="right">${solved ? `<span>Solved locally</span><span class="chip ${isFake(src) ? "fake" : "verified"}" title="source field of the finalists">${esc(src)}</span>` : ""}</span>`;
+    + `${ic("list", 17)}<span class="reset">${ic("reset", 15)}Reset</span><span class="feas">${okCount} of ${solved} solved rows feasible</span>`
+    + `<span class="right">${solved ? `<span>Solved locally</span><span class="chip ${isFake(src) ? "fake" : "verified"}" title="source field of the finalists">${esc(src)}</span>` : ""}<span class="st info"></span></span>`;
+  renderStage();
+  renderGraphs(); // the charts plot the same rows
 }
 function renderParams() {
   const s = S.spec, pane = $("pane-parameters");
   if (!s || !S.res) { pane.innerHTML = '<div class="empty">No parameters loaded.</div>'; return; }
   const r = rowById(S.sel) || S.baseRow, d = (r.ver || r.cand).design;
   pane.innerHTML = `<table class="grid"><thead><tr><th>Name</th><th>Low</th><th>High</th><th>Baseline</th><th>${esc(r.name)}</th></tr></thead><tbody>${s.parameters.map((p) =>
-    `<tr><td class="name">${esc(p.name)}</td><td class="p">${U.mm(p.low_mm)}</td><td class="p">${U.mm(p.high_mm)}</td><td class="m">${U.mm(S.res.baseline.design[p.name])}</td><td class="m">${U.mm(d[p.name])}</td></tr>`).join("")}</tbody></table>`;
+    `<tr class="ver"><td class="name">${esc(p.name)}</td><td class="p">${U.mm(p.low_mm)}</td><td class="p">${U.mm(p.high_mm)}</td><td class="m">${U.mm(S.res.baseline.design[p.name])}</td><td class="m">${U.mm(d[p.name])}</td></tr>`).join("")}</tbody></table>`;
 }
 function renderCases() {
   const s = S.spec, pane = $("pane-testcases");
   if (!s) { pane.innerHTML = '<div class="empty">No test cases loaded.</div>'; return; }
   pane.innerHTML = `<table class="grid"><thead><tr><th>Name</th><th>Force</th><th>Angle</th><th>Material</th></tr></thead><tbody>
-    <tr><td class="name">TC1</td><td class="p">${U.n(s.load.force_n)}</td><td class="p">${esc(s.load.angle_deg)}&deg;</td><td class="p">${esc(s.material_key)}</td></tr></tbody></table>`;
+    <tr class="ver"><td class="name">TC1</td><td class="p">${U.n(s.load.force_n)}</td><td class="p">${esc(s.load.angle_deg)}&deg;</td><td class="p">${esc(s.material_key)}</td></tr></tbody></table>`;
 }
 function renderChat() {
   const log = $("log");
+  renderRecs(); // recommendations unlock once the last message is shown
   if (!S.msgs.length) { log.innerHTML = '<div class="empty">No conversation loaded.</div>'; return; }
   log.innerHTML = S.msgs.slice(0, S.shown).map((m) => {
     let body = esc(m.text);
@@ -570,77 +849,524 @@ function renderChat() {
   }).join("");
   log.scrollTop = log.scrollHeight;
 }
+// Monitor values of the selected variation, where Discovery shows its result legend.
+function renderReadout() {
+  const el = $("readout"), r = S.res ? rowById(S.sel) || S.baseRow : null;
+  if (!r) { el.innerHTML = ""; return; }
+  const verified = isVerified(r), blank = r.show === "none";
+  const val = (m) => blank ? "not started" : verified ? metricText(m, r.ver[m]) : metricText(m, m === "mass_kg" ? r.cand.mass_kg : r.cand[m].value);
+  el.innerHTML = `<div class="ricons">${ic("scene", 22)}${ic("charts", 22)}${ic("monitors", 22)}</div>
+    <div class="rname"><b>${esc(r.name)}</b> ${esc(r.id)} ${ic("kebab", 12).replace("<svg", '<svg style="display:inline;vertical-align:-1px"')}</div>
+    <div class="rchips">${blank ? "" : chip(verified ? "verified" : "predicted")}${r.isRec && verified ? chip("recommended") : ""}</div>
+    <table>${METRICS.map((m, i) => `<tr><td>${METRIC_LABEL[m]}</td><td${i === 1 ? ' class="und"' : ""}>${val(m)}</td></tr>`).join("")}</table>`;
+}
+// Stage control at the bottom centre; the counts are warnings and variation rows.
+function renderStage() {
+  const solved = S.rows.some(isVerified), col = solved ? "#27b535" : "#8a8a8a";
+  const hex = (cx, cy, r) => [[-r, 0], [-r / 2, -r * 0.87], [r / 2, -r * 0.87], [r, 0], [r / 2, r * 0.87], [-r / 2, r * 0.87]].map(([x, y]) => `${cx + x},${cy + y}`).join(" ");
+  const power = document.getElementById("power");
+  if (power) power.setAttribute("fill", solved ? "#1fa82c" : "#1d5c9e");
+  $("stage").innerHTML = `<div class="scaret"></div><div class="sname">Simulation 1</div>
+    <svg viewBox="0 0 170 52" width="170" height="52">
+      <polygon points="${hex(47, 14, 14)}" fill="#1c1c1c"/><polygon points="${hex(47, 40, 14)}" fill="#1c1c1c"/><polygon points="${hex(123, 14, 14)}" fill="#1c1c1c" data-tab="variations"/>
+      <ellipse cx="46" cy="13" rx="8" ry="5.500" fill="none" stroke="#eee" stroke-width="1.200"/><text x="46" y="16" font-size="8" fill="#eee" text-anchor="middle">${S.res ? S.res.warnings.length : 0}</text>
+      <path d="M40 40h13" stroke="#eee" stroke-width="2"/>
+      <g transform="translate(112 7) scale(.6)" data-tab="variations">${IC.variations}</g><text x="131" y="18" font-size="10" fill="#eee" data-tab="variations">${S.rows.length}</text>
+      <polygon points="${hex(85, 26, 27)}" fill="#161616" stroke="${col}" stroke-width="2.500"/>
+      <g transform="translate(66 7) scale(1.58)">${gear(PU)}</g>
+    </svg>
+    <div class="explore"><span>&lsaquo;</span><b>Explore</b><span>&rsaquo;</span></div>`;
+}
 
-// ---- Viewport: flat L-plate drawn from the five dimensions, extruded by thickness in an oblique view.
-function renderViewport() {
-  const vp = $("viewport"), r = S.res ? rowById(S.sel) || S.baseRow : null;
-  if (!r) { vp.innerHTML = '<div class="empty">No design loaded.</div>'; return; }
+// ---- Graphs tab: every mark is a row of the Variations table, plotted from the same contract fields.
+// Colours validated for colour-blind separation on this surface; shape repeats what colour says.
+const VIZ = { rec: "#3987e5", ok: "#199e70", fail: "#d95926", base: "#898781", pos: "#e66767", neg: "#3987e5", ink: "#f0efec", ink2: "#c3c2b7", muted: "#898781", grid: "#2c2c2a", axis: "#4a4a46", surface: "#161616" };
+const UNIT_K = { mass_kg: 1, max_stress_mpa: 1e6, max_disp_mm: 1e-3, safety_factor: 1 }; // contract unit to display unit
+const AXIS_LABEL = { mass_kg: "Mass (kg)", max_stress_mpa: "Max. Von Mises Stress (Pa)", max_disp_mm: "Max. Displacement (m)", safety_factor: "Factor of Safety" };
+const SHORT_LABEL = { mass_kg: "Mass", max_stress_mpa: "Von Mises stress", max_disp_mm: "Displacement", safety_factor: "Factor of safety" };
+const CHARTS = []; // hover registry, rebuilt on every render
+const opSym = (op) => op === ">=" ? "≥" : "≤";
+function tickFmt(v) {
+  if (v === 0) return "0";
+  const a = Math.abs(v);
+  if (a < 1e-3 || a >= 1e5) return v.toExponential(2).replace(/\.?0+e/, "e").replace("e+", "e");
+  return String(Number(v.toPrecision(4)));
+}
+// Round axis ticks; these are scale marks, not data.
+function niceTicks(lo, hi, n) {
+  const raw = (hi - lo) / n, mag = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / mag;
+  const step = (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * mag, out = [];
+  for (let v = Math.ceil(lo / step - 1e-9) * step; v <= hi + step * 1e-9; v += step) out.push(Number(v.toPrecision(10)));
+  return out;
+}
+// Value of one monitor for one row in display units: solver number, or estimate with its band.
+function rowVal(r, metric) {
+  const k = UNIT_K[metric];
+  if (isVerified(r)) return { v: r.ver[metric] * k };
+  const e = r.cand[metric];
+  return metric === "mass_kg" ? { v: e * k } : { v: e.value * k, lo: e.p05 * k, hi: e.p95 * k };
+}
+const rowFeasible = (r) => isVerified(r) ? r.ver.feasible : r.cand.feasible_p95;
+const rowKind = (r) => r.isBase ? "base" : r.isRec && isVerified(r) ? "rec" : rowFeasible(r) ? "ok" : "fail";
+function star(cx, cy, R, r) {
+  let s = "";
+  for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? r : R; s += `${(cx + q * Math.cos(a)).toFixed(1)},${(cy + q * Math.sin(a)).toFixed(1)} `; }
+  return s.trim();
+}
+// Marker per state: star, circle, cross, diamond. Filled or heavy means verified, hollow or thin means predicted.
+function mark(kind, x, y, solid) {
+  const c = VIZ[kind], ring = `stroke="${VIZ.surface}" stroke-width="3.5" paint-order="stroke"`;
+  if (kind === "fail") {
+    const d = `M${x - 4} ${y - 4}L${x + 4} ${y + 4}M${x + 4} ${y - 4}L${x - 4} ${y + 4}`;
+    return `<path d="${d}" stroke="${VIZ.surface}" stroke-width="${solid ? 5.5 : 4}" stroke-linecap="round"/><path d="${d}" stroke="${c}" stroke-width="${solid ? 2.7 : 1.4}" stroke-linecap="round"/>`;
+  }
+  if (kind === "base") return `<rect x="${x - 4.2}" y="${y - 4.2}" width="8.4" height="8.4" transform="rotate(45 ${x} ${y})" fill="${c}" ${ring}/>`;
+  if (kind === "rec") return `<polygon points="${star(x, y, 8.5, 3.8)}" fill="${c}" ${ring} stroke-linejoin="round"/>`;
+  return solid ? `<circle cx="${x}" cy="${y}" r="4.6" fill="${c}" ${ring}/>` : `<circle cx="${x}" cy="${y}" r="4" fill="${VIZ.surface}" stroke="${c}" stroke-width="1.8"/>`;
+}
+const figure = (title, sub, svg) => `<figure class="chart"><figcaption><b>${title}</b><span>${sub}</span></figcaption>${svg}</figure>`;
+const tipAttr = (t) => `data-tip="${esc(JSON.stringify(t))}"`;
+
+// One monitor against the objective, with the requirement line and the region that fails it.
+function scatterChart(metric, rows, idx, bind) {
+  const sp = S.res.spec, obj = sp.objective.metric, W = 340, H = 238, m = { l: 50, r: 14, t: 22, b: 40 };
+  const cons = sp.constraints.filter((c) => c.metric === metric);
+  const pts = rows.map((r) => { const y = rowVal(r, metric); return { r, kind: rowKind(r), solid: isVerified(r), x: rowVal(r, obj).v, y: y.v, lo: y.lo, hi: y.hi }; });
+  const span = (vals) => { const lo = Math.min(...vals), hi = Math.max(...vals), pad = (hi - lo || Math.abs(hi) || 1) * 0.09; return [lo >= 0 ? Math.max(0, lo - pad) : lo - pad, hi + pad]; };
+  const [x0, x1] = span(pts.map((p) => p.x));
+  // The y range always includes the requirement, so the gap to it is visible.
+  const [y0, y1] = span(pts.flatMap((p) => p.lo === undefined ? [p.y] : [p.y, p.lo, p.hi]).concat(cons.map((c) => c.value * UNIT_K[metric])));
+  const X = (v) => m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r), Y = (v) => H - m.b - (v - y0) / (y1 - y0) * (H - m.t - m.b);
+  let g = "", lim = "", whisk = "", marks = "", labels = "";
+  for (const t of niceTicks(y0, y1, 4)) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(t)}" y2="${Y(t)}" stroke="${VIZ.grid}"/><text x="${m.l - 6}" y="${Y(t) + 3.5}" text-anchor="end">${tickFmt(t)}</text>`;
+  for (const t of niceTicks(x0, x1, 4)) g += `<line x1="${X(t)}" x2="${X(t)}" y1="${H - m.b}" y2="${H - m.b + 4}" stroke="${VIZ.axis}"/><text x="${X(t)}" y="${H - m.b + 15}" text-anchor="middle">${tickFmt(t)}</text>`;
+  g += `<line x1="${m.l}" x2="${W - m.r}" y1="${H - m.b}" y2="${H - m.b}" stroke="${VIZ.axis}"/>`;
+  const taken = []; // label boxes already placed, so later labels steer clear
+  for (const c of cons) {
+    const y = Y(c.value * UNIT_K[metric]), below = c.op === ">=", room = below ? H - m.b - y : y - m.t;
+    // The label sits on the failing side of the line when there is room, where few points are.
+    const text = `requirement ${opSym(c.op)} ${metricText(metric, c.value)}`, ly = (below ? room >= 15 : room < 15) ? y + 12 : y - 5;
+    taken.push({ x: m.l + 4, y: ly - 11, w: text.length * 5.4, h: 13 }, { x: m.l, y: y - 3, w: W, h: 6 });
+    lim += `<rect x="${m.l}" y="${below ? y : m.t}" width="${W - m.l - m.r}" height="${Math.max(0, room)}" fill="${VIZ.fail}" opacity=".1"/>
+      <line x1="${m.l}" x2="${W - m.r}" y1="${y}" y2="${y}" stroke="${VIZ.ink2}" stroke-width="1.2" stroke-dasharray="5 3"/>
+      <text x="${m.l + 4}" y="${ly}" fill="${VIZ.ink2}">${text}</text>`;
+  }
+  const order = { fail: 0, ok: 1, base: 2, rec: 3 };
+  for (const p of pts) { p.px = X(p.x); p.py = Y(p.y); }
+  // Try eight spots around the point and keep the one covering the fewest marks and labels.
+  const place = (p, text) => {
+    const w = text.length * 6 + 4, h = 12;
+    let best = null;
+    for (const [dx, dy, anchor] of [[12, 4, "start"], [-12, 4, "end"], [9, -10, "start"], [9, 19, "start"], [-9, -10, "end"], [-9, 19, "end"], [0, -14, "middle"], [0, 23, "middle"]]) {
+      const x = p.px + dx, y = p.py + dy, xa = anchor === "start" ? x : anchor === "end" ? x - w : x - w / 2;
+      const outside = xa < m.l || xa + w > W - 2 || y - h < 2 || y > H - m.b ? 50 : 0;
+      const marksHit = pts.filter((q) => q !== p && q.px > xa - 5 && q.px < xa + w + 5 && q.py > y - h - 4 && q.py < y + 5).length;
+      const labelsHit = taken.filter((b) => xa < b.x + b.w && xa + w > b.x && y - h < b.y + b.h && y > b.y).length;
+      const score = outside + marksHit + labelsHit * 4;
+      if (!best || score < best.score) best = { x, y, anchor, score, box: { x: xa, y: y - h, w, h } };
+    }
+    taken.push(best.box);
+    return best;
+  };
+  for (const p of pts.slice().sort((a, b) => order[a.kind] - order[b.kind])) {
+    if (p.lo !== undefined) whisk += `<line x1="${p.px}" x2="${p.px}" y1="${Y(p.lo)}" y2="${Y(p.hi)}" stroke="${VIZ[p.kind]}" stroke-opacity=".5"/>`;
+    if (p.r.id === S.sel) marks += `<circle cx="${p.px}" cy="${p.py}" r="10" fill="none" stroke="${VIZ.ink}" stroke-width="1.4"/>`;
+    marks += mark(p.kind, p.px, p.py, p.solid);
+  }
+  // Direct labels only for the points the story is about.
+  for (const p of pts.slice().sort((a, b) => order[b.kind] - order[a.kind])) {
+    const text = p.kind === "rec" ? `${p.r.name} recommended` : p.kind === "base" ? "Baseline" : p.r.id === S.sel ? p.r.name : "";
+    if (!text) continue;
+    const at = place(p, text);
+    labels += `<text x="${at.x}" y="${at.y}" text-anchor="${at.anchor}" fill="${VIZ.ink}" font-size="11.5" stroke="${VIZ.surface}" stroke-width="3" paint-order="stroke">${esc(text)}</text>`;
+  }
+  CHARTS[idx] = { W, pts: pts.map((p) => ({ id: p.r.id, x: p.px, y: p.py })) };
+  const better = sp.objective.direction === "minimize" ? "lower is better" : "higher is better";
+  const svg = `<svg viewBox="0 0 ${W} ${H}" data-ch="${idx}" font-size="10.5" fill="${VIZ.muted}" role="img" aria-label="${METRIC_LABEL[metric]} against ${METRIC_LABEL[obj]} for every variation">
+    ${g}${lim}${whisk}${marks}${labels}
+    <text x="4" y="12" fill="${VIZ.ink2}">${AXIS_LABEL[metric]}</text><text x="${W - m.r}" y="${H - 7}" text-anchor="end" fill="${VIZ.ink2}">${AXIS_LABEL[obj]}, ${better}</text>
+    <circle class="hl" r="10.5" fill="none" stroke="#fff" stroke-width="1.6" visibility="hidden"/></svg>`;
+  const sub = cons.length ? `Requirement ${cons.map((c) => `${opSym(c.op)} ${metricText(metric, c.value)}`).join(", ")}${metric === bind ? ", the binding constraint" : ""}` : "No direct limit in the spec; it is governed through the other requirements";
+  return figure(`${METRIC_LABEL[metric]} vs ${METRIC_LABEL[obj]}`, sub, svg);
+}
+// result.sensitivities as ranked diverging bars about zero.
+function sensChart() {
+  const sens = S.res.sensitivities || {}, keys = PARAMS.filter((p) => isNum(sens[p])).sort((a, b) => Math.abs(sens[b]) - Math.abs(sens[a]));
+  if (!keys.length) return "";
+  const W = 340, rowH = 25, top = 6, H = top + keys.length * rowH + 22, mid = 222, half = 74, bh = 14;
+  let g = `<line x1="${mid}" x2="${mid}" y1="${top}" y2="${H - 20}" stroke="${VIZ.axis}"/>`;
+  for (const [v, t] of [[-1, "−1"], [0, "0"], [1, "+1"]]) g += `<text x="${mid + v * half}" y="${H - 6}" text-anchor="middle">${t}</text>`;
+  keys.forEach((p, i) => {
+    const v = sens[p], len = Math.abs(v) * half, y = top + i * rowH + (rowH - bh) / 2, s = v >= 0 ? 1 : -1, rr = Math.min(4, len);
+    // Square at the zero line, rounded at the data end.
+    const bar = `M${mid} ${y}h${s * (len - rr)}a${rr} ${rr} 0 0 ${s > 0 ? 1 : 0} ${s * rr} ${rr}v${bh - 2 * rr}a${rr} ${rr} 0 0 ${s > 0 ? 1 : 0} ${-s * rr} ${rr}H${mid}z`;
+    g += `<g ${tipAttr({ head: p, sub: "result.sensitivities", rows: [["Correlation with " + GOAL_WORD[S.res.spec.objective.metric], sig(v, 3)]] })}><rect x="0" y="${top + i * rowH}" width="${W}" height="${rowH}" fill="transparent"/>
+      <text x="100" y="${y + bh - 3}" text-anchor="end" fill="${VIZ.ink2}" font-size="11.5">${PARAM_LABEL[p]}</text><path d="${bar}" fill="${v >= 0 ? VIZ.pos : VIZ.neg}"/>
+      <text x="${mid + s * (len + 5)}" y="${y + bh - 3}" text-anchor="${s > 0 ? "start" : "end"}" fill="${VIZ.ink}" font-size="11">${v > 0 ? "+" : ""}${sig(v, 2).replace("-", "−")}</text></g>`;
+  });
+  const obj = GOAL_WORD[S.res.spec.objective.metric];
+  const svg = `<svg viewBox="0 0 ${W} ${H}" font-size="10.5" fill="${VIZ.muted}" role="img" aria-label="Sensitivity of ${obj} to each dimension">${g}</svg>`;
+  const keyBox = (c, t) => `<span class="key"><i class="sw" style="background:${c}"></i>${t}</span>`;
+  return figure(`What drives ${obj}`, `Correlation of each dimension with ${obj} across the shortlist`, `<div class="legend">${keyBox(VIZ.pos, obj + " rises with the dimension")}${keyBox(VIZ.neg, obj + " falls")}</div>` + svg);
+}
+// Baseline against the chosen design inside each search range, one row per dimension on its own scale.
+function rangeChart() {
+  const res = S.res, refV = res.recommended || res.finalists[0] || null, refRow = refV ? S.rows.find((r) => r.id === refV.design_id) : null;
+  const ref = refRow && isVerified(refRow) ? refRow : null, kind = ref ? rowKind(ref) : "ok";
+  const W = 340, rowH = 36, top = 4, pars = res.spec.parameters, H = top + pars.length * rowH, x0 = 118, x1 = W - 16;
+  let g = "";
+  pars.forEach((p, i) => {
+    const y = top + i * rowH + 12, pos = (v) => p.high_mm === p.low_mm ? 0.5 : Math.max(0, Math.min(1, (v - p.low_mm) / (p.high_mm - p.low_mm)));
+    const bx = x0 + pos(res.baseline.design[p.name]) * (x1 - x0), rx = ref ? x0 + pos(ref.ver.design[p.name]) * (x1 - x0) : null;
+    const rows = [["Range", `${sig(p.low_mm / 1000)} to ${U.mm(p.high_mm)}`], ["Baseline", U.mm(res.baseline.design[p.name])]];
+    if (ref) rows.push([ref.name, U.mm(ref.ver.design[p.name])]);
+    g += `<g ${tipAttr({ head: p.name, sub: "study spec range", rows })}><rect x="0" y="${top + i * rowH}" width="${W}" height="${rowH}" fill="transparent"/>
+      <text x="104" y="${y + 4}" text-anchor="end" fill="${VIZ.ink2}" font-size="11.5">${PARAM_LABEL[p.name]}</text>
+      <rect x="${x0}" y="${y - 2}" width="${x1 - x0}" height="4" rx="2" fill="#3a3a37"/>
+      <text x="${x0}" y="${y + 17}">${sig(p.low_mm / 1000)}</text><text x="${x1}" y="${y + 17}" text-anchor="end">${U.mm(p.high_mm)}</text>
+      ${ref ? `<line x1="${bx}" x2="${rx}" y1="${y}" y2="${y}" stroke="${VIZ[kind]}" stroke-width="2" stroke-opacity=".55"/>` : ""}
+      ${mark("base", bx, y, true)}${ref ? mark(kind, rx, y, true) : ""}</g>`;
+  });
+  const svg = `<svg viewBox="0 0 ${W} ${H}" font-size="10" fill="${VIZ.muted}" role="img" aria-label="Baseline and chosen design within each search range">${g}</svg>`;
+  const what = ref ? (res.recommended ? `${ref.name}, recommended` : `${ref.name}, top finalist`) : "";
+  return figure("Where the design sits in each search range", ref ? `Baseline to ${what}; a marker at either end is pressing on that bound` : "Baseline only until a design is verified", svg);
+}
+function problemText() {
+  const sp = S.res.spec, dir = sp.objective.direction.charAt(0).toUpperCase() + sp.objective.direction.slice(1);
+  return `${dir} ${GOAL_WORD[sp.objective.metric]} subject to ${sp.constraints.map((c) => `${SHORT_LABEL[c.metric].toLowerCase()} ${opSym(c.op)} ${metricText(c.metric, c.value)}`).join(" and ")}.`;
+}
+function renderGraphs() {
+  const el = $("graphs");
+  if (el.hidden) return;
+  hideTip();
+  if (!S.res) { el.innerHTML = '<div class="empty">No result loaded.</div>'; return; }
+  const sp = S.res.spec, rows = [S.baseRow, ...S.rows.filter((r) => r.show !== "none")];
+  const bind = S.res.binding_constraint ? S.res.binding_constraint.split(" ")[0] : null;
+  // Binding constraint first, then the other requirements, then monitors without a limit.
+  const rank = (m) => m === bind ? 0 : sp.constraints.some((c) => c.metric === m) ? 1 : 2;
+  const metrics = METRICS.filter((m) => m !== sp.objective.metric).sort((a, b) => rank(a) - rank(b));
+  CHARTS.length = 0;
+  const key = (kind, solid, label) => `<span class="key"><svg viewBox="0 0 20 20" width="17" height="17">${mark(kind, 10, 10, solid)}</svg>${label}</span>`;
+  el.innerHTML = `<p class="goal">${esc(problemText())}</p>
+    <div class="legend">${key("rec", true, "Recommended")}${key("ok", true, "Meets every requirement")}${key("fail", true, "Fails a requirement")}${key("base", true, "Baseline")}${key("ok", false, "Hollow or thin: predicted, with its p05 to p95 band")}<span class="key"><i class="wash"></i>Shaded: outside the requirement</span></div>
+    <div class="charts">${metrics.map((m, i) => scatterChart(m, rows, i, bind)).join("")}${sensChart()}${rangeChart()}</div>
+    <p class="vnote">Each point is a row of the Variations table, which lists the same values. Hover for a point's numbers, click to select it. Axis ticks are scale marks only.</p>`;
+}
+// Tooltip built with textContent, since names and ids come from the data files.
+function showTip(e, t) {
+  const tip = $("tip");
+  tip.textContent = "";
+  const head = document.createElement("b"); head.textContent = t.head; tip.append(head);
+  if (t.sub) { const s = document.createElement("span"); s.className = "tsub"; s.textContent = t.sub; tip.append(s); }
+  for (const [label, value] of t.rows) {
+    const row = document.createElement("div"), l = document.createElement("span"), v = document.createElement("strong");
+    l.textContent = label; v.textContent = value; row.append(l, v); tip.append(row);
+  }
+  tip.hidden = false;
+  tip.style.left = Math.max(4, Math.min(innerWidth - tip.offsetWidth - 6, e.clientX + 14)) + "px";
+  tip.style.top = (e.clientY + 18 + tip.offsetHeight > innerHeight ? e.clientY - tip.offsetHeight - 10 : e.clientY + 18) + "px";
+}
+function hideTip() { $("tip").hidden = true; for (const h of document.querySelectorAll("#graphs .hl")) h.setAttribute("visibility", "hidden"); }
+function rowTip(r) {
+  const v = isVerified(r);
+  return { head: r.name, sub: `${r.id}, ${v ? "verified by " + r.ver.source : "predicted"}`, rows: METRICS.map((m) => [METRIC_LABEL[m], v ? metricText(m, r.ver[m]) : metricText(m, m === "mass_kg" ? r.cand.mass_kg : r.cand[m].value)]).concat([["Meets every requirement", rowFeasible(r) ? "Yes" : "No"]]) };
+}
+// Nearest point within reach, so the pointer never has to land on an 8 px dot.
+function nearest(e) {
+  const svg = e.target.closest("svg[data-ch]"), ch = svg && CHARTS[svg.dataset.ch];
+  if (!ch) return null;
+  const b = svg.getBoundingClientRect(), k = ch.W / b.width, sx = (e.clientX - b.left) * k, sy = (e.clientY - b.top) * k;
+  let best = null, bd = 30 * 30;
+  for (const p of ch.pts) { const dd = (p.x - sx) ** 2 + (p.y - sy) ** 2; if (dd < bd) { bd = dd; best = p; } }
+  return best && { svg, p: best };
+}
+$("graphs").addEventListener("pointermove", (e) => {
+  const hit = nearest(e), bar = e.target.closest("[data-tip]");
+  hideTip();
+  if (hit) {
+    const hl = hit.svg.querySelector(".hl");
+    hl.setAttribute("cx", hit.p.x); hl.setAttribute("cy", hit.p.y); hl.setAttribute("visibility", "visible");
+    showTip(e, rowTip(rowById(hit.p.id)));
+  } else if (bar) showTip(e, JSON.parse(bar.dataset.tip));
+});
+$("graphs").addEventListener("pointerleave", hideTip);
+$("graphs").addEventListener("click", (e) => { const hit = nearest(e); if (hit) select(hit.p.id); });
+
+// ---- Recommendations tab: the result restated, the mechanics behind it, and where to go next.
+// The closed form is the first-order beam model in contracts/fakes.py (beam_formula); keep the constants in step with it.
+function mechanics(spec, bindMetric) {
+  const mi = (s) => `<mi>${s}</mi>`, mn = (s) => `<mn>${s}</mn>`, mo = (s) => `<mo>${s}</mo>`, mt = (s) => `<mtext>${s}</mtext>`;
+  const row = (...a) => `<mrow>${a.join("")}</mrow>`, tm = (...a) => row(a.join('<mspace width="0.14em"/>')), frac = (a, b) => `<mfrac displaystyle="true">${a}${b}</mfrac>`;
+  const sub = (a, b) => `<msub>${a}${b}</msub>`, sup = (a, b) => `<msup>${a}${b}</msup>`, par = (...a) => row(mo("("), ...a, mo(")"));
+  const gap = '<mspace width="0.9em"/>', eq = mo("="), ge = mo("≥"), le = mo("≤"), imp = gap + mo("⇒") + gap;
+  const t = mi("t"), L = mi("L"), w = mi("w"), d = mi("d"), r = mi("r"), F = mi("F"), E = mi("E"), Mm = mi("M");
+  const Lw = par(L, mo("−"), w), Kt = sub(mi("K"), mi("t")), smax = sub(mi("σ"), mt("max")), sy = sub(mi("σ"), mi("y")), dmax = sub(mi("δ"), mt("max"));
+  const nreq = sub(mi("n"), mt("req")), dlim = sub(mi("δ"), mt("lim")), slim = sub(mi("σ"), mt("lim")), ts = sub(t, mi("σ")), td = sub(t, mi("δ")), tlow = sub(t, mt("low")), tstar = sup(t, mo("*")), mstar = sup(mi("m"), mo("*"));
+  const area = row(mo("["), tm(w, mi("H")), mo("+"), tm(Lw, w), mo("−"), frac(tm(mi("π"), sup(d, mn(2))), mn(4)), mo("]"));
+  const texArea = "\\left[\\,wH + (L-w)\\,w - \\frac{\\pi d^{2}}{4}\\right]";
+  const SYM = { mass_kg: [mi("m"), "m"], max_stress_mpa: [smax, "\\sigma_{\\max}"], max_disp_mm: [dmax, "\\delta_{\\max}"], safety_factor: [mi("n"), "n"] };
+  const texNum = (metric, v) => { const [num, unit] = metricText(metric, v).split(" "); return num.replace(/e(-?\d+)/, "\\times 10^{$1}") + (unit ? `\\ \\mathrm{${unit}}` : ""); };
+  const eqs = [], add = (cap, tex, ml, bind) => eqs.push({ cap, tex, ml: [].concat(ml), bind: !!bind });
+  const obj = spec.objective.metric, opt = spec.objective.direction === "minimize" ? "min" : "max";
+  const has = (metric, op) => spec.constraints.find((c) => c.metric === metric && c.op === op);
+
+  add("The design problem, as written in the study spec",
+    `\\${opt}_{t,\\,L,\\,w,\\,d,\\,r}\\; ${SYM[obj][1]} \\quad \\text{subject to} \\quad ` + spec.constraints.map((c) => `${SYM[c.metric][1]} ${c.op === ">=" ? "\\ge" : "\\le"} ${texNum(c.metric, c.value)}`).join(",\\; "),
+    [`<munder>${mo(opt)}${row(t, mo(","), L, mo(","), w, mo(","), d, mo(","), r)}</munder><mspace width="0.3em"/>${SYM[obj][0]}`,
+      mt("subject to") + gap + spec.constraints.map((c) => row(SYM[c.metric][0], c.op === ">=" ? ge : le, mt(metricText(c.metric, c.value)))).join(mo(",") + '<mspace width="0.5em"/>')]);
+  add("Bending moment at the fillet, with the load applied at the hole", "M = F\\,(L - w)", Mm + eq + tm(F, Lw));
+  add("Stress concentration at the fillet", "K_t = 1 + 0.72\\left(\\frac{w}{2r}\\right)^{0.675}", Kt + eq + mn(1) + mo("+") + tm(mn("0.72"), sup(par(frac(w, tm(mn(2), r))), mn("0.675"))));
+  add("Peak Von Mises stress, with section modulus Z = t w² / 6", "\\sigma_{\\max} = K_t\\,\\frac{M}{Z} = \\frac{6\\,K_t\\,F\\,(L-w)}{t\\,w^{2}}",
+    smax + eq + tm(Kt, frac(Mm, mi("Z"))) + eq + frac(tm(mn(6), Kt, F, Lw), tm(t, sup(w, mn(2)))));
+  add("Factor of safety against yield", "n = \\frac{\\sigma_y}{\\sigma_{\\max}}", mi("n") + eq + frac(sy, smax));
+  add("Tip deflection, with I = t w³ / 12 and a 1.65 allowance for corner rotation", "\\delta_{\\max} = 1.65\\,\\frac{F\\,(L-w)^{3}}{3\\,E\\,I} = \\frac{6.6\\,F\\,(L-w)^{3}}{E\\,t\\,w^{3}}",
+    dmax + eq + tm(mn("1.65"), frac(tm(F, sup(Lw, mn(3))), tm(mn(3), E, mi("I")))) + eq + frac(tm(mn("6.6"), F, sup(Lw, mn(3))), tm(E, t, sup(w, mn(3)))));
+  add("Mass of the L-plate less the hole", `m = \\rho\\,t${texArea}`, mi("m") + eq + tm(mi("ρ"), t, area));
+
+  // Rearranged for thickness; only meaningful when the objective is to minimise mass.
+  const derived = [];
+  if (obj === "mass_kg" && opt === "min") {
+    const terms = [], texTerms = [];
+    if (has("safety_factor", ">=")) {
+      derived.push({ cap: "Strength requirement, solved for thickness", bind: bindMetric === "safety_factor", ml: [mi("n") + ge + nreq + imp + t + ge + ts + eq + frac(tm(mn(6), nreq, Kt, F, Lw), tm(sy, sup(w, mn(2))))],
+        tex: "n \\ge n_{\\mathrm{req}} \\;\\Rightarrow\\; t \\ge t_{\\sigma} = \\frac{6\\,n_{\\mathrm{req}}\\,K_t\\,F\\,(L-w)}{\\sigma_y\\,w^{2}}" });
+      terms.push(ts); texTerms.push("t_{\\sigma}");
+    } else if (has("max_stress_mpa", "<=")) {
+      derived.push({ cap: "Stress limit, solved for thickness", bind: bindMetric === "max_stress_mpa", ml: [smax + le + slim + imp + t + ge + ts + eq + frac(tm(mn(6), Kt, F, Lw), tm(slim, sup(w, mn(2))))],
+        tex: "\\sigma_{\\max} \\le \\sigma_{\\mathrm{lim}} \\;\\Rightarrow\\; t \\ge t_{\\sigma} = \\frac{6\\,K_t\\,F\\,(L-w)}{\\sigma_{\\mathrm{lim}}\\,w^{2}}" });
+      terms.push(ts); texTerms.push("t_{\\sigma}");
+    }
+    if (has("max_disp_mm", "<=")) {
+      derived.push({ cap: "Stiffness requirement, solved for thickness", bind: bindMetric === "max_disp_mm", ml: [dmax + le + dlim + imp + t + ge + td + eq + frac(tm(mn("6.6"), F, sup(Lw, mn(3))), tm(E, sup(w, mn(3)), dlim))],
+        tex: "\\delta_{\\max} \\le \\delta_{\\mathrm{lim}} \\;\\Rightarrow\\; t \\ge t_{\\delta} = \\frac{6.6\\,F\\,(L-w)^{3}}{E\\,w^{3}\\,\\delta_{\\mathrm{lim}}}" });
+      terms.push(td); texTerms.push("t_{\\delta}");
+    }
+    terms.push(tlow); texTerms.push("t_{\\mathrm{low}}");
+    derived.push({ cap: "Mass is linear in t, so the lightest feasible plate is the thinnest one every requirement allows", ml: [tstar + eq + mo("max") + par(terms.join(mo(",")))], tex: `t^{*} = \\max\\left(${texTerms.join(",\\, ")}\\right)` });
+    const strength = bindMetric === "safety_factor" || bindMetric === "max_stress_mpa";
+    if (strength) derived.push({ cap: "With strength governing, put t* into the mass. The optimum gets lighter as the arm widens and the fillet grows, and heavier as the flange lengthens", bind: true,
+      ml: [mstar + mo("∝") + tm(frac(tm(Kt, Lw), sup(w, mn(2))), area)], tex: `m^{*} \\propto \\frac{K_t\\,(L-w)}{w^{2}}${texArea}` });
+    if (bindMetric === "max_disp_mm") derived.push({ cap: "With stiffness governing, put t* into the mass. The optimum gets lighter quickly as the arm widens and heavier as the flange lengthens", bind: true,
+      ml: [mstar + mo("∝") + tm(frac(sup(Lw, mn(3)), sup(w, mn(3))), area)], tex: `m^{*} \\propto \\frac{(L-w)^{3}}{w^{3}}${texArea}` });
+  }
+  // Symbols, with the values the spec fixes.
+  const im = (ml) => `<math>${ml}</math>`, where = [];
+  where.push([im(row(t, mo(","), L, mo(","), w, mo(","), d, mo(","), r)), "thickness, flange length, arm width, hole diameter, fillet radius"]);
+  where.push([im(F), `load, ${U.n(spec.load.force_n)} at ${spec.load.angle_deg}°`]);
+  const sf = has("safety_factor", ">="), dl = has("max_disp_mm", "<="), sl = has("max_stress_mpa", "<="), th = spec.parameters.find((p) => p.name === "thickness_mm");
+  if (sf) where.push([im(nreq), `required factor of safety, ${U.sf(sf.value)}`]);
+  if (sl) where.push([im(slim), `stress limit, ${U.mpa(sl.value)}`]);
+  if (dl) where.push([im(dlim), `deflection limit, ${U.mm(dl.value)}`]);
+  if (th) where.push([im(tlow), `lower bound of the thickness range, ${U.mm(th.low_mm)}`]);
+  where.push([im(mi("H")), `mounting leg height, fixed at ${U.mm(MOUNT_HEIGHT_MM)} in this bracket family`]);
+  where.push([im(row(sy, mo(","), E, mo(","), mi("ρ"))), `yield strength, Young's modulus and density of ${spec.material_key}`]);
+  return { eqs, derived, where };
+}
+// Next steps, each one a template filled with fields of result.json and prediction.json.
+function avenues(refV, refName) {
+  const res = S.res, sp = res.spec, rec = res.recommended, out = [], objWord = GOAL_WORD[sp.objective.metric];
+  const bind = res.binding_constraint, bindMetric = bind ? bind.split(" ")[0] : null;
+  const against = (c, v) => `${SHORT_LABEL[c.metric].toLowerCase()} is ${metricText(c.metric, v[c.metric])} against ${opSym(c.op)} ${metricText(c.metric, c.value)}`;
+  const violates = (c, v) => v.violated.some((s) => s.startsWith(c.metric + " "));
+  if (!rec && refV) {
+    const gaps = sp.constraints.filter((c) => violates(c, refV)).map((c) => against(c, refV));
+    out.push(["Close the gap before optimising", `No design passes. On the top finalist ${refName}, ${gaps.join(" and ") || "a requirement is violated"}. Stress scales with F (L − w) / (t w²) and deflection with F (L − w)³ / (t w³), so nothing inside the current ranges closes it. Raise the upper bounds on thickness and arm width, shorten the flange, choose a higher-yield material than ${sp.material_key}, or revisit the ${U.n(sp.load.force_n)} load case.`]);
+  }
+  if (rec && bindMetric === "max_disp_mm") out.push(["Work on the binding constraint", `${bind} is what stops the plate getting thinner. Deflection falls with w³ and rises with (L − w)³, so a wider arm or a shorter flange buys stiffness that can be taken back out as thickness.`]);
+  else if (rec && bindMetric) out.push(["Work on the binding constraint", `${bind} is what stops the plate getting thinner. Anything that lowers stress at the fillet buys margin that can be taken back out as thickness: a wider arm (stress falls with w²), a shorter flange, or a larger fillet radius (lower K_t).`]);
+  if (refV) {
+    // A design within a tenth of the range from a bound is treated as pressing on it.
+    const ends = sp.parameters.filter((p) => p.high_mm > p.low_mm).map((p) => {
+      const v = refV.design[p.name], pos = (v - p.low_mm) / (p.high_mm - p.low_mm);
+      return pos <= 0.1 ? `${p.name} is at the low end (${U.mm(v)}, bound ${U.mm(p.low_mm)})` : pos >= 0.9 ? `${p.name} is at the high end (${U.mm(v)}, bound ${U.mm(p.high_mm)})` : null;
+    }).filter(Boolean);
+    if (ends.length) out.push(["Widen the bounds the design is pressing on", `On ${refName}, ${ends.join("; ")}. If manufacturing allows, extend ${ends.length > 1 ? "those bounds" : "that bound"} and rerun: the optimum may lie beyond ${ends.length > 1 ? "them" : "it"}.`]);
+  }
+  if (rec) {
+    const parts = sp.constraints.map((c) => against(c, rec) + (c.metric === bindMetric ? " (binding)" : ""));
+    out.push(["Spend the remaining margin", `On ${refName}, ${parts.join("; ")}. The search sampled the ranges at random, so margin is left over. A denser sample around ${refName} can trade it for ${objWord}, and any requirement far from its limit is not shaping the design.`]);
+  }
+  const sens = res.sensitivities || {}, keys = PARAMS.filter((p) => isNum(sens[p])).sort((a, b) => Math.abs(sens[b]) - Math.abs(sens[a]));
+  if (keys.length) {
+    const say = (p) => `${sens[p] >= 0 ? "rises" : "falls"} with ${p} (${sig(sens[p], 2)})`;
+    const weak = keys.filter((p) => Math.abs(sens[p]) < 0.15);
+    out.push(["Focus the next study on the dimensions that matter", `Across the shortlist, ${objWord} ${keys.slice(0, 2).map(say).join(" and ")}.` + (weak.length ? ` ${weak.join(" and ")} barely ${weak.length > 1 ? "move" : "moves"} it (${weak.map((p) => sig(sens[p], 2)).join(", ")}), so hold ${weak.length > 1 ? "them" : "it"} fixed to shrink the search.` : "")]);
+  }
+  const next = S.rows.filter((r) => !r.ver && r.cand.feasible_p95).slice(0, 3).map((r) => r.name);
+  if (next.length) out.push(["Verify more candidates", `${next.join(", ")} ${next.length > 1 ? "are" : "is"} next in the model's ranking and still predicted feasible, but not yet solved. Only ${res.finalists.length} of ${S.rows.length} rows are verified.`]);
+  const outside = S.rows.filter((r) => r.cand && !r.cand.in_training_range);
+  if (outside.length) out.push(["Add training data where the model extrapolates", `${outside.length} shortlisted designs sit outside the training range${outside.some((r) => r.isRec) ? ", the recommended one among them" : ""}. Add solver runs there before trusting those predictions.`]);
+  const srcs = [...new Set(res.finalists.map((f) => f.source).concat(res.baseline.source))];
+  if (isFake(S.pred.model_name) || srcs.some(isFake)) out.push(["Replace the stand-ins", `These numbers come from ${S.pred.model_name} for prediction and ${srcs.join(", ")} for verification. Rerun with the trained model and a real solve before acting on them.`]);
+  return out;
+}
+function renderRecs() {
+  const el = $("recs");
+  if (el.hidden) return;
+  if (!S.res) { el.innerHTML = '<div class="empty">No result loaded.</div>'; return; }
+  if (S.shown < S.msgs.length) { el.innerHTML = '<div class="empty">The agent is still working. Recommendations appear when the run finishes.</div>'; return; }
+  const res = S.res, sp = res.spec, rec = res.recommended, base = res.baseline;
+  const refV = rec || res.finalists[0] || null, refRow = refV ? S.rows.find((r) => r.id === refV.design_id) : null, refName = refRow ? refRow.name : "";
+  const bindMetric = res.binding_constraint ? res.binding_constraint.split(" ")[0] : null;
+  const need = (m) => sp.constraints.filter((c) => c.metric === m).map((c) => `${opSym(c.op)} ${metricText(m, c.value)}`).concat(sp.objective.metric === m ? [sp.objective.direction] : []).join(", ");
+  const bad = (m, v) => v.violated.some((s) => s.startsWith(m + " "));
+  const refHead = rec ? refName : refName ? refName + " (top finalist)" : "";
+  const monitors = `<table class="rt"><thead><tr><th>Monitor</th><th>Requirement</th><th>Baseline</th>${refV ? `<th>${esc(refHead)}</th>` : ""}</tr></thead><tbody>${METRICS.map((m) =>
+    `<tr${m === bindMetric ? ' class="bindrow"' : ""}><td>${SHORT_LABEL[m]}</td><td>${need(m)}</td><td class="${bad(m, base) ? "no" : ""}">${metricText(m, base[m])}</td>${refV ? `<td class="${bad(m, refV) ? "no" : ""}">${metricText(m, refV[m])}</td>` : ""}</tr>`).join("")}</tbody></table>`;
+  const dims = refV ? `<table class="rt"><thead><tr><th>Dimension</th><th>Baseline</th><th>${esc(refName)}</th><th>Move</th></tr></thead><tbody>${PARAMS.map((p) => {
+    const a = base.design[p], b = refV.design[p];
+    return `<tr><td>${PARAM_LABEL[p]}</td><td>${U.mm(a)}</td><td>${U.mm(b)}</td><td>${b > a ? "▲ increase" : b < a ? "▼ decrease" : "keep"}</td></tr>`;
+  }).join("")}</tbody></table>` : "";
+  const mech = mechanics(sp, bindMetric);
+  S.tex = mech.eqs.concat(mech.derived).map((e) => e.tex);
+  const eqHtml = (e) => `<div class="eq${e.bind ? " bind" : ""}"><div class="cap">${esc(e.cap)}${e.bind ? ' <span class="chip bindchip">binding</span>' : ""}</div>${e.ml.map((m) => `<math display="block">${m}</math>`).join("")}<code>${esc(e.tex)}</code></div>`;
+  const steps = avenues(refV, refName);
+  el.innerHTML = `
+    <h3>${rec ? `Recommended design ${esc(refName)}` : "No feasible design"} ${rec ? chip("recommended") : ""}</h3>
+    <p>${esc(res.explanation)}</p>
+    ${monitors}${dims}
+    ${res.binding_constraint ? `<p class="mutedp">Highlighted row: the binding constraint, ${esc(res.binding_constraint)}.</p>` : ""}
+    <h3>Mechanics behind the optimum <span class="acts"><button type="button" class="lnk" data-act="tex">LaTeX source</button><button type="button" class="lnk" data-act="copytex">Copy LaTeX</button></span></h3>
+    <p class="mutedp">First-order beam model, the closed form used by the fake predictor and solver in contracts/fakes.py. The trained model and the solver supply the numbers; these relations explain which way each dimension has to move.</p>
+    ${mech.eqs.map(eqHtml).join("")}
+    ${mech.derived.length ? `<h4>From the requirements to the optimum</h4>${mech.derived.map(eqHtml).join("")}` : ""}
+    <table class="where"><tbody>${mech.where.map(([s, d]) => `<tr><td>${s}</td><td>${esc(d)}</td></tr>`).join("")}</tbody></table>
+    <h3>Avenues for the next iteration</h3>
+    <ol class="steps">${steps.map(([h, t]) => `<li><b>${esc(h)}.</b> ${esc(t)}</li>`).join("")}</ol>`;
+}
+function showATab(tab) {
+  for (const b of document.querySelectorAll("#winAgent .wtabs .t")) b.setAttribute("aria-selected", String(b.dataset.atab === tab));
+  $("log").hidden = tab !== "chat"; $("graphs").hidden = tab !== "graphs"; $("recs").hidden = tab !== "recs";
+  hideTip();
+  if (tab === "graphs") renderGraphs();
+  if (tab === "recs") renderRecs();
+  if (tab === "chat") $("log").scrollTop = $("log").scrollHeight;
+}
+async function copyTex(btn) {
+  const text = (S.tex || []).join("\n");
+  try { await navigator.clipboard.writeText(text); btn.textContent = "Copied"; }
+  catch (e) { $("recs").classList.add("show-tex"); btn.textContent = "Shown below"; } // clipboard blocked: reveal the source instead
+  setTimeout(() => { btn.textContent = "Copy LaTeX"; }, 1600);
+}
+
+// ---- Scene: the L-plate extruded by thickness, drawn with a small perspective camera.
+const VIEW = { yaw: -0.5, pitch: 0.34, dist: 620, cx: 50, cy: 26, floor: -13 };
+function camera() {
+  const cy = Math.cos(VIEW.yaw), sy = Math.sin(VIEW.yaw), cp = Math.cos(VIEW.pitch), sp = Math.sin(VIEW.pitch);
+  // Yaw about the vertical axis, then pitch toward the viewer.
+  const rot = (x, y, z) => { const x1 = x * cy + z * sy, z1 = -x * sy + z * cy; return [x1, y * cp - z1 * sp, y * sp + z1 * cp]; };
+  const pt = (x, y, z) => { const [a, b, c] = rot(x - VIEW.cx, y - VIEW.cy, z); const k = VIEW.dist / (VIEW.dist - c); return [a * k, -b * k, c]; };
+  return { rot, pt };
+}
+const poly = (pts) => pts.map((p) => p[0].toFixed(2) + "," + p[1].toFixed(2)).join(" ");
+function renderScene() {
+  const box = $("scenebox"), r = S.res ? rowById(S.sel) || S.baseRow : null;
+  if (!r) { box.innerHTML = ""; return; }
+  const { rot, pt } = camera();
   const d = (r.ver || r.cand).design, load = S.res.spec.load;
   const t = d.thickness_mm, L = d.flange_length_mm, w = d.arm_width_mm, hole = d.hole_diameter_mm;
   const H = MOUNT_HEIGHT_MM, rad = Math.max(0, Math.min(d.fillet_radius_mm, H - w, L - w)); // clamp so the arc always fits
-  // Profile in mm with y up, written to screen coordinates by negating y.
-  const profile = `M0,0 L${L},0 L${L},${-w} L${w + rad},${-w} A${rad},${rad} 0 0 1 ${w},${-(w + rad)} L${w},${-H} L0,${-H} Z`;
-  const dx = t * 0.7, dy = -t * 0.45, steps = 14; // depth offset of the back face
-  let slabs = "";
-  for (let i = steps; i >= 1; i--) slabs += `<path d="${profile}" transform="translate(${(dx * i / steps).toFixed(2)},${(dy * i / steps).toFixed(2)})" fill="#4d5661" stroke="#4d5661" stroke-width=".4"/>`;
-  const hx = L - w / 2, hy = -w / 2; // hole centred across the arm near the free end
+  // Profile in mm, counter-clockwise with y up; the fillet arc runs from the arm to the leg.
+  const prof = [[0, 0], [L, 0], [L, w]];
+  for (let i = 0; i <= 12; i++) { const a = Math.PI * (1.5 - 0.5 * i / 12); prof.push([w + rad + rad * Math.cos(a), w + rad + rad * Math.sin(a)]); }
+  prof.push([w, H], [0, H]);
+  // Side faces: keep the ones whose normal turns toward the camera, shade by a fixed light.
+  const sides = [];
+  prof.forEach((p, i) => {
+    const q = prof[(i + 1) % prof.length], dx = q[0] - p[0], dy = q[1] - p[1], len = Math.hypot(dx, dy);
+    if (len < 1e-6) return;
+    const nx = dy / len, ny = -dx / len;
+    if (rot(nx, ny, 0)[2] <= 0) return;
+    const shade = 0.5 + 0.48 * Math.max(0, nx * 0.25 + ny * 0.97);
+    const quad = [pt(p[0], p[1], 0), pt(q[0], q[1], 0), pt(q[0], q[1], -t), pt(p[0], p[1], -t)];
+    sides.push({ quad, z: quad.reduce((s, v) => s + v[2], 0) / 4, col: `rgb(${Math.round(196 * shade)},${Math.round(204 * shade)},${Math.round(214 * shade)})` });
+  });
+  sides.sort((a, b) => a.z - b.z); // far faces first
+  const front = prof.map((p) => pt(p[0], p[1], 0));
+  const hx = L - w / 2, hy = w / 2, hr = hole / 2; // hole centred across the arm near the free end
+  const ring = (z) => Array.from({ length: 32 }, (_, i) => pt(hx + hr * Math.cos(i * Math.PI / 16), hy + hr * Math.sin(i * Math.PI / 16), z));
+  // Floor grid with the two in-plane axes, like an empty modelling scene.
   let grid = "";
-  for (let u = -60; u <= 200; u += 10) grid += `<line x1="${u}" y1="-60" x2="${u}" y2="60"/>`;
-  for (let v = -60; v <= 60; v += 10) grid += `<line x1="-60" y1="${v}" x2="200" y2="${v}"/>`;
-  // Force arrow follows load.angle_deg; -90 points straight down.
-  const a = load.angle_deg * Math.PI / 180, ux = Math.cos(a), uy = -Math.sin(a);
-  const tip = [hx - ux * (hole / 2 + 1.5), hy - uy * (hole / 2 + 1.5)], tail = [tip[0] - ux * 24, tip[1] - uy * 24];
+  const seg = (a, b) => `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}"/>`;
+  for (let x = -90; x <= 190; x += 10) grid += seg(pt(x, VIEW.floor, -130), pt(x, VIEW.floor, 110));
+  for (let z = -130; z <= 110; z += 10) grid += seg(pt(-90, VIEW.floor, z), pt(190, VIEW.floor, z));
+  const fc = pt(VIEW.cx, VIEW.floor, -10);
+  // Force arrow follows load.angle_deg; -90 points straight down onto the hole.
+  const a = load.angle_deg * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a);
+  const tip = pt(hx - ux * (hr + 1.5), hy - uy * (hr + 1.5), 0), tail = pt(hx - ux * (hr + 27), hy - uy * (hr + 27), 0);
+  const al = Math.hypot(tip[0] - tail[0], tip[1] - tail[1]) || 1, vx = (tip[0] - tail[0]) / al, vy = (tip[1] - tail[1]) / al;
   let hatch = "";
-  for (let y = 0; y <= H; y += 6) hatch += `<line x1="0" y1="${-y}" x2="-5" y2="${-y + 4}"/>`;
-  const hot = r.isRec && r.show === "verified";
-  const fx = w + rad * 0.29, fy = -(w + rad * 0.29); // midpoint of the fillet arc
-  vp.innerHTML = `
-  <svg class="scene" viewBox="-32 -84 192 112" preserveAspectRatio="xMidYMid meet" role="img" aria-label="L-bracket for ${esc(r.name)}">
+  for (let y = 0; y <= H; y += 6) hatch += seg(pt(0, y, 0), pt(-5, y - 4, 0));
+  const hot = r.isRec && isVerified(r);
+  const f = pt(w + rad * 0.29, w + rad * 0.29, 0); // midpoint of the fillet arc
+  box.innerHTML = `<svg viewBox="-72 -52 184 100" preserveAspectRatio="xMidYMid meet" role="img" aria-label="L-bracket for ${esc(r.name)}">
     <defs>
-      <clipPath id="face"><path d="${profile}"/></clipPath>
-      <clipPath id="bore"><circle cx="${hx}" cy="${hy}" r="${hole / 2}"/></clipPath>
-      <radialGradient id="hotspot"><stop offset="0" stop-color="#ff7a3c" stop-opacity=".95"/><stop offset=".45" stop-color="#e2a93b" stop-opacity=".5"/><stop offset="1" stop-color="#e2a93b" stop-opacity="0"/></radialGradient>
-      <radialGradient id="fade"><stop offset=".3" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient>
-      <mask id="floorMask"><ellipse cx="64" cy="4" rx="110" ry="40" fill="url(#fade)"/></mask>
+      <clipPath id="face"><polygon points="${poly(front)}"/></clipPath>
+      <clipPath id="bore"><polygon points="${poly(ring(0))}"/></clipPath>
+      <linearGradient id="steel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b3bcc7"/><stop offset="1" stop-color="#7f8994"/></linearGradient>
+      <radialGradient id="hotspot"><stop offset="0" stop-color="#ff5a2c" stop-opacity=".95"/><stop offset=".45" stop-color="#f2a531" stop-opacity=".55"/><stop offset="1" stop-color="#f2a531" stop-opacity="0"/></radialGradient>
+      <radialGradient id="fade"><stop offset=".25" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient>
+      <mask id="floorMask"><ellipse cx="${fc[0]}" cy="${fc[1]}" rx="150" ry="62" fill="url(#fade)"/></mask>
     </defs>
-    <g mask="url(#floorMask)"><g transform="matrix(1 0 -0.9 0.42 0 4)" stroke="#55606c" stroke-width=".25" opacity=".8">${grid}</g></g>
-    ${slabs}
-    <path d="${profile}" fill="#86919e" stroke="#aab4c0" stroke-width=".5"/>
-    ${hot ? `<circle cx="${fx}" cy="${fy}" r="${Math.max(rad, 5) * 1.9}" fill="url(#hotspot)" clip-path="url(#face)"/>` : ""}
-    <circle cx="${hx}" cy="${hy}" r="${hole / 2}" fill="#3b424b"/>
-    <circle cx="${hx + dx}" cy="${hy + dy}" r="${hole / 2}" fill="#1c2026" clip-path="url(#bore)"/>
-    <circle cx="${hx}" cy="${hy}" r="${hole / 2}" fill="none" stroke="#aab4c0" stroke-width=".5"/>
-    <g stroke="#4cc2b0" stroke-width=".7">${hatch}<line x1="0" y1="0" x2="0" y2="${-H}" stroke-width="1.2"/></g>
-    <text x="-8" y="${-H - 3}" fill="#4cc2b0" font-size="4.2" text-anchor="middle">Support</text>
-    <g stroke="#e2a93b" stroke-width="1.3" fill="#e2a93b">
-      <line x1="${tail[0]}" y1="${tail[1]}" x2="${tip[0] - ux * 4}" y2="${tip[1] - uy * 4}"/>
-      <polygon stroke="none" points="${tip[0]},${tip[1]} ${tip[0] - ux * 6 - uy * 2.6},${tip[1] - uy * 6 + ux * 2.6} ${tip[0] - ux * 6 + uy * 2.6},${tip[1] - uy * 6 - ux * 2.6}"/>
+    <g mask="url(#floorMask)">
+      <g stroke="#6a6a6a" stroke-width=".22">${grid}</g>
+      <g stroke-width=".55"><g stroke="#e5463c">${seg(pt(-90, VIEW.floor, 0), pt(190, VIEW.floor, 0))}</g><g stroke="#3ccf4e">${seg(pt(0, VIEW.floor, -130), pt(0, VIEW.floor, 110))}</g></g>
     </g>
-    <text x="${tail[0] + 3}" y="${tail[1] + 2}" fill="#e2a93b" font-size="4.6">${U.n(load.force_n)}</text>
-    ${hot ? `<line x1="${fx + 2}" y1="${fy - 2}" x2="${fx + 20}" y2="${fy - 22}" stroke="#ff9a5c" stroke-width=".4"/><text x="${fx + 21}" y="${fy - 23}" fill="#ff9a5c" font-size="4.2">stress hotspot at the fillet (illustrative)</text>` : ""}
-  </svg>
-  <div class="vp-label"><span class="name">${esc(r.name)}</span><span>${esc(r.id)}</span>${r.show === "none" ? "" : chip(r.show === "verified" && r.ver ? "verified" : "predicted")}${hot ? '<span class="chip verified">Recommended</span>' : ""}</div>
-  <table class="vp-dims">${PARAMS.map((p) => `<tr><td>${PARAM_LABEL[p]}</td><td>${U.mm(d[p])}</td></tr>`).join("")}</table>
-  <svg class="triad" viewBox="0 0 76 76" aria-hidden="true">
-    <circle cx="38" cy="38" r="36" fill="#0b0d10" opacity=".55"/>
-    <g stroke-width="2" font-size="10" font-weight="700">
-      <line x1="34" y1="44" x2="60" y2="44" stroke="#e2705d"/><text x="62" y="48" fill="#e2705d">X</text>
-      <line x1="34" y1="44" x2="34" y2="18" stroke="#5fbf77"/><text x="30" y="14" fill="#5fbf77">Y</text>
-      <line x1="34" y1="44" x2="20" y2="56" stroke="#5aa9e6"/><text x="10" y="66" fill="#5aa9e6">Z</text>
+    <polygon points="${poly(prof.map((p) => pt(p[0], p[1], -t)))}" fill="#3f454c"/>
+    ${sides.map((s) => `<polygon points="${poly(s.quad)}" fill="${s.col}" stroke="${s.col}" stroke-width=".25"/>`).join("")}
+    <polygon points="${poly(front)}" fill="url(#steel)" stroke="#d5dce4" stroke-width=".35" stroke-linejoin="round"/>
+    ${hot ? `<circle cx="${f[0]}" cy="${f[1]}" r="${Math.max(rad, 5) * 1.9}" fill="url(#hotspot)" clip-path="url(#face)"/>` : ""}
+    <polygon points="${poly(ring(0))}" fill="#555d67"/>
+    <polygon points="${poly(ring(-t))}" fill="#222" clip-path="url(#bore)"/>
+    <polygon points="${poly(ring(0))}" fill="none" stroke="#d5dce4" stroke-width=".35"/>
+    <g stroke="${PU}" stroke-width=".6">${hatch}</g><g stroke="${PU}" stroke-width="1.1">${seg(pt(0, 0, 0), pt(0, H, 0))}</g>
+    <g stroke="${PU}" fill="${PU}">
+      <line x1="${tail[0]}" y1="${tail[1]}" x2="${tip[0] - vx * 4}" y2="${tip[1] - vy * 4}" stroke-width="1.3"/>
+      <polygon stroke="none" points="${tip[0]},${tip[1]} ${tip[0] - vx * 6.5 - vy * 2.7},${tip[1] - vy * 6.5 + vx * 2.7} ${tip[0] - vx * 6.5 + vy * 2.7},${tip[1] - vy * 6.5 - vx * 2.7}"/>
     </g>
+    <text x="${tail[0] + 2.5}" y="${tail[1] + 3}" fill="#e9d3f7" font-size="3.9">${U.n(load.force_n)}</text>
+    ${hot ? `<line x1="${f[0] + 2}" y1="${f[1] - 2}" x2="${f[0] + 17}" y2="${f[1] - 19}" stroke="#ff9a5c" stroke-width=".35"/><text x="${f[0] + 18}" y="${f[1] - 20}" fill="#ffb07a" font-size="3.7">stress hotspot at the fillet (illustrative)</text>` : ""}
   </svg>`;
 }
 
 // ---- Interaction
 function select(id, focus) {
   S.sel = id;
-  renderTable(); renderParams(); renderViewport();
+  renderTable(); renderParams(); renderScene(); renderReadout();
   if (focus) { const tr = $("pane-variations").querySelector("tr.sel"); if (tr) tr.focus(); }
+}
+let zTop = 5;
+const front = (win) => { win.style.zIndex = ++zTop; };
+function showWin(id, on) {
+  const win = $(id);
+  win.hidden = !on;
+  $("vp").classList.toggle(id === "winAgent" ? "agent-off" : "var-off", !on);
+  if (on) front(win);
 }
 function showTab(tab) {
   S.tab = tab;
-  for (const b of document.querySelectorAll(".btabs button")) b.setAttribute("aria-selected", String(b.dataset.tab === tab));
+  showWin("winVar", true);
+  for (const b of document.querySelectorAll("#winVar .wtabs .t")) b.setAttribute("aria-selected", String(b.dataset.tab === tab));
   for (const k of ["parameters", "testcases", "variations"]) $("pane-" + k).hidden = k !== tab;
+}
+// Windows drag by their tab bar and stay inside the viewport.
+function draggable(win) {
+  const bar = win.querySelector(".wtabs");
+  win.addEventListener("pointerdown", () => front(win));
+  bar.addEventListener("dblclick", (e) => { if (!e.target.closest("button")) win.classList.toggle("max"); });
+  bar.addEventListener("pointerdown", (e) => {
+    if (e.target.closest("button") || win.classList.contains("max")) return;
+    const vp = $("vp").getBoundingClientRect(), r = win.getBoundingClientRect(), ox = e.clientX - r.left, oy = e.clientY - r.top;
+    // Switch from the CSS anchors to explicit left and top so the box can move freely.
+    Object.assign(win.style, { left: r.left - vp.left + "px", top: r.top - vp.top + "px", right: "auto", bottom: "auto", width: r.width + "px", height: r.height + "px" });
+    bar.setPointerCapture(e.pointerId);
+    const move = (ev) => {
+      win.style.left = Math.max(60 - r.width, Math.min(vp.width - 60, ev.clientX - vp.left - ox)) + "px";
+      win.style.top = Math.max(0, Math.min(vp.height - 27, ev.clientY - vp.top - oy)) + "px";
+    };
+    const up = () => { bar.removeEventListener("pointermove", move); bar.removeEventListener("pointerup", up); bar.removeEventListener("pointercancel", up); };
+    bar.addEventListener("pointermove", move); bar.addEventListener("pointerup", up); bar.addEventListener("pointercancel", up);
+  });
 }
 $("pane-variations").addEventListener("click", (e) => { const tr = e.target.closest("tr.row"); if (tr) select(tr.dataset.id, true); });
 $("pane-variations").addEventListener("keydown", (e) => {
@@ -650,7 +1376,26 @@ $("pane-variations").addEventListener("keydown", (e) => {
   const next = e.key === "ArrowDown" ? tr.nextElementSibling : e.key === "ArrowUp" ? tr.previousElementSibling : null;
   if (next) { e.preventDefault(); select(next.dataset.id, true); }
 });
-document.addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); });
+document.addEventListener("click", (e) => {
+  const menu = $("structMenu"), btn = e.target.closest("#structBtn");
+  if (btn && menu.hidden) {
+    // The menu lives outside the ribbon so the ribbon's clipping cannot cut it off.
+    const r = btn.getBoundingClientRect();
+    Object.assign(menu.style, { left: r.left + "px", top: r.bottom + "px" });
+    menu.hidden = false; btn.classList.add("open");
+  } else { menu.hidden = true; const b = $("structBtn"); if (b) b.classList.remove("open"); }
+  const t = e.target.closest("[data-tab]"); if (t) showTab(t.dataset.tab);
+  const c = e.target.closest("[data-close]"); if (c) showWin(c.dataset.close, false);
+  const m = e.target.closest("[data-max]"); if (m) $(m.dataset.max).classList.toggle("max");
+  const a = e.target.closest("[data-atab]"); if (a) showATab(a.dataset.atab);
+  const act = e.target.closest("[data-act]");
+  if (act && act.dataset.act === "tex") $("recs").classList.toggle("show-tex");
+  if (act && act.dataset.act === "copytex") copyTex(act);
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("structMenu").hidden = true; });
+$("handle").addEventListener("click", () => showWin("winAgent", $("winAgent").hidden));
+$("chevL").addEventListener("click", () => { $("groups").scrollLeft -= 320; });
+$("chevR").addEventListener("click", () => { $("groups").scrollLeft += 320; });
 $("fixture").addEventListener("change", (e) => loadFixture(e.target.value));
 $("files").addEventListener("change", (e) => loadPicked(e.target.files));
 $("run").addEventListener("click", runDemo);
@@ -662,10 +1407,11 @@ async function runDemo() {
   const wait = (ms) => new Promise((ok, stop) => setTimeout(() => token === S.run ? ok() : stop("cancelled"), ms));
   try {
     document.body.dataset.demo = "running";
-    showTab("variations");
+    showWin("winAgent", true); showTab("variations"); showATab("chat");
     S.rows.forEach((r) => { r.show = "none"; });
     S.shown = 0; S.sel = "baseline";
     renderAll();
+    $("pane-variations").scrollTop = 0;
     for (let i = 0; i < S.msgs.length; i++) {
       await wait(STEP_MS);
       S.shown = i + 1; renderChat();
@@ -674,11 +1420,13 @@ async function runDemo() {
       if (m.action === "verify") for (const r of S.rows) if (r.ver) { r.show = "verified"; renderTable(); await wait(220); }
     }
     const rec = S.rows.find((r) => r.isRec);
-    if (rec) select(rec.id); else renderViewport();
+    if (rec) select(rec.id); else { renderScene(); renderReadout(); }
     document.body.dataset.demo = "done";
   } catch (e) { if (e !== "cancelled") throw e; }
 }
 
+buildChrome();
+draggable($("winVar")); draggable($("winAgent"));
 // ?fixture=name picks the starting fixture, which also makes the error path easy to show.
 const start = new URLSearchParams(location.search).get("fixture") || "normal";
 if (start in SUFFIX) $("fixture").value = start;

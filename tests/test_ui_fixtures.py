@@ -3,12 +3,13 @@
 If this fails after a contract change, rerun `python -m src.ui.make_fixtures` and commit the result.
 """
 
+import inspect
 import json
 from pathlib import Path
 
 import pytest
 
-from contracts import Prediction, Result, StudySpec
+from contracts import Prediction, Result, StudySpec, beam_formula
 from src.ui import make_fixtures
 
 FIX = Path(__file__).parent.parent / "src" / "ui" / "fixtures"
@@ -55,3 +56,12 @@ def test_make_fixtures_is_deterministic(tmp_path):
     # The committed fixtures are what the script writes today.
     for name, data in first.items():
         assert json.loads(data) == json.loads((FIX / name).read_text(encoding="utf-8")), name
+
+
+def test_equations_match_fake_model():
+    # The Recommendations tab typesets beam_formula; its constants must not drift from the code.
+    source = inspect.getsource(beam_formula)
+    page = (FIX.parent / "index.html").read_text(encoding="utf-8")
+    for constant in ("0.72", "0.675", "1.65"):
+        assert constant in source, f"{constant} left beam_formula: update the equations in src/ui/index.html"
+        assert constant in page
