@@ -61,3 +61,9 @@ def test_match_all_and_unmatched():
     keys = [KEY_HOLE1, KEY_HOLE2, KEY_WALL]
     assert match_all(keys, props, FACES) == {"hole1": [0], "hole2": [], "wall": []}
     assert unmatched(keys, props, FACES) == [1]
+
+
+def test_grouped_key_feature_needs_all_its_holes():
+    key = {"id": "mounts", "face_id": "h1a", "action": "radius", "also_face_ids": ["h2a"], "alt_face_ids": []}
+    assert matches(key, {"face_id": "h2b", "action": "radius", "also_face_ids": ["h1b"]}, FACES)
+    assert not matches(key, {"face_id": "h1a", "action": "radius"}, FACES)

@@ -1,0 +1,106 @@
+id: nin_named_holes
+part: external:external/ninsample/NinSample_x0.1.scdocx
+kind: clean_named
+request: My bracket mounts through the four base holes; the center hole takes 5000 N pulling straight
+  up away from the base. Steel. I want to try a different size for all four mounting holes together, nothing
+  else.
+hidden_facts: 'The four holes in the base plate are the mounting holes; they are bolted down. The center
+  hole in the upright lug is the loaded hole: 5000 N pulling straight up (+y), away from the mounting
+  holes. Material: structural steel. Goal: lighter. Safety factor: default is fine. You only want the
+  mounting-hole size changed (all four together).'
+user_named_features:
+- mount_holes
+key:
+  setup:
+    fixed_face_ids:
+    - 0:56
+    - 0:59
+    - 0:62
+    - 0:65
+    - 0:86
+    - 0:89
+    - 0:92
+    - 0:95
+    load_face_ids:
+    - 0:38
+    - 0:98
+    force_N:
+    - 0
+    - 5000
+    - 0
+    material: Structural Steel
+    safety_factor: 1.5
+  must_ask: []
+  must_flag: []
+  objective: mass_kg
+  limits:
+  - response: safety_factor
+    op: '>='
+    value: 1.5
+  features:
+  - id: base_thickness
+    label: thickness of the base plate
+    face_id: 0:71
+    action: offset
+    other_face_id: null
+    alt_face_ids:
+    - 0:68
+    key_low: -2
+    key_high: 2
+    min_value: null
+    max_value: null
+  - id: lug_thickness
+    label: thickness of the upright lug
+    face_id: 0:50
+    action: offset
+    other_face_id: null
+    alt_face_ids:
+    - 0:44
+    key_low: -2
+    key_high: 2
+    min_value: null
+    max_value: null
+  - id: center_hole
+    label: radius of the loaded center hole
+    face_id: 0:38
+    action: radius
+    other_face_id: null
+    alt_face_ids: []
+    key_low: 5
+    key_high: 7.5
+    min_value: 3
+    max_value: 9
+  - id: mount_holes
+    label: radius of the 4 mounting holes (one size)
+    face_id: 0:56
+    action: radius
+    other_face_id: null
+    alt_face_ids: []
+    key_low: 4
+    key_high: 6
+    min_value: 2.5
+    max_value: 7
+    also_face_ids:
+    - 0:59
+    - 0:62
+    - 0:65
+  - id: lug_root_fillet_a
+    label: fillet at the lug root, one side
+    face_id: 0:50
+    action: fillet
+    other_face_id: 0:71
+    alt_face_ids: []
+    key_low: 1
+    key_high: 4
+    min_value: 0.5
+    max_value: 6
+  - id: lug_root_fillet_b
+    label: fillet at the lug root, other side
+    face_id: 0:44
+    action: fillet
+    other_face_id: 0:71
+    alt_face_ids: []
+    key_low: 1
+    key_high: 4
+    min_value: 0.5
+    max_value: 6

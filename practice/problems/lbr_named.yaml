@@ -1,0 +1,74 @@
+id: lbr_named
+part: examples/l_bracket.scdocx
+kind: clean_named
+request: My L bracket is bolted to a wall by the back of its tall leg and carries 500 N down at the end
+  of the short leg. Make it lighter, but only change the thickness of the horizontal leg and the fillet
+  at the inside corner.
+hidden_facts: 'The back of the tall leg (the flat face at x = 0) is bolted flat to a wall. The end face
+  of the short leg carries 500 N straight down. Material: structural steel. Goal: make it as light as
+  possible. Safety factor: you did not think about it; the assistant may use its default. You only want
+  the horizontal leg thickness and the inside-corner fillet changed.'
+user_named_features:
+- base_thickness
+- corner_fillet
+key:
+  setup:
+    fixed_face_ids:
+    - 0:30
+    load_face_ids:
+    - 0:36
+    force_N:
+    - 0
+    - -500
+    - 0
+    material: Structural Steel
+    safety_factor: 1.5
+  must_ask: []
+  must_flag: []
+  objective: mass_kg
+  limits:
+  - response: safety_factor
+    op: '>='
+    value: 1.5
+  features:
+  - id: base_thickness
+    label: thickness of the horizontal leg
+    face_id: 0:39
+    action: offset
+    other_face_id: null
+    alt_face_ids:
+    - 0:33
+    key_low: -1
+    key_high: 2
+    min_value: null
+    max_value: null
+  - id: wall_thickness
+    label: thickness of the vertical leg
+    face_id: 0:42
+    action: offset
+    other_face_id: null
+    alt_face_ids: []
+    key_low: -1
+    key_high: 2
+    min_value: null
+    max_value: null
+  - id: corner_fillet
+    label: fillet at the inside corner
+    face_id: 0:39
+    action: fillet
+    other_face_id: 0:42
+    alt_face_ids: []
+    key_low: 1
+    key_high: 6
+    min_value: 0.5
+    max_value: 8
+  - id: hole_radius
+    label: radius of the hole in the horizontal leg
+    face_id: 0:141
+    action: radius
+    other_face_id: null
+    alt_face_ids: []
+    key_low: 2
+    key_high: 6
+    min_value: 1
+    max_value: 8

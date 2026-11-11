@@ -38,7 +38,7 @@ def matches(key_feature: dict, prop_feature: dict, faces: list[dict]) -> bool:
         return False
     action = key_feature["action"]
     if action == "radius":
-        key_set = _holes(faces, [key_feature["face_id"]])
+        key_set = _holes(faces, [key_feature["face_id"], *(key_feature.get("also_face_ids") or [])])
         prop_set = _holes(faces, [prop_feature["face_id"], *(prop_feature.get("also_face_ids") or [])])
         return key_set <= prop_set
     if action == "fillet":

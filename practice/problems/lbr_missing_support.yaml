@@ -1,0 +1,71 @@
+id: lbr_missing_support
+part: examples/l_bracket.scdocx
+kind: missing_info
+request: I have an L bracket in steel with 500 N pushing straight down on the end of the short leg. I
+  want it lighter.
+hidden_facts: 'The back of the tall leg (the flat face at x = 0) is bolted flat to a wall. The end face
+  of the short leg carries 500 N straight down. Material: structural steel. Goal: make it as light as
+  possible. Safety factor: you did not think about it; the assistant may use its default.'
+user_named_features: []
+key:
+  setup:
+    fixed_face_ids:
+    - 0:30
+    load_face_ids:
+    - 0:36
+    force_N:
+    - 0
+    - -500
+    - 0
+    material: Structural Steel
+    safety_factor: 1.5
+  must_ask:
+  - fixed_faces
+  must_flag: []
+  objective: mass_kg
+  limits:
+  - response: safety_factor
+    op: '>='
+    value: 1.5
+  features:
+  - id: base_thickness
+    label: thickness of the horizontal leg
+    face_id: 0:39
+    action: offset
+    other_face_id: null
+    alt_face_ids:
+    - 0:33
+    key_low: -1
+    key_high: 2
+    min_value: null
+    max_value: null
+  - id: wall_thickness
+    label: thickness of the vertical leg
+    face_id: 0:42
+    action: offset
+    other_face_id: null
+    alt_face_ids: []
+    key_low: -1
+    key_high: 2
+    min_value: null
+    max_value: null
+  - id: corner_fillet
+    label: fillet at the inside corner
+    face_id: 0:39
+    action: fillet
+    other_face_id: 0:42
+    alt_face_ids: []
+    key_low: 1
+    key_high: 6
+    min_value: 0.5
+    max_value: 8
+  - id: hole_radius
+    label: radius of the hole in the horizontal leg
+    face_id: 0:141
+    action: radius
+    other_face_id: null
+    alt_face_ids: []
+    key_low: 2
+    key_high: 6
+    min_value: 1
+    max_value: 8

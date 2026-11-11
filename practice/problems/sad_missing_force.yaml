@@ -1,0 +1,73 @@
+id: sad_missing_force
+part: examples/pyansys/saddle_bracket.scdoc
+kind: missing_info
+request: This sheet bracket is bolted through the two small holes on the left, and something hangs from
+  the big hole on the right. Can you make it lighter?
+hidden_facts: 'The two small holes in the left flange are bolted down. A 20 N load pulls straight down
+  (-y) on the big hole in the right flange. Material: structural steel. Goal: lighter. Safety factor:
+  no opinion, default is fine.'
+user_named_features: []
+key:
+  setup:
+    fixed_face_ids:
+    - 0:26589
+    - 0:26592
+    load_face_ids:
+    - 0:26595
+    force_N:
+    - 0
+    - -20
+    - 0
+    material: Structural Steel
+    safety_factor: 1.5
+  must_ask:
+  - force
+  must_flag: []
+  objective: mass_kg
+  limits:
+  - response: safety_factor
+    op: '>='
+    value: 1.5
+  features:
+  - id: left_flange
+    label: thickness of the left (bolted) flange
+    face_id: 0:26586
+    action: offset
+    other_face_id: null
+    alt_face_ids:
+    - 0:26580
+    key_low: -0.3
+    key_high: 1.0
+    min_value: null
+    max_value: null
+  - id: right_flange
+    label: thickness of the right (loaded) flange
+    face_id: 0:26616
+    action: offset
+    other_face_id: null
+    alt_face_ids:
+    - 0:26610
+    key_low: -0.3
+    key_high: 1.0
+    min_value: null
+    max_value: null
+  - id: left_corner_fillet
+    label: fillet where the left flange meets the slanted leg
+    face_id: 0:26586
+    action: fillet
+    other_face_id: 0:26619
+    alt_face_ids: []
+    key_low: 0.5
+    key_high: 2.0
+    min_value: 0.2
+    max_value: 3
+  - id: load_hole
+    label: radius of the big hole in the right flange
+    face_id: 0:26595
+    action: radius
+    other_face_id: null
+    alt_face_ids: []
+    key_low: 4.5
+    key_high: 6.0
+    min_value: 3
+    max_value: 7

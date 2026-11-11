@@ -1,0 +1,68 @@
+id: jeb_named
+part: external:external/simjeb/samples/148.stp
+kind: clean_named
+request: 'Titanium (Ti-6Al-4V) engine bracket: four base bolt holes fixed, 35.6 kN straight up through
+  the pin holes in the lugs. Only try a different size for the four bolt holes together.'
+hidden_facts: 'The four bolt holes in the base are bolted down. A pin through the two lug holes pulls
+  35,586 N straight up (+z). Material: Ti-6Al-4V titanium (annealed). Goal: lighter. Safety factor: default
+  is fine. You only want the bolt-hole size changed (all four together).'
+user_named_features:
+- bolt_holes
+key:
+  setup:
+    fixed_face_ids:
+    - 0:21/0:22/0:23/0:714
+    - 0:21/0:22/0:23/0:717
+    - 0:21/0:22/0:23/0:720
+    - 0:21/0:22/0:23/0:723
+    - 0:21/0:22/0:23/0:1410
+    - 0:21/0:22/0:23/0:1413
+    - 0:21/0:22/0:23/0:1416
+    - 0:21/0:22/0:23/0:1419
+    load_face_ids:
+    - 0:21/0:22/0:23/0:69
+    - 0:21/0:22/0:23/0:72
+    - 0:21/0:22/0:23/0:75
+    - 0:21/0:22/0:23/0:78
+    force_N:
+    - 0
+    - 0
+    - 35585.77
+    material: Titanium alloy, Ti-6Al-4V, annealed
+    safety_factor: 1.5
+  must_ask: []
+  must_flag: []
+  objective: mass_kg
+  limits:
+  - response: safety_factor
+    op: '>='
+    value: 1.5
+  features:
+  - id: bolt_holes
+    label: radius of the 4 bolt holes (one size)
+    face_id: 0:21/0:22/0:23/0:714
+    action: radius
+    other_face_id: null
+    alt_face_ids: []
+    key_low: 4.5
+    key_high: 6
+    min_value: 3
+    max_value: 7
+    also_face_ids:
+    - 0:21/0:22/0:23/0:717
+    - 0:21/0:22/0:23/0:720
+    - 0:21/0:22/0:23/0:723
+    - 0:21/0:22/0:23/0:1410
+    - 0:21/0:22/0:23/0:1413
+    - 0:21/0:22/0:23/0:1416
+    - 0:21/0:22/0:23/0:1419
+  - id: pin_hole
+    label: radius of the pin hole in the lugs
+    face_id: 0:21/0:22/0:23/0:69
+    action: radius
+    other_face_id: null
+    alt_face_ids: []
+    key_low: 9
+    key_high: 10.5
+    min_value: 7
+    max_value: 12
