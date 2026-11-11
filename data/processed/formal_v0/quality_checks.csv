@@ -1,0 +1,12 @@
+check_name,passed,expected,observed
+all_cases_solved,True,200 successful rows and zero unresolved failures,successes=200; failures=0
+aligned_output_tables,True,"runs, diagnostics, and model rows have identical design IDs",runs=200; diagnostics=200; model_rows=200
+positive_model_outputs,True,"all reference stress, displacement, and volume values are positive",checked_rows=200
+reaction_force_balance,True,every relative reaction imbalance is at most 0.01,maximum=3.35248369e-07
+minimum_element_quality,True,every minimum element quality is above 0.1,batch_minimum=0.126465203
+lhs_strata_thickness_mm,True,all 200 strata used exactly once,unique_strata=200
+lhs_strata_flange_length_mm,True,all 200 strata used exactly once,unique_strata=200
+lhs_strata_arm_width_mm,True,all 200 strata used exactly once,unique_strata=200
+lhs_strata_hole_diameter_mm,True,all 200 strata used exactly once,unique_strata=200
+lhs_strata_fillet_radius_mm,True,all 200 strata used exactly once,unique_strata=200
+lhs_strata_poissons_ratio,True,all 200 strata used exactly once,unique_strata=200

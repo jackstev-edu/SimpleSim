@@ -1,0 +1,1 @@
+attempt_number,schema_version,design_id,failure_stage,error_type,error_message,material_key,load_force_n,load_angle_deg,thickness_mm,flange_length_mm,arm_width_mm,hole_diameter_mm,fillet_radius_mm,poissons_ratio

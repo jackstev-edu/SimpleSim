@@ -8,10 +8,19 @@ venv/
 # Secrets
 .env
 
-# Data and models (too large for git; host on Hugging Face instead)
+# Data and models
 data/raw/*
 data/processed/*
 !data/**/.gitkeep
+
+# Role 1 temporary geometry, mesh, and solver outputs
+data/generated/
+
+# Keep the curated formal dataset in Git
+!data/processed/formal_v0/
+!data/processed/formal_v0/*.csv
+!data/processed/formal_v0/*.json
+
 models/
 *.pt
 *.pkl

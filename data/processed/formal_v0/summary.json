@@ -1,0 +1,51 @@
+{
+  "schema_version": "0.1.0",
+  "model_dataset_schema_version": "role1_model_0.1.0",
+  "dataset_name": "l_bracket_v0_formal_200",
+  "dataset_stage": "formal_training_data",
+  "planned_cases": 200,
+  "successful_cases": 200,
+  "remaining_cases": 0,
+  "unresolved_failures": 0,
+  "random_seed": 20261111,
+  "model_inputs": [
+    "thickness_mm",
+    "flange_length_mm",
+    "arm_width_mm",
+    "hole_diameter_mm",
+    "fillet_radius_mm",
+    "poissons_ratio"
+  ],
+  "poissons_ratio_range": {
+    "low": 0.25,
+    "high": 0.35
+  },
+  "reference_conditions": {
+    "load_force_n": 500.0,
+    "load_direction": "-Y",
+    "youngs_modulus_mpa": 200000.0,
+    "yield_strength_mpa": 250.0,
+    "density_kg_m3": 7850.0
+  },
+  "production_mesh_strategy": "tet2; maximum_size_mm=min(2.0, thickness_mm/3); minimum_size_mm=maximum_size_mm/2",
+  "successful_case_files_retained": false,
+  "successful_case_file_policy": "keep logs; remove reproducible large solver files",
+  "all_quality_checks_passed": true,
+  "role1_dataset_complete": true,
+  "contract_status": {
+    "shared_contract_modified": false,
+    "runs_csv_uses_current_shared_columns": true,
+    "poissons_ratio_is_in_model_dataset_csv": true,
+    "contract_changes_documented_in_final_word_handoff": true
+  },
+  "artifacts": {
+    "sample_plan_csv": "data\\generated\\formal_v0\\sample_plan.csv",
+    "runs_csv": "data\\generated\\formal_v0\\runs.csv",
+    "model_dataset_csv": "data\\generated\\formal_v0\\model_dataset.csv",
+    "run_diagnostics_csv": "data\\generated\\formal_v0\\run_diagnostics.csv",
+    "failure_attempts_csv": "data\\generated\\formal_v0\\failure_attempts.csv",
+    "failures_csv": "data\\generated\\formal_v0\\failures.csv",
+    "quality_checks_csv": "data\\generated\\formal_v0\\quality_checks.csv",
+    "progress_json": "data\\generated\\formal_v0\\progress.json"
+  }
+}
