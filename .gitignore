@@ -31,3 +31,5 @@ outputs/
 Thumbs.db
 .vscode/
 .idea/
+practice/parts/external/
+practice/results/*/*/ws/
