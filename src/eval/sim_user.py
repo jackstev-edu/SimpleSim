@@ -10,6 +10,7 @@ import anthropic
 from src.eval.problems import Problem
 
 SIM_MODEL = "claude-haiku-5-5"
+MAX_TOKENS = 2000  # thinking + reply
 APPROVE = "OK, go ahead."
 APPROVE_NAMED = "OK, go ahead with the features I asked for."
 
@@ -48,7 +49,13 @@ class SimUser:
 
     def reply(self, agent_text: str) -> str:
         self.messages.append({"role": "user", "content": agent_text})
-        r = self.client.messages.create(model=SIM_MODEL, max_tokens=300, system=self.system, messages=self.messages)
+        # The model thinks before it answers and thinking counts against max_tokens: with 300 the
+        # whole budget went to thinking and the reply was empty (2026-11-11). The 60-word rule keeps
+        # the reply itself short.
+        r = self.client.messages.create(model=SIM_MODEL, max_tokens=MAX_TOKENS, system=self.system,
+                                        messages=self.messages)
         text = "".join(b.text for b in r.content if b.type == "text").strip()
+        if not text:
+            raise RuntimeError(f"simulated user gave no text (stop_reason {r.stop_reason})")
         self.messages.append({"role": "assistant", "content": text})
         return text

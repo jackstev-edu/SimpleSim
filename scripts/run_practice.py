@@ -9,6 +9,9 @@ Uses SIMPLESIM_MODE for the agent (default debug = Haiku); the simulated user is
 from __future__ import annotations
 
 import argparse
+import json
+import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -56,6 +59,7 @@ def main() -> None:
     ap.add_argument("--label", default="run")
     ap.add_argument("--only", nargs="*")
     ap.add_argument("--compare", nargs=2, metavar=("BEFORE", "AFTER"))
+    ap.add_argument("--out", help=argparse.SUPPRESS)  # results folder, set by the parent run for its children
     args = ap.parse_args()
     if args.compare:
         after = Path(args.compare[1])
@@ -64,8 +68,31 @@ def main() -> None:
         return
 
     problems = [p for p in load_problems(PROBLEMS_DIR) if not args.only or p.id in args.only]
-    out = RESULTS / f"{time.strftime('%Y%m%d-%H%M')}-{args.label}"
+    out = Path(args.out) if args.out else RESULTS / f"{time.strftime('%Y%m%d-%H%M')}-{args.label}"
     usage: dict = {}
+    if len(problems) > 1:
+        # One process per problem: PyMechanical allows one embedded Mechanical per process, ever, so
+        # a second Workbench in the same process fails every solve with "Cannot have more than one
+        # embedded mechanical instance!" (seen 2026-11-11).
+        results = []
+        for p in problems:
+            code = subprocess.run([sys.executable, "-m", "scripts.run_practice", "--label", args.label,
+                                   "--only", p.id, "--out", str(out)], cwd=REPO).returncode
+            saved = out / f"{p.id}.json"
+            if code == 0 and saved.is_file():
+                d = json.loads(saved.read_text(encoding="utf-8"))
+                results.append((d["run_log"], d["checklist"]))
+                for model, u in json.loads((out / p.id / "usage.json").read_text(encoding="utf-8")).items():
+                    total = usage.setdefault(model, dict.fromkeys(USAGE_KEYS, 0))
+                    for k in USAGE_KEYS:
+                        total[k] += u[k]
+            else:
+                print(f"[{p.id}] runner process failed (exit {code})", flush=True)
+                results.append((None, {"problem_id": p.id, "status": "not_graded",
+                                       "reason": f"runner process failed (exit {code})", "checks": {}}))
+        write_results(out, results)
+        print(f"\nresults: {out}\nusage: {usage}\nestimated cost: ${cost(usage):.4f}")
+        return
     client = counted_client(usage)
     results = []
     for p in problems:
@@ -88,6 +115,7 @@ def main() -> None:
         fails = [n for n, c in checklist["checks"].items() if c["result"] == "fail"]
         print(f"[{p.id}] end={log['end']} status={checklist['status']} fails={fails} ({log['seconds']} s)", flush=True)
         write_results(out, results)  # keep partial results if a later problem hangs
+        (out / p.id / "usage.json").write_text(json.dumps(usage), encoding="utf-8")
     write_results(out, results)
     print(f"\nresults: {out}\nusage: {usage}\nestimated cost: ${cost(usage):.4f}")
 
