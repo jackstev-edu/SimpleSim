@@ -1,0 +1,298 @@
+problem: nin_bad_sf
+reviewed: true
+reviewed_by: user
+reviewed_on: '2026-11-11'
+review_notes:
+- Built with fixed 2.5 mm lug-root fillets (key.fixed_edits). look_2_high (fillet
+  B at 4 mm) failed with an intermittent ZeroDivisionError; its label rests on low
+  vs reference and on an earlier run where it solved (40.6 MPa). Safety factor is
+  4 to 7.4 against 1.5, so every feature is controls_limit. Approved as built by the
+  user, 2026-11-11.
+built: '2026-11-11'
+effects:
+  base_thickness: controls_limit
+  lug_thickness: controls_limit
+  center_hole: controls_limit
+  mount_holes: controls_limit
+  lug_root_fillet_a: controls_limit
+  lug_root_fillet_b: controls_limit
+warnings:
+- 'chunk 2: 1 designs failed: {''look_2_high'': ''ZeroDivisionError: float division
+  by zero''}'
+evidence:
+- reference:
+    values:
+    - 0.0
+    - 0.0
+    - 6.34109
+    - 5.079226
+    responses:
+      mass_kg: 0.4475
+      max_stress_MPa: 38.96952772798457
+      max_def_mm: 0.00347574468827067
+      safety_factor: 6.415
+  features:
+  - index: 1
+    label: thickness of the base plate
+    low: -2
+    ref: 0.0
+    high: 2
+    responses:
+      mass_kg:
+        low: 0.3969
+        ref: 0.4475
+        high: 0.4981
+        change: 0.10120000000000001
+        basis: high_vs_low
+        change_rel: 0.22614525139664807
+      max_stress_MPa:
+        low: 47.375834046250816
+        ref: 38.96952772798457
+        high: 33.68034918110144
+        change: -13.695484865149375
+        basis: high_vs_low
+        change_rel: -0.3514408735139598
+      max_def_mm:
+        low: 0.003925891435015237
+        ref: 0.00347574468827067
+        high: 0.0031469727001788884
+        change: -0.0007789187348363489
+        basis: high_vs_low
+        change_rel: -0.22410125158643165
+      safety_factor:
+        low: 5.277
+        ref: 6.415
+        high: 7.423
+        change: 2.146
+        basis: high_vs_low
+        change_rel: 0.3345284489477786
+    feasible:
+      low: true
+      high: true
+  - index: 2
+    label: thickness of the upright lug
+    low: -2
+    ref: 0.0
+    high: 2
+    responses:
+      mass_kg:
+        low: 0.4354
+        ref: 0.4475
+        high: 0.4596
+        change: 0.0242
+        basis: high_vs_low
+        change_rel: 0.05407821229050279
+      max_stress_MPa:
+        low: 41.330587433924975
+        ref: 38.96952772798457
+        high: 37.38887841087933
+        change: -3.9417090230456466
+        basis: high_vs_low
+        change_rel: -0.1011484935244686
+      max_def_mm:
+        low: 0.004021180664887193
+        ref: 0.00347574468827067
+        high: 0.0031005666351878857
+        change: -0.0009206140296993074
+        basis: high_vs_low
+        change_rel: -0.2648681397129177
+      safety_factor:
+        low: 6.049
+        ref: 6.415
+        high: 6.686
+        change: 0.6369999999999996
+        basis: high_vs_low
+        change_rel: 0.099298519095869
+    feasible:
+      low: true
+      high: true
+  - index: 3
+    label: radius of the loaded center hole
+    low: 5
+    ref: 6.34109
+    high: 7.5
+    responses:
+      mass_kg:
+        low: 0.4522
+        ref: 0.4475
+        high: 0.4424
+        change: -0.009799999999999975
+        basis: high_vs_low
+        change_rel: -0.021899441340782068
+      max_stress_MPa:
+        low: 36.515499784360586
+        ref: 38.96952772798457
+        high: 41.283467003816824
+        change: 4.767967219456239
+        basis: high_vs_low
+        change_rel: 0.12235116762865704
+      max_def_mm:
+        low: 0.0031677002174293656
+        ref: 0.00347574468827067
+        high: 0.003956870953832835
+        change: 0.0007891707364034695
+        basis: high_vs_low
+        change_rel: 0.22705083577243856
+      safety_factor:
+        low: 6.846
+        ref: 6.415
+        high: 6.056
+        change: -0.79
+        basis: high_vs_low
+        change_rel: -0.12314886983632113
+    feasible:
+      low: true
+      high: true
+  - index: 4
+    label: radius of the 4 mounting holes (one size)
+    low: 4
+    ref: 5.079226
+    high: 6
+    responses:
+      mass_kg:
+        low: 0.4597
+        ref: 0.4475
+        high: 0.4347
+        change: -0.025000000000000022
+        basis: high_vs_low
+        change_rel: -0.05586592178770954
+      max_stress_MPa:
+        low: 40.217684935242715
+        ref: 38.96952772798457
+        high: 36.908717232063864
+        change: -3.308967703178851
+        basis: high_vs_low
+        change_rel: -0.08491167063342762
+      max_def_mm:
+        low: 0.003664720529857319
+        ref: 0.00347574468827067
+        high: 0.0033344283213609426
+        change: -0.00033029220849637624
+        basis: high_vs_low
+        change_rel: -0.0950277532210545
+      safety_factor:
+        low: 6.216
+        ref: 6.415
+        high: 6.773
+        change: 0.5569999999999995
+        basis: high_vs_low
+        change_rel: 0.08682774746687444
+    feasible:
+      low: true
+      high: true
+  ranking:
+  - 1
+  - 4
+  - 2
+  - 3
+  limit_ranking:
+    safety_factor:
+    - 1
+    - 3
+    - 2
+    - 4
+  best_feasible: look_1_low
+  errors: {}
+  failed: 0
+  stopped: done
+  solves: 9
+  seconds_per_design: 29.3
+- reference:
+    values:
+    - 2.5
+    - 2.5
+    responses:
+      mass_kg: 0.4475
+      max_stress_MPa: 38.381113268914824
+      max_def_mm: 0.0034740139134826547
+      safety_factor: 6.514
+  features:
+  - index: 1
+    label: fillet at the lug root, one side
+    low: 1
+    ref: 2.5
+    high: 4
+    responses:
+      mass_kg:
+        low: 0.4471
+        ref: 0.4475
+        high: 0.4481
+        change: 0.0010000000000000009
+        basis: high_vs_low
+        change_rel: 0.002234636871508382
+      max_stress_MPa:
+        low: 58.05608335084106
+        ref: 38.381113268914824
+        high: 39.35425508031202
+        change: -18.701828270529035
+        basis: high_vs_low
+        change_rel: -0.48726643595499347
+      max_def_mm:
+        low: 0.003561065400144613
+        ref: 0.0034740139134826547
+        high: 0.0034842546619451823
+        change: -7.681073819943091e-05
+        basis: high_vs_low
+        change_rel: -0.022110083641671177
+      safety_factor:
+        low: 4.306
+        ref: 6.514
+        high: 6.353
+        change: 2.0469999999999997
+        basis: high_vs_low
+        change_rel: 0.3142462388701258
+    feasible:
+      low: true
+      high: true
+  - index: 2
+    label: fillet at the lug root, other side
+    low: 1
+    ref: 2.5
+    high: 4
+    responses:
+      mass_kg:
+        low: 0.4471
+        ref: 0.4475
+        high: null
+        change: -0.00040000000000001146
+        basis: low_vs_ref
+        change_rel: -0.0008938547486033776
+      max_stress_MPa:
+        low: 61.95406930969323
+        ref: 38.381113268914824
+        high: null
+        change: 23.572956040778408
+        basis: low_vs_ref
+        change_rel: 0.614181143616549
+      max_def_mm:
+        low: 0.003556146009861558
+        ref: 0.0034740139134826547
+        high: null
+        change: 8.213209637890307e-05
+        basis: low_vs_ref
+        change_rel: 0.023641844397959445
+      safety_factor:
+        low: 4.035
+        ref: 6.514
+        high: null
+        change: -2.479
+        basis: low_vs_ref
+        change_rel: -0.3805649370586429
+    feasible:
+      low: true
+      high: false
+  ranking:
+  - 1
+  - 2
+  limit_ranking:
+    safety_factor:
+    - 2
+    - 1
+  best_feasible: look_1_low
+  errors:
+    look_2_high: 'ZeroDivisionError: float division by zero'
+  failed: 1
+  stopped: done
+  solves: 4
+  seconds_per_design: 29.6
+copied_from: nin_clean_auto

@@ -1,0 +1,116 @@
+problem: jeb_named
+reviewed: true
+reviewed_by: user
+reviewed_on: '2026-11-11'
+review_notes:
+- 'Peak stress is a support singularity at a fixed bolt-hole edge and is not monotonic
+  in the features (bolt holes 2180 / 4493 / 2671 MPa, pin hole 7094 / 4493 / 6689
+  MPa), so the built stress labels were noise. The user chose to grade this part on
+  setup and the complex-part behaviour only: labels set to unknown, 2026-11-11. Rebuild
+  once stress near supports is excluded.'
+built: '2026-11-11'
+effects:
+  bolt_holes: unknown
+  pin_hole: unknown
+warnings: []
+evidence:
+- reference:
+    values:
+    - 5.1562
+    - 9.5504
+    responses:
+      mass_kg: 0.5765
+      max_stress_MPa: 4493.144572233305
+      max_def_mm: 2.657104464063792
+      safety_factor: 0.188
+  features:
+  - index: 1
+    label: radius of the 4 bolt holes (one size)
+    low: 4.5
+    ref: 5.1562
+    high: 6
+    responses:
+      mass_kg:
+        low: 0.5788
+        ref: 0.5765
+        high: 0.5726
+        change: -0.006199999999999983
+        basis: high_vs_low
+        change_rel: -0.010754553339115323
+      max_stress_MPa:
+        low: 2180.1151604485076
+        ref: 4493.144572233305
+        high: 2671.0216011844927
+        change: 490.90644073598514
+        basis: high_vs_low
+        change_rel: 0.10925676502146947
+      max_def_mm:
+        low: 2.809267003734557
+        ref: 2.657104464063792
+        high: 2.506912273861861
+        change: -0.30235472987269585
+        basis: high_vs_low
+        change_rel: -0.1137910586361639
+      safety_factor:
+        low: 0.388
+        ref: 0.188
+        high: 0.317
+        change: -0.07100000000000001
+        basis: high_vs_low
+        change_rel: -0.3776595744680851
+    feasible:
+      low: false
+      high: false
+  - index: 2
+    label: radius of the pin hole in the lugs
+    low: 9
+    ref: 9.5504
+    high: 10.5
+    responses:
+      mass_kg:
+        low: 0.5781
+        ref: 0.5765
+        high: 0.5727
+        change: -0.00539999999999996
+        basis: high_vs_low
+        change_rel: -0.009366869037293947
+      max_stress_MPa:
+        low: 7094.2450096915745
+        ref: 4493.144572233305
+        high: 6689.162420722309
+        change: -405.0825889692651
+        basis: high_vs_low
+        change_rel: -0.09015569885567247
+      max_def_mm:
+        low: 2.648099889028314
+        ref: 2.657104464063792
+        high: 2.6701126297792483
+        change: 0.022012740750934512
+        basis: high_vs_low
+        change_rel: 0.008284484501323703
+      safety_factor:
+        low: 0.119
+        ref: 0.188
+        high: 0.126
+        change: 0.007000000000000006
+        basis: high_vs_low
+        change_rel: 0.03723404255319152
+    feasible:
+      low: false
+      high: false
+  ranking:
+  - 1
+  - 2
+  limit_ranking:
+    safety_factor:
+    - 1
+    - 2
+  best_feasible: null
+  errors: {}
+  failed: 0
+  note: No design meets the limits. To reach them, change the features that move the
+    limited response most (limit_ranking), not the ones ranked first for the objective.
+  stopped: done
+  solves: 5
+  seconds_per_design: 54.5
+copied_from: jeb_complex

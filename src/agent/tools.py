@@ -17,6 +17,7 @@ import queue
 import shutil
 import threading
 import time
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -555,7 +556,8 @@ class Workbench:
             try:
                 r = self._evaluate(name, edits, self.element_size_mm)
             except Exception as e:  # noqa: BLE001 - one failed design must not end the screen
-                err = f"{type(e).__name__}: {e}"
+                tb = traceback.extract_tb(e.__traceback__)[-1]  # where it was raised: intermittent failures
+                err = f"{type(e).__name__}: {e} (at {Path(tb.filename).name}:{tb.lineno} in {tb.name})"
                 rows[name] = {"values": values, "error": err}
                 self._emit("first_look", k, len(plan), name, error=err, best=best[0])
                 continue

@@ -49,8 +49,13 @@ def main() -> None:
             fl = [{"face_id": f["face_id"], "action": f["action"], "low": f["key_low"], "high": f["key_high"],
                    "label": f.get("label", f["id"])}
                   | {k: f[k] for k in ("other_face_id", "also_face_ids") if f.get(k)} for f in chunk]
-            out = json.loads(wb.call("first_look", {"features": fl, "fixed_edits": key.get("fixed_edits", []),
+            varied = {frozenset((f["face_id"], f.get("other_face_id"))) for f in fl if f["action"] == "fillet"}
+            fixed = [e for e in key.get("fixed_edits", [])  # a fillet varied in this chunk is not also fixed
+                     if not (e["action"] == "fillet" and frozenset((e["face_id"], e.get("other_face_id"))) in varied)]
+            out = json.loads(wb.call("first_look", {"features": fl, "fixed_edits": fixed,
                                                     "objective": key["objective"], "limits": key["limits"]}))
+            if not out["reference"]["responses"]:  # no reference -> no effects; labels would all read "negligible"
+                raise SystemExit(f"chunk {i // CHUNK + 1}: the reference design failed, no key written: {out.get('errors')}")
             for f, label, s in zip(chunk, label_effects(out, key["objective"], key["limits"]), out["features"]):
                 effects[f["id"]] = label
                 if all(r.get("change_rel") is None for r in s["responses"].values()):

@@ -81,7 +81,9 @@ def test_first_look_records_failed_design(wb):
     assert out["features"][0]["feasible"]["high"] is False
     assert any("error" in e for e in drain(wb))
     # the agent itself sees why the design failed, and solves counts only completed designs
-    assert out["errors"] == {"look_1_high": "RuntimeError: boom"}
+    err = out["errors"]["look_1_high"]  # message plus where it was raised (file:line in function)
+    assert list(out["errors"]) == ["look_1_high"] and err.startswith("RuntimeError: boom (at test_workbench.py:")
+    assert err.endswith(" in fake)")
     assert out["failed"] == 1 and out["solves"] == 4
 
 

@@ -1,0 +1,194 @@
+problem: lbr_units
+reviewed: true
+reviewed_by: user
+reviewed_on: '2026-11-11'
+review_notes:
+- 'wall_thickness: built label was controls_limit (stress swing 5.2 % against the
+  5 % threshold, within remeshing noise of about 1 MPa); changed to moves_objective
+  by the user at review, 2026-11-11.'
+built: '2026-11-11'
+effects:
+  base_thickness: controls_limit
+  wall_thickness: moves_objective
+  corner_fillet: controls_limit
+  hole_radius: negligible
+warnings: []
+evidence:
+- reference:
+    values:
+    - 0.0
+    - 0.0
+    - 3.5
+    - 4.0
+    responses:
+      mass_kg: 0.2509
+      max_stress_MPa: 190.47908480805617
+      max_def_mm: 0.4858062676030334
+      safety_factor: 1.312
+  features:
+  - index: 1
+    label: thickness of the horizontal leg
+    low: -1
+    ref: 0.0
+    high: 2
+    responses:
+      mass_kg:
+        low: 0.2281
+        ref: 0.2509
+        high: 0.2966
+        change: 0.06849999999999998
+        basis: high_vs_low
+        change_rel: 0.27301713830211227
+      max_stress_MPa:
+        low: 266.3814341445162
+        ref: 190.47908480805617
+        high: 117.4094294202987
+        change: -148.97200472421753
+        basis: high_vs_low
+        change_rel: -0.7820911407377618
+      max_def_mm:
+        low: 0.8211428750186521
+        ref: 0.4858062676030334
+        high: 0.2126236966110533
+        change: -0.6085191784075988
+        basis: high_vs_low
+        change_rel: -1.2525963928173067
+      safety_factor:
+        low: 0.939
+        ref: 1.312
+        high: 2.129
+        change: 1.19
+        basis: high_vs_low
+        change_rel: 0.9070121951219512
+    feasible:
+      low: false
+      high: true
+  - index: 2
+    label: thickness of the vertical leg
+    low: -1
+    ref: 0.0
+    high: 2
+    responses:
+      mass_kg:
+        low: 0.234
+        ref: 0.2509
+        high: 0.2848
+        change: 0.050799999999999984
+        basis: high_vs_low
+        change_rel: 0.2024711040255081
+      max_stress_MPa:
+        low: 198.60828102749866
+        ref: 190.47908480805617
+        high: 188.71682107741813
+        change: -9.891459950080531
+        basis: high_vs_low
+        change_rel: -0.05192937565847743
+      max_def_mm:
+        low: 0.5020686250670859
+        ref: 0.4858062676030334
+        high: 0.45248975628370897
+        change: -0.04957886878337697
+        basis: high_vs_low
+        change_rel: -0.10205481503562923
+      safety_factor:
+        low: 1.259
+        ref: 1.312
+        high: 1.325
+        change: 0.06600000000000006
+        basis: high_vs_low
+        change_rel: 0.05030487804878053
+    feasible:
+      low: false
+      high: false
+  - index: 3
+    label: fillet at the inside corner
+    low: 1
+    ref: 3.5
+    high: 6
+    responses:
+      mass_kg:
+        low: 0.2502
+        ref: 0.2509
+        high: 0.2525
+        change: 0.0023000000000000242
+        basis: high_vs_low
+        change_rel: 0.0091669988043046
+      max_stress_MPa:
+        low: 294.7356910018123
+        ref: 190.47908480805617
+        high: 167.66640537073178
+        change: -127.06928563108053
+        basis: high_vs_low
+        change_rel: -0.667103612762141
+      max_def_mm:
+        low: 0.5110330606719592
+        ref: 0.4858062676030334
+        high: 0.45808915973322967
+        change: -0.05294390093872953
+        basis: high_vs_low
+        change_rel: -0.10898151067493338
+      safety_factor:
+        low: 0.848
+        ref: 1.312
+        high: 1.491
+        change: 0.6430000000000001
+        basis: high_vs_low
+        change_rel: 0.4900914634146342
+    feasible:
+      low: false
+      high: false
+  - index: 4
+    label: radius of the hole in the horizontal leg
+    low: 2
+    ref: 4.0
+    high: 6
+    responses:
+      mass_kg:
+        low: 0.2527
+        ref: 0.2509
+        high: 0.248
+        change: -0.004699999999999982
+        basis: high_vs_low
+        change_rel: -0.01873256277401348
+      max_stress_MPa:
+        low: 195.65725707942465
+        ref: 190.47908480805617
+        high: 191.58890440404895
+        change: -4.068352675375706
+        basis: high_vs_low
+        change_rel: -0.021358526997729665
+      max_def_mm:
+        low: 0.4826206227779569
+        ref: 0.4858062676030334
+        high: 0.4914609595048293
+        change: 0.0088403367268724
+        basis: high_vs_low
+        change_rel: 0.018197247167045814
+      safety_factor:
+        low: 1.278
+        ref: 1.312
+        high: 1.305
+        change: 0.026999999999999913
+        basis: high_vs_low
+        change_rel: 0.02057926829268286
+    feasible:
+      low: false
+      high: false
+  ranking:
+  - 1
+  - 2
+  - 4
+  - 3
+  limit_ranking:
+    safety_factor:
+    - 1
+    - 3
+    - 2
+    - 4
+  best_feasible: look_1_high
+  errors: {}
+  failed: 0
+  stopped: done
+  solves: 9
+  seconds_per_design: 29.4
+copied_from: lbr_clean_auto

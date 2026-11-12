@@ -34,6 +34,15 @@ key:
   - response: safety_factor
     op: '>='
     value: 1.5
+  fixed_edits:
+  - face_id: 0:50
+    other_face_id: 0:71
+    action: fillet
+    value_mm: 2.5
+  - face_id: 0:44
+    other_face_id: 0:71
+    action: fillet
+    value_mm: 2.5
   features:
   - id: base_thickness
     label: thickness of the base plate

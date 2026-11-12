@@ -121,6 +121,7 @@ def solve(
     reaction.BoundaryConditionSelection = support
     sol.Solve(True)
 
+    peak_at = _peak_location(analysis, stress)
     reaction_N = [reaction.XAxis.Value, reaction.YAxis.Value, reaction.ZAxis.Value]
     # The reaction should equal minus the applied load. Mechanical reports reactions
     # with the sign convention "force the support exerts", so compare magnitudes per axis.
@@ -135,23 +136,35 @@ def solve(
         "element_size_mm": element_size_mm,
         "local_size_mm": local_size[1] if local_size else None,
         "max_stress_MPa": stress.Maximum.Value,
-        "max_stress_at_mm": _peak_location(analysis, stress),
+        "max_stress_at_mm": peak_at,
         "max_def_mm": deformation.Maximum.Value,
         "reaction_N": reaction_N,
         "balance_error": residual / applied if applied else 0.0,
-        "messages": [m.DisplayString for m in ExtAPI.Application.Messages],  # noqa: F821
+        "messages": [m.DisplayString for m in ExtAPI.Application.Messages]  # noqa: F821
+                    + ([] if peak_at else ["Peak-stress location could not be read (max_stress_at_mm is null); "
+                                           "the stress and deflection values are valid."]),
         "solve_s": round(time.time() - t0, 1),
     }
 
 
-def _peak_location(analysis, stress) -> list[float]:
-    """Coordinates (mm) of the node with the highest equivalent stress.
+def _peak_location(analysis, stress) -> list[float] | None:
+    """Coordinates (mm) of the node with the highest equivalent stress, or None if unreadable.
 
     PlotData and MeshData are in solver SI units (Pa, m) regardless of the active unit
     system (seen 2026-10-31), so the peak value is cross-checked against stress.Maximum
-    (MPa) to catch a unit change in a future release."""
-    pd = stress.PlotData
-    nodes, vals = list(pd["Node"]), list(pd["Values"])
+    (MPa) to catch a unit change in a future release.
+    Reading PlotData fails now and then with "PlotData is not supported for Equivalent
+    Stress" on a design that reads fine on a re-run (seen 2026-11-11, cause unknown). The
+    location is extra information, so try twice and then give None instead of losing the solve."""
+    for attempt in (1, 2):
+        try:
+            pd = stress.PlotData
+            nodes, vals = list(pd["Node"]), list(pd["Values"])
+            break
+        except Exception:  # .NET NotImplementedException from Mechanical
+            if attempt == 2:
+                return None
+            time.sleep(1)
     i = max(range(len(vals)), key=vals.__getitem__)
     if abs(vals[i] / 1e6 - stress.Maximum.Value) > 1e-3 * abs(stress.Maximum.Value):
         raise RuntimeError(f"Peak-location units look wrong: PlotData max {vals[i]} vs "
