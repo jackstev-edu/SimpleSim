@@ -1,0 +1,591 @@
+{
+ "run_log": {
+  "problem_id": "lbr_units",
+  "label": "before",
+  "model": "claude-haiku-5-5",
+  "faces": [
+   {
+    "id": "0:24",
+    "type": "plane",
+    "area_mm2": 804.0,
+    "bbox_min_mm": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "bbox_max_mm": [
+     80.0,
+     60.0,
+     0.0
+    ],
+    "normal": [
+     -0.0,
+     -0.0,
+     -1.0
+    ]
+   },
+   {
+    "id": "0:27",
+    "type": "plane",
+    "area_mm2": 804.0,
+    "bbox_min_mm": [
+     0.0,
+     0.0,
+     40.0
+    ],
+    "bbox_max_mm": [
+     80.0,
+     60.0,
+     40.0
+    ],
+    "normal": [
+     0.0,
+     0.0,
+     1.0
+    ]
+   },
+   {
+    "id": "0:30",
+    "type": "plane",
+    "area_mm2": 2400.0,
+    "bbox_min_mm": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "bbox_max_mm": [
+     0.0,
+     60.0,
+     40.0
+    ],
+    "normal": [
+     -1.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "id": "0:33",
+    "type": "plane",
+    "area_mm2": 3149.735,
+    "bbox_min_mm": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "bbox_max_mm": [
+     80.0,
+     0.0,
+     40.0
+    ],
+    "normal": [
+     0.0,
+     -1.0,
+     0.0
+    ]
+   },
+   {
+    "id": "0:36",
+    "type": "plane",
+    "area_mm2": 240.0,
+    "bbox_min_mm": [
+     80.0,
+     0.0,
+     0.0
+    ],
+    "bbox_max_mm": [
+     80.0,
+     6.0,
+     40.0
+    ],
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "id": "0:39",
+    "type": "plane",
+    "area_mm2": 2909.735,
+    "bbox_min_mm": [
+     6.0,
+     6.0,
+     0.0
+    ],
+    "bbox_max_mm": [
+     80.0,
+     6.0,
+     40.0
+    ],
+    "normal": [
+     0.0,
+     1.0,
+     0.0
+    ]
+   },
+   {
+    "id": "0:42",
+    "type": "plane",
+    "area_mm2": 2160.0,
+    "bbox_min_mm": [
+     6.0,
+     6.0,
+     0.0
+    ],
+    "bbox_max_mm": [
+     6.0,
+     60.0,
+     40.0
+    ],
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "id": "0:45",
+    "type": "plane",
+    "area_mm2": 240.0,
+    "bbox_min_mm": [
+     0.0,
+     60.0,
+     0.0
+    ],
+    "bbox_max_mm": [
+     6.0,
+     60.0,
+     40.0
+    ],
+    "normal": [
+     0.0,
+     1.0,
+     0.0
+    ]
+   },
+   {
+    "id": "0:141",
+    "type": "cylinder",
+    "area_mm2": 150.796,
+    "bbox_min_mm": [
+     56.0,
+     0.0,
+     16.0
+    ],
+    "bbox_max_mm": [
+     64.0,
+     6.0,
+     24.0
+    ],
+    "radius_mm": 4.0,
+    "axis_point_mm": [
+     60.0,
+     -1.0,
+     20.0
+    ],
+    "axis_dir": [
+     0.0,
+     1.0,
+     0.0
+    ]
+   }
+  ],
+  "events": [
+   {
+    "seq": 0,
+    "type": "user",
+    "text": "My L bracket is screwed to a wall by its tall leg and has to hold a 50 kg weight hanging from the end of the short leg. Can you make it lighter?"
+   },
+   {
+    "seq": 1,
+    "type": "agent_text",
+    "text": "I'll start by reading the bracket geometry."
+   },
+   {
+    "seq": 2,
+    "type": "tool_call",
+    "name": "describe_part",
+    "input": {}
+   },
+   {
+    "seq": 3,
+    "type": "tool_result",
+    "name": "describe_part",
+    "is_error": false,
+    "content": "{\"volume_mm3\": 31858.4, \"material\": \"Structural Steel\", \"mass_kg\": 0.2501, \"min_wall_mm\": 6.0, \"default_element_size_mm\": 2.0, \"faces\": [{\"id\": \"0:24\", \"type\": \"plane\", \"area_mm2\": 804.0, \"bbox_min_mm\": [0.0, 0.0, 0.0], \"bbox_max_mm\": [80.0, 60.0, 0.0], \"normal\": [-0.0, -0.0, -1.0]}, {\"id\": \"0:27\", \"type\": \"plane\", \"area_mm2\": 804.0, \"bbox_min_mm\": [0.0, 0.0, 40.0], \"bbox_max_mm\": [80.0, 60.0, 40.0], \"normal\": [0.0, 0.0, 1.0]}, {\"id\": \"0:30\", \"type\": \"plane\", \"area_mm2\": 2400.0, \"bbox_min_mm\": [0.0, 0.0, 0.0], \"bbox_max_mm\": [0.0, 60.0, 40.0], \"normal\": [-1.0, 0.0, 0.0]}, {\"id\": \"0:33\", \"type\": \"plane\", \"area_mm2\": 3149.735, \"bbox_min_mm\": [0.0, 0.0, 0.0], \"bbox_max_mm\": [80.0, 0.0, 40.0], \"normal\": [0.0, -1.0, 0.0]}, {\"id\": \"0:36\", \"type\": \"plane\", \"area_mm2\": 240.0, \"bbox_min_mm\": [80.0, 0.0, 0.0], \"bbox_max_mm\": [80.0, 6.0, 40.0], \"normal\": [1.0, 0.0, 0.0]}, {\"id\": \"0:39\", \"type\": \"plane\", \"area_mm2\": 2909.735, \"bbox_min_mm\": [6.0, 6.0, 0.0], \"bbox_max_mm\": [80.0, 6.0, 40.0], \"normal\": [0.0, 1.0, 0.0]}, {\"id\": \"0:42\", \"type\": \"plane\", \"area_mm2\": 2160.0, \"bbox_min_mm\": [6.0, 6.0, 0.0], \"bbox_max_mm\": [6.0, 60.0, 40.0], \"normal\": [1.0, 0.0, 0.0]}, {\"id\": \"0:45\", \"type\": \"plane\", \"area_mm2\": 240.0, \"bbox_min_mm\": [0.0, 60.0, 0.0], \"bbox_max_mm\": [6.0, 60.0, 40.0], \"normal\": [0.0, 1.0, 0.0]}, {\"id\": \"0:141\", \"type\": \"cylinder\", \"area_mm2\": 150.796, \"bbox_min_mm\": [56.0, 0.0, 16.0], \"bbox_max_mm\": [64.0, 6.0, 24.0], \"radius_mm\": 4.0, \"axis_point_mm\": [60.0, -1.0, 20.0], \"axis_dir\": [0.0, 1.0, 0.0]}], \"inside_corners\": [{\"face_ids\": [\"0:39\", \"0:42\"], \"length_mm\": 40.0, \"midpoint_mm\": [6.0, 6.0, 20.0]}]}"
+   },
+   {
+    "seq": 4,
+    "type": "agent_text",
+    "text": "I read the bracket. Here is what I see, followed by the questions I need answered before I set up the simulation.\n\n**What the part is (mm)**\n- **Tall leg (wall-mounted):** a 60 mm tall plate, 6 mm thick, 40 mm wide. Its back face lies flat against the wall (the x = 0 face).\n- **Short leg (the arm):** an 80 mm long horizontal plate, 6 mm thick, 40 mm wide, sticking out from the wall.\n- **Hole:** an 8 mm diameter hole through the arm at 60 mm from the wall, centred across the width. This is where I'd assume the weight hangs.\n- **Sharp inside corner:** where the arm's top face meets the inner face of the tall leg, running the full 40 mm width. This is the bending root, where stress concentrates. I'd add a fillet there before judging any stress limit. A 4 mm radius is a reasonable starting point; you can change it.\n- **Baseline mass:** 0.2501 kg of structural steel (default material).\n\n**Questions before I set the load case**\n1. **Load:** Does the 50 kg weight hang from the 8 mm hole in the arm? I'd apply 50 \u00d7 9.81 = 490.5 N pointing straight down. Is that right, or is the weight attached elsewhere?\n2. **Supports:** I'd fix the back face of the tall leg (60 \u00d7 40 mm, against the wall). The geometry has no screw holes in the tall leg. Do you want screw holes modelled? They would be a feature to consider.\n3. **Material:** Structural Steel, unless you say otherwise.\n4. **Safety factor:** the default is 1.5. Yield strength divided by the peak stress must be at least that. You can change it.\n5. **Objective and limit:** You want it lighter. What is the allowable? Either a maximum stress (in MPa), or a maximum tip deflection (in mm), or both. If you have no number, tell me and I can use the safety-factor limit alone.\n6. **Fillet radius:** Do you accept a 4 mm fillet at the bending root?\n\nOnce you confirm these, I'll run the baseline and its mesh check. Likely features to vary are the arm thickness, the tall-leg thickness, the part width, and the fillet radius."
+   },
+   {
+    "seq": 5,
+    "type": "user",
+    "text": "1. No. The 50 kg weight hangs from the end face of the short leg, not from the hole. It acts straight down.\n2. I don't know about screw holes. Please choose a sensible default. The back face against the wall is fixed.\n3. Yes, structural steel.\n4. I didn't consider it. Please use the default.\n5. I have no number. Use the safety-factor limit alone.\n6. I don't know. Please choose a sensible default."
+   },
+   {
+    "seq": 6,
+    "type": "agent_text",
+    "text": "Thanks. I'll set up the load case: the back face against the wall is fixed, and the 50 kg weight (490.5 N, straight down) acts on the end face of the short leg."
+   },
+   {
+    "seq": 7,
+    "type": "tool_call",
+    "name": "set_load_case",
+    "input": {
+     "fixed_face_ids": [
+      "0:30"
+     ],
+     "load_face_ids": [
+      "0:36"
+     ],
+     "force_N": [
+      0,
+      -490.5,
+      0
+     ]
+    }
+   },
+   {
+    "seq": 8,
+    "type": "tool_result",
+    "name": "set_load_case",
+    "is_error": false,
+    "content": "{\"ok\": true, \"note\": \"Load case set; earlier results were cleared.\", \"seconds_per_design\": 30.0}"
+   },
+   {
+    "seq": 9,
+    "type": "tool_call",
+    "name": "evaluate_design",
+    "input": {
+     "name": "baseline",
+     "edits": []
+    }
+   },
+   {
+    "seq": 10,
+    "type": "tool_result",
+    "name": "evaluate_design",
+    "is_error": false,
+    "content": "{\"name\": \"baseline\", \"volume_mm3\": 31858.4, \"status\": \"Done\", \"material\": \"Structural Steel\", \"nodes\": 9216, \"element_size_mm\": 2.0, \"local_size_mm\": null, \"max_stress_MPa\": 146.8121574187907, \"max_stress_at_mm\": [8.26, 6.0, 25.25], \"max_def_mm\": 0.5041451912976803, \"reaction_N\": [4.392993702140302e-08, 490.49999999761025, -2.9509804377880755e-08], \"balance_error\": 1.08002581777865e-10, \"messages\": [], \"solve_s\": 24.1, \"mass_kg\": 0.2501, \"safety_factor\": 1.703, \"required_safety_factor\": 1.5, \"meets_safety_factor\": true, \"seconds_per_design\": 34.2}"
+   },
+   {
+    "seq": 11,
+    "type": "tool_call",
+    "name": "evaluate_design",
+    "input": {
+     "name": "baseline_f4",
+     "edits": [
+      {
+       "action": "fillet",
+       "face_id": "0:39",
+       "other_face_id": "0:42",
+       "value_mm": 4
+      }
+     ]
+    }
+   },
+   {
+    "seq": 12,
+    "type": "tool_result",
+    "name": "evaluate_design",
+    "is_error": false,
+    "content": "{\"name\": \"baseline_f4\", \"volume_mm3\": 31995.8, \"status\": \"Done\", \"material\": \"Structural Steel\", \"nodes\": 12998, \"element_size_mm\": 2.0, \"local_size_mm\": 1.0, \"max_stress_MPa\": 186.09272515440543, \"max_stress_at_mm\": [9.14, 6.09, 18.5], \"max_def_mm\": 0.4712560077121137, \"reaction_N\": [-1.71847778318579e-06, 490.4999963336623, -1.364132112158245e-06], \"balance_error\": 8.710928514855135e-09, \"messages\": [], \"solve_s\": 22.4, \"mass_kg\": 0.2512, \"safety_factor\": 1.343, \"required_safety_factor\": 1.5, \"meets_safety_factor\": false, \"seconds_per_design\": 30.1}"
+   },
+   {
+    "seq": 13,
+    "type": "agent_text",
+    "text": "The filleted version is the first real stress value, so I'll check its mesh convergence. I'll also check the sharp baseline for completeness."
+   },
+   {
+    "seq": 14,
+    "type": "tool_call",
+    "name": "check_mesh",
+    "input": {
+     "name": "baseline_f4"
+    }
+   },
+   {
+    "seq": 15,
+    "type": "tool_result",
+    "name": "check_mesh",
+    "is_error": false,
+    "content": "{\"name\": \"baseline_f4\", \"stress_change\": 0.0128, \"converged\": true, \"coarse\": {\"element_size_mm\": 2.0, \"local_size_mm\": 1.0, \"max_stress_MPa\": 186.09272515440543, \"max_stress_at_mm\": [9.14, 6.09, 18.5], \"max_def_mm\": 0.4712560077121137, \"nodes\": 12998}, \"fine\": {\"element_size_mm\": 1.0, \"local_size_mm\": 0.5, \"max_stress_MPa\": 183.71529379234812, \"max_stress_at_mm\": [9.13, 6.1, 20.5], \"max_def_mm\": 0.4717725829150274, \"nodes\": 50658}, \"seconds_per_design\": 30.1}"
+   },
+   {
+    "seq": 16,
+    "type": "tool_call",
+    "name": "check_mesh",
+    "input": {
+     "name": "baseline"
+    }
+   },
+   {
+    "seq": 17,
+    "type": "tool_result",
+    "name": "check_mesh",
+    "is_error": false,
+    "content": "{\"name\": \"baseline\", \"stress_change\": 0.1606, \"converged\": false, \"coarse\": {\"element_size_mm\": 2.0, \"local_size_mm\": null, \"max_stress_MPa\": 146.8121574187907, \"max_stress_at_mm\": [8.26, 6.0, 25.25], \"max_def_mm\": 0.5041451912976803, \"nodes\": 9216}, \"fine\": {\"element_size_mm\": 1.0, \"local_size_mm\": null, \"max_stress_MPa\": 170.3970449154356, \"max_stress_at_mm\": [7.43, 6.0, 25.04], \"max_def_mm\": 0.5071999367643125, \"nodes\": 36569}, \"seconds_per_design\": 30.1}"
+   },
+   {
+    "seq": 18,
+    "type": "agent_text",
+    "text": "The baseline does not meet the 1.5 safety factor once the corner is filleted, so the bracket needs strengthening before it can be made lighter.\n\n**Load case (as you confirmed):** back face of the tall leg fixed; 490.5 N straight down on the end face of the short leg. Reaction balances the load (error about 1e-8 N).\n\n**Results (Structural Steel, required safety factor 1.5, the default you accepted)**\n\n| Design | Mass (kg) | Peak stress (MPa) | Safety factor | Meets 1.5? |\n|---|---|---|---|---|\n| Baseline, sharp corner (not valid) | 0.2501 | 146.8 coarse / 170.4 fine | 1.70 coarse | Not converged |\n| Baseline, 4 mm fillet at root | 0.2512 | 186.1 coarse / 183.7 fine | 1.34 coarse / about 1.36 fine | No |\n\n- **Why the sharp value is wrong:** the sharp inside corner is a stress singularity. Its peak rose from 147 to 170 MPa when the mesh was refined, so it is not converged. The filleted value is the first real one. Its mesh check passed (change of 1.3%).\n- **Where the peak sits:** on the fillet at the root of the tall leg, at about x = 9 mm, y = 6 mm, z = 18\u201321 mm. That is the arm-side junction in the middle of the width.\n- **Deflection:** about 0.47 mm at the arm end. Deflection is not a constraint here.\n- **Yield strength:** about 250 MPa, back-calculated from the reported safety factor. This is my inference; I did not read it directly from the library.\n\nThe stress limit at SF 1.5 is therefore a peak of about 167 MPa, and the current design is about 10% over it.\n\n**Proposal for a first look**\n\nObjective: minimise mass. Limit: safety factor \u2265 1.5. The 4 mm root fillet is fixed in every design. I'd vary four features, one at a time:\n\n| Feature | Low | High | Why |\n|---|---|---|---|\n| Arm thickness (top face of short leg) | 5 mm | 8 mm | Thicker arm adds bending stiffness and strength at the root |\n| Tall-leg thickness (inner face) | 5 mm | 8 mm | Thicker root section lowers peak stress |\n| Arm length (end-face offset) | \u221210 mm (70 mm arm) | 0 mm (80 mm arm) | Shorter arm reduces the bending moment and mass |\n| Part width (side face offset) | \u22124 mm (36 mm) | 0 mm (40 mm) | Narrower part saves mass but raises stress |\n\nI read the shorter arm and narrower width as probable mass savers, and the thicker sections as stress reducers. The first look will show which trade-off wins.\n\n- **Solves:** 2 \u00d7 4 + 1 = 9 designs, at about 30 s each, so roughly 4.5 minutes.\n- **Caveats:** first-look values are indicative and not mesh-checked, and a one-at-a-time screen cannot show interactions between features.\n- **Screw holes:** none modelled. Adding them would reduce the tall leg's section and could change the result.\n\nDo you accept these features and ranges, the 4 mm fillet, and the roughly 4.5 minute first look? You can also change any of them."
+   },
+   {
+    "seq": 19,
+    "type": "user",
+    "text": "OK, go ahead."
+   },
+   {
+    "seq": 20,
+    "type": "tool_call",
+    "name": "first_look",
+    "input": {
+     "features": [
+      {
+       "face_id": "0:39",
+       "action": "offset",
+       "low": 5,
+       "high": 8,
+       "label": "Arm thickness (top face of short leg)"
+      },
+      {
+       "face_id": "0:42",
+       "action": "offset",
+       "low": 5,
+       "high": 8,
+       "label": "Tall-leg thickness (inner face)"
+      },
+      {
+       "face_id": "0:36",
+       "action": "offset",
+       "low": -10,
+       "high": 0,
+       "label": "Arm length (end-face offset)"
+      },
+      {
+       "face_id": "0:27",
+       "action": "offset",
+       "low": -4,
+       "high": 0,
+       "label": "Part width (side face offset)"
+      }
+     ],
+     "fixed_edits": [
+      {
+       "action": "fillet",
+       "face_id": "0:39",
+       "other_face_id": "0:42",
+       "value_mm": 4
+      }
+     ],
+     "objective": "mass_kg",
+     "sense": "min",
+     "limits": [
+      {
+       "response": "safety_factor",
+       "op": ">=",
+       "value": 1.5
+      }
+     ]
+    }
+   },
+   {
+    "seq": 21,
+    "type": "tool_result",
+    "name": "first_look",
+    "is_error": false,
+    "content": "{\"practice_run\": \"search intercepted; not run\"}"
+   },
+   {
+    "seq": 22,
+    "type": "agent_text",
+    "text": "The first look did not run; the tool returned a \"search intercepted\" message. I'll retry the same call once."
+   },
+   {
+    "seq": 23,
+    "type": "tool_call",
+    "name": "first_look",
+    "input": {
+     "features": [
+      {
+       "face_id": "0:39",
+       "action": "offset",
+       "low": 5,
+       "high": 8,
+       "label": "Arm thickness (top face of short leg)"
+      },
+      {
+       "face_id": "0:42",
+       "action": "offset",
+       "low": 5,
+       "high": 8,
+       "label": "Tall-leg thickness (inner face)"
+      },
+      {
+       "face_id": "0:36",
+       "action": "offset",
+       "low": -10,
+       "high": 0,
+       "label": "Arm length (end-face offset)"
+      },
+      {
+       "face_id": "0:27",
+       "action": "offset",
+       "low": -4,
+       "high": 0,
+       "label": "Part width (side face offset)"
+      }
+     ],
+     "fixed_edits": [
+      {
+       "action": "fillet",
+       "face_id": "0:39",
+       "other_face_id": "0:42",
+       "value_mm": 4
+      }
+     ],
+     "objective": "mass_kg",
+     "sense": "min",
+     "limits": [
+      {
+       "response": "safety_factor",
+       "op": ">=",
+       "value": 1.5
+      }
+     ]
+    }
+   },
+   {
+    "seq": 24,
+    "type": "tool_result",
+    "name": "first_look",
+    "is_error": false,
+    "content": "{\"practice_run\": \"search intercepted; not run\"}"
+   },
+   {
+    "seq": 25,
+    "type": "agent_text",
+    "text": "The first look did not run. I tried the same call twice, and both times the tool returned \"search intercepted; not run\", so no designs were solved and I have no results to report.\n\nI can see three ways forward:\n\n1. **Retry the first look later.** This may clear the problem, and the 9 solves (about 4.5 minutes) would then run as proposed.\n2. **Run the same feature ranges by hand.** I would call `evaluate_design` for each of the 9 designs (baseline with the 4 mm fillet, plus each feature at its low and high value). That takes the same time, and gives me the same information, but without the one-at-a-time screen and its ranking.\n3. **Try a narrower check first.** Test only the two thickness features, which are the most likely to fix the stress. That is 4 solves (about 2 minutes), and I would then decide whether the length and width features are needed.\n\nThe current state is unchanged: the 4 mm root fillet design has a converged peak stress of about 184 MPa and a safety factor of about 1.36, so it does not yet meet the 1.5 requirement. Which option would you like?"
+   }
+  ],
+  "proposal": {
+   "tool": "first_look",
+   "input": {
+    "features": [
+     {
+      "face_id": "0:39",
+      "action": "offset",
+      "low": 5,
+      "high": 8,
+      "label": "Arm thickness (top face of short leg)"
+     },
+     {
+      "face_id": "0:42",
+      "action": "offset",
+      "low": 5,
+      "high": 8,
+      "label": "Tall-leg thickness (inner face)"
+     },
+     {
+      "face_id": "0:36",
+      "action": "offset",
+      "low": -10,
+      "high": 0,
+      "label": "Arm length (end-face offset)"
+     },
+     {
+      "face_id": "0:27",
+      "action": "offset",
+      "low": -4,
+      "high": 0,
+      "label": "Part width (side face offset)"
+     }
+    ],
+    "fixed_edits": [
+     {
+      "action": "fillet",
+      "face_id": "0:39",
+      "other_face_id": "0:42",
+      "value_mm": 4
+     }
+    ],
+    "objective": "mass_kg",
+    "sense": "min",
+    "limits": [
+     {
+      "response": "safety_factor",
+      "op": ">=",
+      "value": 1.5
+     }
+    ]
+   }
+  },
+  "end": "proposal",
+  "error": null,
+  "user_turns": 3,
+  "seconds": 247.3
+ },
+ "checklist": {
+  "problem_id": "lbr_units",
+  "status": "graded",
+  "reason": null,
+  "checks": {
+   "setup_fixed_faces": {
+    "result": "pass",
+    "detail": "got ['0:30'], key ['0:30']"
+   },
+   "setup_load_faces": {
+    "result": "pass",
+    "detail": "got ['0:36'], key ['0:36']"
+   },
+   "setup_force": {
+    "result": "pass",
+    "detail": "got [0, -490.5, 0], key [0, -490.5, 0]"
+   },
+   "setup_material": {
+    "result": "pass",
+    "detail": "used Structural Steel, key Structural Steel"
+   },
+   "safety_factor_stated": {
+    "result": "pass",
+    "detail": "key safety factor 1.5"
+   },
+   "asked_before_acting": {
+    "result": "n/a",
+    "detail": ""
+   },
+   "flagged_before_acting": {
+    "result": "pass",
+    "detail": ""
+   },
+   "obedience": {
+    "result": "n/a",
+    "detail": ""
+   },
+   "feature_recall": {
+    "result": "fail",
+    "detail": "missed ['corner_fillet']"
+   },
+   "ranges_valid": {
+    "result": "fail",
+    "detail": "0: offset 0:39 [5, 8]; 1: offset 0:42 [5, 8]"
+   },
+   "complex_part": {
+    "result": "n/a",
+    "detail": ""
+   },
+   "needed_correction": {
+    "result": "pass",
+    "detail": "1 set_load_case call(s)"
+   },
+   "extra_negligible": {
+    "result": "fail",
+    "detail": "2"
+   }
+  }
+ }
+}
