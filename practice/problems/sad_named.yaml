@@ -21,7 +21,9 @@ key:
     - 0
     material: Structural Steel
     safety_factor: 1.5
-  must_ask: []
+  must_ask:
+  - material
+  - safety_factor
   must_flag: []
   objective: mass_kg
   limits:
@@ -71,3 +73,15 @@ key:
     key_high: 6.0
     min_value: 3
     max_value: 7
+  - id: web_thickness
+    label: thickness of the slanted web
+    face_id: 0:26574
+    action: offset
+    other_face_id: null
+    alt_face_ids:
+    - 0:26619
+    key_low: -0.4
+    key_high: 0.3
+    min_value: null
+    max_value: null
+    optional: true

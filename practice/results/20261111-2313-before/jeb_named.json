@@ -8994,8 +8994,8 @@
     "detail": "key safety factor 1.5"
    },
    "asked_before_acting": {
-    "result": "n/a",
-    "detail": ""
+    "result": "fail",
+    "detail": "not asked first: ['safety_factor']"
    },
    "flagged_before_acting": {
     "result": "n/a",
@@ -9023,8 +9023,9 @@
    },
    "extra_negligible": {
     "result": "pass",
-    "detail": "0"
+    "detail": "0 negligible"
    }
-  }
+  },
+  "unmatched_features": []
  }
 }

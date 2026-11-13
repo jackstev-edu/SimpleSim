@@ -1,0 +1,73 @@
+problem: nin_clean_auto
+results: 20261111-2313-before
+built: '2026-11-13'
+reviewed: true
+features:
+- face_id: 0:77
+  action: offset
+  other_face_id: null
+  also_face_ids: []
+  low: -5
+  high: 0
+  label: Base plate end length (+x)
+  seen_in:
+  - nin_bad_sf
+  effect: moves_objective  # reviewed 2026-11-13: SF -1 %, mass -7 %; "controls" was a single-feature ranking artefact
+evidence:
+- reference:
+    values:
+    - 0.0
+    responses:
+      mass_kg: 0.4475
+      max_stress_MPa: 38.381113268914824
+      max_def_mm: 0.0034740139134826547
+      safety_factor: 6.514
+  features:
+  - index: 1
+    label: Base plate end length (+x)
+    low: -5
+    ref: 0.0
+    high: 0
+    responses:
+      mass_kg:
+        low: 0.4158
+        ref: 0.4475
+        high: 0.4475
+        change: 0.031700000000000006
+        basis: high_vs_low
+        change_rel: 0.07083798882681565
+      max_stress_MPa:
+        low: 38.7681222774416
+        ref: 38.381113268914824
+        high: 38.381113268914824
+        change: -0.3870090085267748
+        basis: high_vs_low
+        change_rel: -0.010083318996382956
+      max_def_mm:
+        low: 0.0034935892281089363
+        ref: 0.0034740139134826547
+        high: 0.0034740139134826547
+        change: -1.95753146262816e-05
+        basis: high_vs_low
+        change_rel: -0.0056347830244173076
+      safety_factor:
+        low: 6.449
+        ref: 6.514
+        high: 6.514
+        change: 0.06500000000000039
+        basis: high_vs_low
+        change_rel: 0.009978507829290818
+    feasible:
+      low: true
+      high: true
+  ranking:
+  - 1
+  limit_ranking:
+    safety_factor:
+    - 1
+  best_feasible: look_1_low
+  errors: {}
+  failed: 0
+  stopped: done
+  solves: 3
+  seconds_per_design: 33.9

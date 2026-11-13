@@ -51,3 +51,14 @@ def test_uses_haiku():
     fake = FakeClient()
     SimUser(problem(), fake).reply("x")
     assert fake.calls[0]["model"] == SIM_MODEL == "claude-haiku-5-5"
+
+
+def test_complex_part_user_does_not_claim_it_named_features():
+    # On a complex part the features are named only if the agent asks, so the approval must not say
+    # "the features I asked for" (seen 2026-11-11: the agent never asked and got that reply).
+    fake = FakeClient()
+    p = problem(named=["wall"])
+    p.kind = "complex"
+    SimUser(p, fake).reply("Shall I run this?")
+    s = fake.calls[0]["system"]
+    assert 'reply exactly: "OK, go ahead."' in s and "If the assistant asks which features" in s

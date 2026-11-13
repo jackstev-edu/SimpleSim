@@ -999,9 +999,10 @@
     "detail": "1 set_load_case call(s)"
    },
    "extra_negligible": {
-    "result": "fail",
-    "detail": "1"
+    "result": "pass",
+    "detail": "0 negligible"
    }
-  }
+  },
+  "unmatched_features": []
  }
 }

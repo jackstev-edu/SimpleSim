@@ -20,7 +20,9 @@ key:
     - 0
     material: Structural Steel
     safety_factor: 1.5
-  must_ask: []
+  must_ask:
+  - material
+  - safety_factor
   must_flag:
   - unit_conversion
   objective: mass_kg

@@ -103,3 +103,14 @@ key:
     key_high: 4
     min_value: 0.5
     max_value: 6
+  - id: base_length
+    label: length of the base plate (+x end face)
+    face_id: 0:77
+    action: offset
+    other_face_id: null
+    alt_face_ids: []
+    key_low: -5
+    key_high: 0
+    min_value: null
+    max_value: null
+    optional: true

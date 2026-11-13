@@ -540,9 +540,29 @@
     "detail": "1 set_load_case call(s)"
    },
    "extra_negligible": {
-    "result": "fail",
-    "detail": "2"
+    "result": "pass",
+    "detail": "0 negligible; 2 unmatched (not graded): Depth (z), Flange length"
    }
-  }
+  },
+  "unmatched_features": [
+   {
+    "face_id": "0:27",
+    "action": "offset",
+    "other_face_id": null,
+    "also_face_ids": [],
+    "low": -10,
+    "high": 0,
+    "label": "Depth (z)"
+   },
+   {
+    "face_id": "0:36",
+    "action": "offset",
+    "other_face_id": null,
+    "also_face_ids": [],
+    "low": -20,
+    "high": 0,
+    "label": "Flange length"
+   }
+  ]
  }
 }

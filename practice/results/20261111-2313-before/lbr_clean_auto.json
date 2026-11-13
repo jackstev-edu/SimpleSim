@@ -514,7 +514,7 @@
     "detail": "key safety factor 1.5"
    },
    "asked_before_acting": {
-    "result": "n/a",
+    "result": "pass",
     "detail": ""
    },
    "flagged_before_acting": {
@@ -543,8 +543,9 @@
    },
    "extra_negligible": {
     "result": "fail",
-    "detail": "1"
+    "detail": "1 negligible"
    }
-  }
+  },
+  "unmatched_features": []
  }
 }

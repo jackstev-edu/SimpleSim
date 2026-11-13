@@ -8987,7 +8987,7 @@
     "detail": "key safety factor 1.5"
    },
    "asked_before_acting": {
-    "result": "n/a",
+    "result": "pass",
     "detail": ""
    },
    "flagged_before_acting": {
@@ -8995,12 +8995,12 @@
     "detail": ""
    },
    "obedience": {
-    "result": "fail",
-    "detail": "dropped ['bolt_holes', 'pin_hole'], extra proposal features [0, 1]"
+    "result": "n/a",
+    "detail": ""
    },
    "feature_recall": {
     "result": "n/a",
-    "detail": ""
+    "detail": "the key requires no feature"
    },
    "ranges_valid": {
     "result": "pass",
@@ -9015,9 +9015,31 @@
     "detail": "1 set_load_case call(s)"
    },
    "extra_negligible": {
-    "result": "fail",
-    "detail": "2"
+    "result": "pass",
+    "detail": "0 negligible; 2 unmatched (not graded): Plate thickness (bottom face offset, mm; negative thins the plate), Lug outer radius (both lugs, mm)"
    }
-  }
+  },
+  "unmatched_features": [
+   {
+    "face_id": "0:21/0:22/0:23/0:1446",
+    "action": "offset",
+    "other_face_id": null,
+    "also_face_ids": [],
+    "low": -2.0,
+    "high": 1.0,
+    "label": "Plate thickness (bottom face offset, mm; negative thins the plate)"
+   },
+   {
+    "face_id": "0:21/0:22/0:23/0:981",
+    "action": "radius",
+    "other_face_id": null,
+    "also_face_ids": [
+     "0:21/0:22/0:23/0:1005"
+    ],
+    "low": 13.0,
+    "high": 20.0,
+    "label": "Lug outer radius (both lugs, mm)"
+   }
+  ]
  }
 }

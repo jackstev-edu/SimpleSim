@@ -135,7 +135,8 @@ def test_safety_factor_not_stated_fails():
 
 def test_must_ask_force_asked_before_set_load_case():
     p = problem(must_ask=["force"])
-    ok = log(say("How large is the force, in N?"), call("set_load_case", **GOOD_LC), proposal_feats=GOOD_FEATS)
+    ok = log(say("How large is the force, in N?"), {"type": "user", "text": "500 N"},
+             call("set_load_case", **GOOD_LC), proposal_feats=GOOD_FEATS)
     late = log(call("set_load_case", **GOOD_LC), say("What force did you want?"), proposal_feats=GOOD_FEATS)
     assert res(grade(p, EFFECTS, ok), "asked_before_acting") == "pass"
     assert res(grade(p, EFFECTS, late), "asked_before_acting") == "fail"
@@ -204,3 +205,74 @@ def test_complex_part_says_complex():
              call("set_load_case", **GOOD_LC), end="turn_cap")
     assert res(grade(p, EFFECTS, lg), "complex_part") == "pass"
     assert res(grade(p, EFFECTS, log(call("set_load_case", **GOOD_LC), end="turn_cap")), "complex_part") == "fail"
+
+
+# --- rule changes of 2026-11-13 ---------------------------------------------------------------
+
+def user(text="answer"):
+    return {"type": "user", "text": text}
+
+
+EXTRA = {"face_id": "end", "action": "offset", "low": -5, "high": 0, "label": "Arm length"}
+
+
+def test_unmatched_feature_is_reported_not_failed():
+    c = grade(problem(), EFFECTS, good_log(GOOD_FEATS + [EXTRA]))
+    assert res(c, "extra_negligible") == "pass"
+    assert "unmatched" in c["checks"]["extra_negligible"]["detail"]
+    assert [u["label"] for u in c["unmatched_features"]] == ["Arm length"]
+    assert c["unmatched_features"][0]["face_id"] == "end" and c["unmatched_features"][0]["low"] == -5
+
+
+def test_matched_negligible_feature_still_fails():
+    feats = GOOD_FEATS + [{"face_id": "h2b", "action": "radius", "low": 3, "high": 5}]
+    c = grade(problem(), EFFECTS, good_log(feats))
+    assert res(c, "extra_negligible") == "fail" and c["unmatched_features"] == []
+
+
+def test_complex_obedience_only_when_features_were_named_in_the_chat():
+    p = problem("complex", named=["wall"])
+    never_asked = good_log(GOOD_FEATS)
+    asked = log(say("Safety factor 1.5. This part looks complex. Which features should I change?"), user("the wall"),
+                call("set_load_case", **GOOD_LC), proposal_feats=GOOD_FEATS)
+    assert res(grade(p, EFFECTS, never_asked), "obedience") == "n/a"
+    assert res(grade(p, EFFECTS, asked), "obedience") == "fail"  # corner was not named
+    assert res(grade(p, EFFECTS, good_log(GOOD_FEATS[:1])), "obedience") == "n/a"
+
+
+def test_question_needs_a_user_reply_before_the_value_is_used():
+    p = problem(must_ask=["force"])
+    no_reply = log(say("How large is the force, in N?"), call("set_load_case", **GOOD_LC), proposal_feats=GOOD_FEATS)
+    assert res(grade(p, EFFECTS, no_reply), "asked_before_acting") == "fail"
+
+
+def test_material_and_safety_factor_must_be_asked_before_the_first_solve():
+    p = problem(must_ask=["material", "safety_factor"])
+    ok = log(say("Which material is it, and which safety factor do you need? My default safety factor is 1.5."),
+             user("Steel. The default safety factor is fine."), call("set_load_case", **GOOD_LC), {"type": "tool_call", "name": "evaluate_design", "input": {}},
+             proposal_feats=GOOD_FEATS)
+    late = log(call("set_load_case", **GOOD_LC), {"type": "tool_call", "name": "evaluate_design", "input": {}},
+               say("Safety factor 1.5 and Structural Steel by default. Is that material right? Safety factor ok?"),
+               user("yes"), proposal_feats=GOOD_FEATS)
+    assert res(grade(p, EFFECTS, ok), "asked_before_acting") == "pass"
+    c = grade(p, EFFECTS, late)
+    assert res(c, "asked_before_acting") == "fail"
+    assert "material" in c["checks"]["asked_before_acting"]["detail"]
+
+
+def test_optional_key_feature_is_not_required_for_recall_but_counts_when_proposed():
+    key_feats = copy.deepcopy(KEY["features"]) + [
+        {"id": "arm", "face_id": "end", "action": "offset", "alt_face_ids": [], "optional": True},
+        {"id": "depth", "face_id": "w3", "action": "offset", "alt_face_ids": [], "optional": True}]
+    eff = {"reviewed": True, "effects": dict(EFFECTS["effects"], arm="controls_limit", depth="negligible")}
+    p = problem(features=key_feats)
+    assert res(grade(p, eff, good_log()), "feature_recall") == "pass"
+    c = grade(p, eff, good_log(GOOD_FEATS + [EXTRA]))
+    assert res(c, "extra_negligible") == "pass" and c["unmatched_features"] == []
+    bad = grade(p, eff, good_log(GOOD_FEATS + [{"face_id": "w3", "action": "offset", "low": -1, "high": 0}]))
+    assert res(bad, "extra_negligible") == "fail"
+
+
+def test_recall_is_na_when_the_key_requires_no_feature():
+    eff = {"reviewed": True, "effects": {"wall": "unknown", "corner": "unknown", "hole2": "unknown"}}
+    assert res(grade(problem(), eff, good_log()), "feature_recall") == "n/a"

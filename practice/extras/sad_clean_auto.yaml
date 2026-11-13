@@ -1,0 +1,124 @@
+problem: sad_clean_auto
+results: 20261111-2313-before
+built: '2026-11-13'
+reviewed: true
+features:
+- face_id: 0:26574
+  action: offset
+  other_face_id: null
+  also_face_ids: []
+  low: -0.4
+  high: 0.3
+  label: Web thickness
+  seen_in:
+  - sad_clean_auto
+  effect: controls_limit
+- face_id: 0:26619
+  action: offset
+  other_face_id: null
+  also_face_ids: []
+  low: -0.4
+  high: 0.4
+  label: Web thickness
+  seen_in:
+  - sad_missing_force
+  effect: controls_limit
+evidence:
+- reference:
+    values:
+    - 0.0
+    - 0.0
+    responses:
+      mass_kg: 0.0392
+      max_stress_MPa: 118.03087716359542
+      max_def_mm: 1.1415070920593635
+      safety_factor: 2.118
+  features:
+  - index: 1
+    label: Web thickness
+    low: -0.4
+    ref: 0.0
+    high: 0.3
+    responses:
+      mass_kg:
+        low: 0.0365
+        ref: 0.0392
+        high: 0.0412
+        change: 0.004700000000000003
+        basis: high_vs_low
+        change_rel: 0.11989795918367355
+      max_stress_MPa:
+        low: 156.9832920324917
+        ref: 118.03087716359542
+        high: 114.03105102623526
+        change: -42.95224100625644
+        basis: high_vs_low
+        change_rel: -0.3639068186091929
+      max_def_mm:
+        low: 2.2472928094996885
+        ref: 1.1415070920593635
+        high: 0.8397972643952324
+        change: -1.4074955451044562
+        basis: high_vs_low
+        change_rel: -1.2330151559244629
+      safety_factor:
+        low: 1.593
+        ref: 2.118
+        high: 2.192
+        change: 0.5990000000000002
+        basis: high_vs_low
+        change_rel: 0.2828139754485365
+    feasible:
+      low: true
+      high: true
+  - index: 2
+    label: Web thickness
+    low: -0.4
+    ref: 0.0
+    high: 0.4
+    responses:
+      mass_kg:
+        low: 0.0366
+        ref: 0.0392
+        high: null
+        change: -0.002599999999999998
+        basis: low_vs_ref
+        change_rel: -0.06632653061224485
+      max_stress_MPa:
+        low: 155.62150963144364
+        ref: 118.03087716359542
+        high: null
+        change: 37.59063246784822
+        basis: low_vs_ref
+        change_rel: 0.3184813446378623
+      max_def_mm:
+        low: 2.207487271575091
+        ref: 1.1415070920593635
+        high: null
+        change: 1.0659801795157273
+        basis: low_vs_ref
+        change_rel: 0.9338357921128811
+      safety_factor:
+        low: 1.606
+        ref: 2.118
+        high: null
+        change: -0.5119999999999998
+        basis: low_vs_ref
+        change_rel: -0.2417374881964116
+    feasible:
+      low: true
+      high: false
+  ranking:
+  - 1
+  - 2
+  limit_ranking:
+    safety_factor:
+    - 1
+    - 2
+  best_feasible: look_1_low
+  errors:
+    look_2_high: 'ZeroDivisionError: float division by zero (at tools.py:413 in _responses)'
+  failed: 1
+  stopped: done
+  solves: 4
+  seconds_per_design: 32.9

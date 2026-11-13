@@ -44,7 +44,8 @@ class SimUser:
         if problem.kind == "complex":
             complex_rule = ("- If the assistant asks which features to change, "
                             + ("name: " + "; ".join(named) + ".\n" if named else "say you are not sure.\n"))
-        self.system = RULES.format(facts=problem.hidden_facts.strip(), approve=APPROVE_NAMED if named else APPROVE,
+        told = bool(named) and problem.kind != "complex"  # on a complex part they are named only when asked
+        self.system = RULES.format(facts=problem.hidden_facts.strip(), approve=APPROVE_NAMED if told else APPROVE,
                                    named=named_rule, complex=complex_rule)
 
     def reply(self, agent_text: str) -> str:

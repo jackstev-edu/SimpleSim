@@ -10,6 +10,7 @@ review_notes:
   user, 2026-11-11.
 built: '2026-11-11'
 effects:
+  base_length: moves_objective
   base_thickness: controls_limit
   lug_thickness: controls_limit
   center_hole: controls_limit

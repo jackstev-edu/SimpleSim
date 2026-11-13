@@ -4,6 +4,7 @@ From the repo root:
   set PYTHONIOENCODING=utf-8 && ..\.venv\Scripts\python.exe -m scripts.run_practice --label before
   ..\.venv\Scripts\python.exe -m scripts.run_practice --label after --only lbr_clean_auto
   ..\.venv\Scripts\python.exe -m scripts.run_practice --compare practice/results/A practice/results/B
+  ..\.venv\Scripts\python.exe -m scripts.run_practice --regrade practice/results/A
 Uses SIMPLESIM_MODE for the agent (default debug = Haiku); the simulated user is always Haiku.
 """
 from __future__ import annotations
@@ -59,6 +60,7 @@ def main() -> None:
     ap.add_argument("--label", default="run")
     ap.add_argument("--only", nargs="*")
     ap.add_argument("--compare", nargs=2, metavar=("BEFORE", "AFTER"))
+    ap.add_argument("--regrade", metavar="RESULTS", help="grade a results folder's saved run logs again, in place")
     ap.add_argument("--out", help=argparse.SUPPRESS)  # results folder, set by the parent run for its children
     args = ap.parse_args()
     if args.compare:
@@ -68,6 +70,16 @@ def main() -> None:
         return
 
     problems = [p for p in load_problems(PROBLEMS_DIR) if not args.only or p.id in args.only]
+    if args.regrade:  # saved run logs, today's grader and keys; no ANSYS, no API
+        folder, results = Path(args.regrade), []
+        for p in problems:
+            saved = folder / f"{p.id}.json"
+            if saved.is_file():
+                run_log = json.loads(saved.read_text(encoding="utf-8"))["run_log"]
+                results.append((run_log, grade(p, load_effects(p), run_log)))
+        write_results(folder, results)
+        print((folder / "summary.md").read_text(encoding="utf-8"))
+        return
     out = Path(args.out) if args.out else RESULTS / f"{time.strftime('%Y%m%d-%H%M')}-{args.label}"
     usage: dict = {}
     if len(problems) > 1:

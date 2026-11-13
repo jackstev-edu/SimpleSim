@@ -21,6 +21,7 @@ key:
     safety_factor: 1.5
   must_ask:
   - fixed_faces
+  - safety_factor
   must_flag: []
   objective: mass_kg
   limits:

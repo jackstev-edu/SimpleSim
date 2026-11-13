@@ -555,7 +555,7 @@
     "detail": "key safety factor 1.5"
    },
    "asked_before_acting": {
-    "result": "n/a",
+    "result": "pass",
     "detail": ""
    },
    "flagged_before_acting": {
@@ -583,9 +583,29 @@
     "detail": "1 set_load_case call(s)"
    },
    "extra_negligible": {
-    "result": "fail",
-    "detail": "2"
+    "result": "pass",
+    "detail": "0 negligible; 2 unmatched (not graded): Arm length (end-face offset), Part width (side face offset)"
    }
-  }
+  },
+  "unmatched_features": [
+   {
+    "face_id": "0:36",
+    "action": "offset",
+    "other_face_id": null,
+    "also_face_ids": [],
+    "low": -10,
+    "high": 0,
+    "label": "Arm length (end-face offset)"
+   },
+   {
+    "face_id": "0:27",
+    "action": "offset",
+    "other_face_id": null,
+    "also_face_ids": [],
+    "low": -4,
+    "high": 0,
+    "label": "Part width (side face offset)"
+   }
+  ]
  }
 }

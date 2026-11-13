@@ -30,7 +30,9 @@ key:
     - 35585.77
     material: Titanium alloy, Ti-6Al-4V, annealed
     safety_factor: 1.5
-  must_ask: []
+  must_ask:
+  - safety_factor
+  - objective
   must_flag: []
   objective: mass_kg
   limits:

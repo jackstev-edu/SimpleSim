@@ -5,6 +5,7 @@ reviewed_on: '2026-11-11'
 review_notes: []
 built: '2026-11-11'
 effects:
+  web_thickness: controls_limit
   left_flange: controls_limit
   right_flange: moves_objective
   left_corner_fillet: controls_limit
