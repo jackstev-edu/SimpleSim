@@ -79,3 +79,16 @@ def test_fixed_zone_mm_skips_the_search():
 def test_step_for():
     assert step_for(6.0, 2.0) == 3.0
     assert step_for(None, 2.0) == 2.0
+
+
+def test_zero_zone_excludes_nothing():
+    stress = 100.0 + 1000.0 * np.exp(-X / 1.0)
+    r = _run(stress, guard=np.array([2]))
+    assert r["excluded_peak_MPa"] is None
+    assert r["excluded_peak_at_mm"] is None
+    assert r["excluded_at"] is None
+
+
+def test_all_zero_stress_does_not_raise():
+    r = _run(np.zeros_like(X))
+    assert r["stress_for_limit_MPa"] == 0.0

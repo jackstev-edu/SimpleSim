@@ -76,13 +76,19 @@ def exclusion_zone(coords_mm: np.ndarray, stress_mpa: np.ndarray,
     d_guard = float(d[np.asarray(guard_idx, dtype=int)].min()) if len(guard_idx) else np.inf
     sizes = [step_mm * k for k in range(1, n_steps + 1) if step_mm * k < d_guard]
     if not sizes:
-        out = build(0.0, False)
-        out["stress_for_limit_MPa"] = float(stress_mpa[raw_i])
-        out["stress_for_limit_at_mm"] = _xyz(coords_mm, raw_i)
-        return out
+        # No zone fits: nothing is excluded and the raw peak is the answer.
+        return {
+            "stress_for_limit_MPa": float(stress_mpa[raw_i]),
+            "stress_for_limit_at_mm": _xyz(coords_mm, raw_i),
+            "excluded_peak_MPa": None,
+            "excluded_peak_at_mm": None,
+            "excluded_at": None,
+            "zone_mm": 0,
+            "zone_settled": False,
+        }
     peaks = [peak_outside(s)[0] for s in sizes]
     for k in range(1, len(sizes)):
         # Settled when growing the zone no longer changes the outside peak.
-        if abs(peaks[k] - peaks[k - 1]) / peaks[k - 1] < tol:
+        if abs(peaks[k] - peaks[k - 1]) <= tol * abs(peaks[k - 1]):
             return build(sizes[k - 1], True)
     return build(sizes[0], False)
