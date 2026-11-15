@@ -203,7 +203,9 @@ TOOLS = [
             "only (one-at-a-time, coarse mesh, no interactions): use them to choose the variables and bounds for "
             "optimize, then run check_mesh on whatever you recommend. Before calling it, show the user the features, "
             "their ranges and the estimated time (2n + 1 designs x seconds_per_design) and wait for their OK. "
-            "Designs are stored as look_ref, look_<k>_low, look_<k>_high. The user can stop it between designs."
+            "Designs are stored as look_ref, look_<k>_low, look_<k>_high. The user can stop it between designs. "
+            "For 'offset', low and high are the offset from the current face in mm (not an absolute thickness), "
+            "so the range must include 0 (e.g. -1 to +2); for 'radius' and 'fillet' they are radii in mm."
         ),
         "input_schema": {
             "type": "object",
@@ -248,7 +250,7 @@ TOOLS = [
         "description": (
             "Run the classical optimizer (optiSLang ARSM, an adaptive response-surface method) over 1-3 design "
             "variables. Each variable drives one edit (same actions as evaluate_design; for 'offset' the value is "
-            "the offset in mm from the original face, for 'radius' and 'fillet' it is the radius). fixed_edits are "
+            "the offset from the current face in mm, not an absolute thickness, so lower..upper must include 0; for 'radius' and 'fillet' it is the radius). fixed_edits are "
             "applied to every design (e.g. a fillet you are not varying). Minimises (or, with sense 'max', maximises) "
             "the objective response subject to every limit (response, '<=' or '>=', value). To respect the required "
             "safety factor, add the limit safety_factor >= that value. Every design is stored like evaluate_design results "
