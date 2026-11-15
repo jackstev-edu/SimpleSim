@@ -32,3 +32,39 @@ def test_unfinished_solve_is_refused_with_the_solver_messages():
         check_solved("SolveRequired", ["An unknown error occurred during solution."], "*** ERROR ***\nlicense lost")
     text = str(e.value)
     assert "SolveRequired" in text and "unknown error" in text and "license lost" in text and "NOT solved" in text
+
+
+def test_zone_fields_convert_units():
+    from src.sim.mechanical import _zone_fields
+    # Nodes 1..3 on a line, 10 mm apart; support at node 1, stress peak (300 MPa) beside it.
+    coords_m = {1: (0.0, 0.0, 0.0), 2: (0.01, 0.0, 0.0), 3: (0.02, 0.0, 0.0)}
+    out = _zone_fields([1, 2, 3], [300e6, 100e6, 80e6], coords_m, {1}, set(), set(),
+                       step_mm=5.0, zone_mm=5.0, max_stress_mpa=300.0)
+    assert out["stress_for_limit_MPa"] == pytest.approx(100.0)
+    assert out["stress_for_limit_at_mm"] == [10.0, 0.0, 0.0]
+    assert out["excluded_peak_MPa"] == pytest.approx(300.0)
+    assert out["excluded_peak_at_mm"] == [0.0, 0.0, 0.0]
+
+
+def test_zone_fields_without_plotdata_fall_back_to_raw_peak():
+    from src.sim.mechanical import _zone_fields
+    out = _zone_fields([], [], {}, set(), set(), set(), 5.0, None, 123.0)
+    assert out["stress_for_limit_MPa"] == 123.0
+    assert out["zone_mm"] is None and out["excluded_peak_MPa"] is None
+
+
+def test_refinement_check_compares_zone_stress_and_reuses_zone(monkeypatch):
+    from src.sim import mechanical
+    calls = []
+
+    def fake_solve(*args, **kwargs):
+        calls.append(kwargs)
+        n = len(calls)
+        return {"max_stress_MPa": 100.0 * n, "stress_for_limit_MPa": 49.0 + n, "zone_mm": 3.0, "nodes": 1}
+
+    monkeypatch.setattr(mechanical, "solve", fake_solve)
+    out = mechanical.refinement_check("p.pmdb", "F", "L", (0, 0, 1), guard="G", min_wall_mm=4.0)
+    assert out["converged"] is True
+    assert out["stress_change"] == pytest.approx(0.02)
+    assert calls[1]["zone_mm"] == 3.0
+    assert calls[1]["guard"] == "G" and calls[1]["min_wall_mm"] == 4.0

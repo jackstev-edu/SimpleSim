@@ -14,7 +14,9 @@ from pathlib import Path
 
 from ansys.mechanical.core import App
 
-from src.sim import materials
+import numpy as np
+
+from src.sim import materials, zones
 
 # PyMechanical's embedding injects Model, Quantity, enums etc. into these globals.
 _app: App | None = None
@@ -93,13 +95,18 @@ def solve(
     local_size: tuple[str, float] | None = None,
     material: dict | None = None,
     save_to: str | Path | None = None,
+    guard: str | None = None,
+    min_wall_mm: float | None = None,
+    zone_mm: float | None = None,
 ) -> dict:
     """Fix the faces in named selection `fixed`, apply `force_N` on `load`, solve.
 
     local_size = (named selection, size in mm) refines the mesh on those faces only,
     e.g. fillets, which a global mesh fine enough to resolve would exceed the node limit.
     material = an entry from materials.get(); None keeps Mechanical's default Structural Steel.
-    save_to = a .mechdb path: save the solved analysis there so it can be opened in Mechanical."""
+    save_to = a .mechdb path: save the solved analysis there so it can be opened in Mechanical.
+    guard = optional named selection whose stress must never be excluded (may be absent from the part).
+    min_wall_mm sets the zone step (half of it); zone_mm fixes the zone size (no search)."""
     app = _get_app()
     t0 = time.time()
     app.new()
@@ -149,7 +156,10 @@ def solve(
     check_solved(str(sol.Status), [m.DisplayString for m in ExtAPI.Application.Messages],  # noqa: F821
                  _solver_output_tail(analysis))
 
-    peak_at = _peak_location(analysis, stress)
+    peak_at, node_ids, values_pa = _peak_location(analysis, stress)
+    zone, zone_msg = _zone_from_mesh(analysis, [ns[fixed], ns[load], ns.get(guard) if guard else None],
+                                     node_ids, values_pa, zones.step_for(min_wall_mm, element_size_mm),
+                                     zone_mm, stress.Maximum.Value)
     reaction_N = [reaction.XAxis.Value, reaction.YAxis.Value, reaction.ZAxis.Value]
     # The reaction should equal minus the applied load. Mechanical reports reactions
     # with the sign convention "force the support exerts", so compare magnitudes per axis.
@@ -170,20 +180,22 @@ def solve(
         "balance_error": residual / applied if applied else 0.0,
         "messages": [m.DisplayString for m in ExtAPI.Application.Messages]  # noqa: F821
                     + ([] if peak_at else ["Peak-stress location could not be read (max_stress_at_mm is null); "
-                                           "the stress and deflection values are valid."]),
+                                           "the stress and deflection values are valid."])
+                    + ([zone_msg] if zone_msg else []),
+        **zone,
         "solve_s": round(time.time() - t0, 1),
     }
 
 
-def _peak_location(analysis, stress) -> list[float] | None:
-    """Coordinates (mm) of the node with the highest equivalent stress, or None if unreadable.
+def _peak_location(analysis, stress):
+    """(peak coords in mm or None, node ids, stress values in Pa) from one PlotData read.
 
     PlotData and MeshData are in solver SI units (Pa, m) regardless of the active unit
     system (seen 2026-10-31), so the peak value is cross-checked against stress.Maximum
     (MPa) to catch a unit change in a future release.
     Reading PlotData fails now and then with "PlotData is not supported for Equivalent
     Stress" on a design that reads fine on a re-run (seen 2026-11-11, cause unknown). The
-    location is extra information, so try twice and then give None instead of losing the solve."""
+    location is extra information, so try twice and then give None and empty arrays."""
     for attempt in (1, 2):
         try:
             pd = stress.PlotData
@@ -191,28 +203,76 @@ def _peak_location(analysis, stress) -> list[float] | None:
             break
         except Exception:  # .NET NotImplementedException from Mechanical
             if attempt == 2:
-                return None
+                return None, [], []
             time.sleep(1)
     i = max(range(len(vals)), key=vals.__getitem__)
     if abs(vals[i] / 1e6 - stress.Maximum.Value) > 1e-3 * abs(stress.Maximum.Value):
         raise RuntimeError(f"Peak-location units look wrong: PlotData max {vals[i]} vs "
                            f"Maximum {stress.Maximum.Value} MPa")
     node = analysis.MeshData.NodeById(nodes[i])
-    return [round(c * 1000, 2) for c in (node.X, node.Y, node.Z)]
+    return [round(c * 1000, 2) for c in (node.X, node.Y, node.Z)], nodes, vals
+
+
+def _zone_fields(nodes: list[int], values_pa: list[float], coords_m: dict[int, tuple],
+                 support_ids: set[int], load_ids: set[int], guard_ids: set[int],
+                 step_mm: float, zone_mm: float | None, max_stress_mpa: float) -> dict:
+    """Exclusion-zone fields from SI node data (Pa, m); pure, no ANSYS."""
+    if not nodes:
+        # PlotData unreadable: judge the limit on the raw peak and say no zone was used.
+        return {"stress_for_limit_MPa": max_stress_mpa, "stress_for_limit_at_mm": None,
+                "excluded_peak_MPa": None, "excluded_peak_at_mm": None, "excluded_at": None,
+                "zone_mm": None, "zone_settled": None}
+    coords_mm = np.array([[c * 1000 for c in coords_m[n]] for n in nodes])
+    stress_mpa = np.asarray(values_pa, dtype=float) / 1e6
+
+    def idx(ids: set[int]) -> np.ndarray:
+        return np.array([k for k, n in enumerate(nodes) if n in ids], dtype=int)
+
+    return zones.exclusion_zone(coords_mm, stress_mpa, idx(support_ids), idx(load_ids),
+                                idx(guard_ids), step_mm, zone_mm=zone_mm)
+
+
+def _zone_from_mesh(analysis, selections, nodes, values_pa, step_mm, zone_mm, max_stress_mpa):
+    """Gather coordinates and face node ids from Mechanical, then call _zone_fields.
+
+    Returns (fields, message or None). Any ANSYS API failure falls back to the raw peak."""
+    try:
+        if not nodes:
+            raise RuntimeError("stress PlotData was not readable")
+        mesh = analysis.MeshData
+        coords = {}
+        for n in nodes:  # per-node lookup; Task 5 measures the time at 120K nodes
+            nd = mesh.NodeById(n)
+            coords[n] = (nd.X, nd.Y, nd.Z)
+        id_sets = []
+        for sel in selections:
+            ids: set[int] = set()
+            for geo_id in (sel.Location.Ids if sel is not None else []):
+                ids.update(int(i) for i in mesh.MeshRegionById(geo_id).NodeIds)
+            id_sets.append(ids)
+        return _zone_fields(nodes, values_pa, coords, id_sets[0], id_sets[1], id_sets[2],
+                            step_mm, zone_mm, max_stress_mpa), None
+    except Exception as e:  # noqa: BLE001 - the zone is extra; keep the solve
+        fields = _zone_fields([], [], {}, set(), set(), set(), step_mm, zone_mm, max_stress_mpa)
+        return fields, f"Exclusion zone could not be computed ({type(e).__name__}: {e}); the limit uses the raw peak."
 
 
 def refinement_check(pmdb: str | Path, fixed: str, load: str, force_N, element_size_mm: float = 2.0,
                      tolerance: float = 0.10, local_size: tuple[str, float] | None = None,
-                     material: dict | None = None, on_solve=None) -> dict:
+                     material: dict | None = None, on_solve=None, *,
+                     guard: str | None = None, min_wall_mm: float | None = None) -> dict:
     """Re-solve with half the element size (global and local). A max stress change above
     `tolerance` means the peak is mesh-dependent, typically a singularity at a sharp corner.
-    `on_solve("coarse" | "fine", result)` is called after each solve (progress reporting)."""
-    coarse = solve(pmdb, fixed, load, force_N, element_size_mm, local_size, material)
+    The comparison uses stress_for_limit_MPa (outside the exclusion zone); the fine solve reuses the
+    coarse zone_mm. `on_solve("coarse" | "fine", result)` is called after each solve."""
+    coarse = solve(pmdb, fixed, load, force_N, element_size_mm, local_size, material,
+                   guard=guard, min_wall_mm=min_wall_mm)
     if on_solve:
         on_solve("coarse", coarse)
     fine_local = (local_size[0], local_size[1] / 2) if local_size else None
     try:
-        fine = solve(pmdb, fixed, load, force_N, element_size_mm / 2, fine_local, material)
+        fine = solve(pmdb, fixed, load, force_N, element_size_mm / 2, fine_local, material,
+                     guard=guard, min_wall_mm=min_wall_mm, zone_mm=coarse["zone_mm"])
     except MeshTooLarge as e:
         raise MeshTooLarge(
             f"Mesh check not possible: the halved mesh is over the Student limit. {e} The coarse result "
@@ -220,5 +280,5 @@ def refinement_check(pmdb: str | Path, fixed: str, load: str, force_N, element_s
             f"{coarse['nodes']:,} nodes at {element_size_mm} mm.") from e
     if on_solve:
         on_solve("fine", fine)
-    change = abs(fine["max_stress_MPa"] - coarse["max_stress_MPa"]) / coarse["max_stress_MPa"]
+    change = abs(fine["stress_for_limit_MPa"] - coarse["stress_for_limit_MPa"]) / coarse["stress_for_limit_MPa"]
     return {"coarse": coarse, "fine": fine, "stress_change": change, "converged": change <= tolerance}
