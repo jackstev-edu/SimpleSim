@@ -209,6 +209,7 @@ TOOLS = [
             "only (one-at-a-time, coarse mesh, no interactions): use them to choose the variables and bounds for "
             "optimize, then run check_mesh on whatever you recommend. Before calling it, show the user the features, "
             "their ranges and the estimated time (2n + 1 designs x seconds_per_design) and wait for their OK. "
+            "Stress limits and stress objectives use stress_for_limit_MPa (max_stress_MPa includes the singular spike and is refused). "
             "Designs are stored as look_ref, look_<k>_low, look_<k>_high. The user can stop it between designs. "
             "For 'offset', low and high are the offset from the current face in mm (not an absolute thickness), "
             "so the range must include 0 (e.g. -1 to +2); for 'radius' and 'fillet' they are radii in mm."
@@ -232,7 +233,7 @@ TOOLS = [
                         "required": ["face_id", "action", "low", "high"],
                     },
                 },
-                "fixed_edits": {"type": "array", "items": {"type": "object"}, "description": "Edits applied to every design and not varied (same form as evaluate_design edits), e.g. a fillet at each sharp inside corner in the load path so the peak stress is not a singularity"},
+                "fixed_edits": {"type": "array", "items": {"type": "object"}, "description": "Edits applied to every design and not varied (same form as evaluate_design edits), e.g. a fillet at each sharp inside corner in the load path so the stress used for the limit is not a singularity"},
                 "objective": {"type": "string", "enum": list(RESPONSES)},
                 "sense": {"type": "string", "enum": ["min", "max"], "description": "Default min"},
                 "limits": {
@@ -259,7 +260,8 @@ TOOLS = [
             "the offset from the current face in mm, not an absolute thickness, so lower..upper must include 0; for 'radius' and 'fillet' it is the radius). fixed_edits are "
             "applied to every design (e.g. a fillet you are not varying). Minimises (or, with sense 'max', maximises) "
             "the objective response subject to every limit (response, '<=' or '>=', value). To respect the required "
-            "safety factor, add the limit safety_factor >= that value. Every design is stored like evaluate_design results "
+            "safety factor, add the limit safety_factor >= that value. Stress limits and stress objectives use "
+            "stress_for_limit_MPa (max_stress_MPa includes the singular spike and is refused). Every design is stored like evaluate_design results "
             "(names prefix_01, prefix_02, ...), so check_mesh and finalize_design work on them. Uses the 2 mm "
             "mesh: run check_mesh on the best design before trusting it. Each evaluation takes about seconds_per_design, so "
             "agree the budget with the user first (default 15, max 30)."
@@ -284,7 +286,7 @@ TOOLS = [
                         "required": ["face_id", "action", "lower", "upper", "start"],
                     },
                 },
-                "fixed_edits": {"type": "array", "items": {"type": "object"}, "description": "Edits applied to every design and not varied (same form as evaluate_design edits), e.g. a fillet at each sharp inside corner in the load path so the peak stress is not a singularity"},
+                "fixed_edits": {"type": "array", "items": {"type": "object"}, "description": "Edits applied to every design and not varied (same form as evaluate_design edits), e.g. a fillet at each sharp inside corner in the load path so the stress used for the limit is not a singularity"},
                 "objective": {"type": "string", "enum": list(RESPONSES)},
                 "sense": {"type": "string", "enum": ["min", "max"], "description": "Default min"},
                 "limits": {

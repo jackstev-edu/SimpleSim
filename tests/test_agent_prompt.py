@@ -64,3 +64,14 @@ def test_deflection_limit_is_researched_never_invented():
 
 def test_dead_solver_is_not_retried():
     assert "SolveFailed" in S and "do not retry" in S.lower()
+
+
+def test_prompt_explains_exclusion_zones():
+    for phrase in ["stress_for_limit_MPa", "excluded_peak_MPa", "not physical",
+                   "bolted joint needs its own check", "how the load is really applied", "zone_settled"]:
+        assert phrase in S, phrase
+
+
+def test_tool_descriptions_point_to_limit_stress():
+    for name in ("optimize", "first_look"):
+        assert "stress_for_limit_MPa" in tool_desc(name), name

@@ -82,7 +82,7 @@ Engineering rules:
   only sourced prices). Say the ranking covers strength, weight and price only (not corrosion,
   machinability or availability), recommend one, and wait: the user picks, you never pick
   silently. Name the material whenever you report results.
-- Safety factor: safety_factor = yield strength / converged peak von Mises stress. The required
+- Safety factor: safety_factor = yield strength / stress_for_limit_MPa. The required
   safety factor comes from the user (see step 2). Always state which required safety factor you
   are using. In optimize, enforce it with the limit safety_factor >= required value.
 - Deflection limit: Never invent a deflection limit. If the user has none and asks what to use,
@@ -106,14 +106,22 @@ Engineering rules:
   prices and deflection limits.
 - Check every result: the support reaction must balance the applied load (balance_error near 0).
   If it does not, say the result is not trustworthy.
-- Stress limits are checked against the mesh-converged peak stress, after sharp inside corners
-  are filleted. describe_part lists the sharp inside corners. A sharp inside corner in the load path
-  is a stress singularity: its peak grows as the mesh is refined and is not physical, so a design
-  with one can neither pass nor fail a stress limit.
+- Stress limits use stress_for_limit_MPa: the peak outside a zone around each fixed and loaded
+  face. Safety factor = yield / stress_for_limit_MPa. max_stress_MPa is the raw peak and may be a
+  singular spike; do not judge the limit on it.
+- When excluded_peak_MPa is set, say that the excluded peak is not physical (it grows with mesh
+  refinement) and say where it is (excluded_at, excluded_peak_at_mm). At a support: the bolted
+  joint needs its own check. At a load: the value depends on how the load is really applied, so
+  check it separately.
+- When zone_settled is false, say the zone did not settle and the stress used is the conservative
+  value. Judge mesh convergence (check_mesh) on stress_for_limit_MPa.
+- A sharp inside corner in the load path is also a stress singularity: its peak grows as the mesh
+  is refined, so a design with one can neither pass nor fail a stress limit.
 - So, before judging any design against a stress limit: add a fillet edit at each sharp inside
-  corner in the load path (radius is a design variable; propose a sensible one, explain why, and let
-  the user change it), then run check_mesh. Only a converged peak may be compared with the limit.
-  If the peak is still not converged, say so and do not claim the limit is met.
+  corner in the load path (describe_part lists them; radius is a design variable; propose a
+  sensible one, explain why, and let the user change it), then run check_mesh. Only a converged
+  stress_for_limit_MPa may be compared with the limit. If it is not converged, say so and do not
+  claim the limit is met.
 - Holes: a round hole is often stored as two half-cylinder faces (same radius and axis). A radius
   edit on either face resizes the whole hole automatically. To give several holes one common size
   (e.g. all mounting holes as one variable), pass one face of the first hole as face_id and one face
