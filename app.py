@@ -14,11 +14,14 @@ import gradio as gr
 
 from src.agent.agent import MODE, MODEL, Agent
 from src.agent.tools import Workbench
+from src.llm import LEDGER, BudgetExceeded, append_spend, cost, counted_client, session_budget
 
 ROOT = Path(__file__).resolve().parent
 wb = Workbench(ROOT / "outputs" / "session")  # closed in the __main__ block, not atexit: by then
 # concurrent.futures has shut its pools down and wb.close fails
 _agent: Agent | None = None
+USAGE: dict = {}  # tokens this GUI session spent, per model; written to the ledger when the app closes
+BUDGET_USD = session_budget()
 
 TABLE_HEADERS = ["design", "material", "mass (kg)", "max stress (MPa)", "safety factor", "max deflection (mm)",
                  "cost (USD)", "reaction balance error", "mesh check"]
@@ -29,8 +32,15 @@ def agent() -> Agent:
     if _agent is None:
         if not os.environ.get("OPENAI_API_KEY"):
             raise gr.Error("Set the OPENAI_API_KEY environment variable and restart the app.")
-        _agent = Agent(wb)
+        _agent = Agent(wb, client=counted_client(USAGE, BUDGET_USD))
     return _agent
+
+
+def record_spend(path=LEDGER) -> float | None:
+    """Add this session's spend to the ledger; None when nothing was spent."""
+    if not USAGE:
+        return None
+    return append_spend(path, "gui", 0, USAGE)
 
 
 def _short(text: str, n: int = 1500) -> str:
@@ -39,6 +49,16 @@ def _short(text: str, n: int = 1500) -> str:
 
 def _stream(history: list, user_text: str):
     """Run one agent turn, yielding (chat history, design table) as events arrive."""
+    try:
+        yield from _events(history, user_text)
+    except BudgetExceeded as e:
+        history.append({"role": "assistant", "content": f"⚠️ **The {e}.** No further model calls this session "
+                        f"(${cost(USAGE):.2f} spent). Restart the app to continue, or raise the cap with the "
+                        "SIMPLESIM_SESSION_BUDGET_USD environment variable."})
+        yield history, wb.table()
+
+
+def _events(history: list, user_text: str):
     for ev in agent().run(user_text):
         if ev["type"] == "text":
             history.append({"role": "assistant", "content": ev["text"]})
@@ -161,3 +181,6 @@ if __name__ == "__main__":
         demo.launch(inbrowser=True)
     finally:
         wb.close()
+        total = record_spend()
+        if total is not None:
+            print(f"session cost ${cost(USAGE):.4f}; all runs so far (practice/spend.csv): ${total:.4f}")

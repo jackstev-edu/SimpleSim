@@ -60,3 +60,21 @@ def test_spend_ledger_appends_one_row_per_run(tmp_path):
     assert [r["label"] for r in rows] == ["after", "after2"]
     assert rows[0]["problems"] == "12" and rows[0]["cost_usd"] == "0.1000" and rows[0]["models"] == "gpt-6-luna"
     assert rows[1]["total_usd"] == "0.2000"
+
+
+def test_session_budget_defaults_per_mode_and_env_override(monkeypatch):
+    from src.llm import session_budget
+    monkeypatch.delenv("SIMPLESIM_SESSION_BUDGET_USD", raising=False)
+    assert session_budget("debug") == 0.20 and session_budget("demo") == 0.20
+    assert session_budget("deploy") == 2.00
+    monkeypatch.setenv("SIMPLESIM_SESSION_BUDGET_USD", "0.5")
+    assert session_budget("deploy") == 0.5
+
+
+def test_session_budget_must_be_a_positive_number(monkeypatch):
+    import pytest
+    from src.llm import session_budget
+    for bad in ("0", "-1", "abc"):
+        monkeypatch.setenv("SIMPLESIM_SESSION_BUDGET_USD", bad)
+        with pytest.raises(ValueError, match="SIMPLESIM_SESSION_BUDGET_USD"):
+            session_budget("debug")

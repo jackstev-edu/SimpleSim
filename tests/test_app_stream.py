@@ -61,3 +61,36 @@ def test_send_clears_textbox_before_the_turn_runs():
     assert app.take_text("hello") == ("", "hello")
     clear = [f for f in app.demo.fns.values() if getattr(f, "name", None) == "take_text"]
     assert len(clear) == 2 and all(f.queue is False for f in clear)  # not stuck behind a running turn
+
+
+def test_gui_agent_uses_the_counted_client(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-not-used")
+    monkeypatch.setattr(app, "_agent", None)
+    try:
+        assert app.agent().client.responses.create.__name__ == "counted"
+    finally:
+        app._agent = None
+
+
+def test_budget_cap_ends_the_turn_with_a_warning(monkeypatch):
+    from src.llm import BudgetExceeded
+
+    class Broke:
+        def run(self, text):
+            yield {"type": "text", "text": "hi"}
+            raise BudgetExceeded("budget cap reached: $0.20 spent of $0.20")
+
+    monkeypatch.setattr(app, "agent", lambda: Broke())
+    monkeypatch.setattr(app.wb, "table", lambda: "TABLE")
+    hist = list(app._stream([], "go"))[-1][0]
+    assert "budget cap" in hist[-1]["content"] and "SIMPLESIM_SESSION_BUDGET_USD" in hist[-1]["content"]
+
+
+def test_session_spend_goes_to_the_ledger(monkeypatch, tmp_path):
+    ledger = tmp_path / "spend.csv"
+    monkeypatch.setattr(app, "USAGE", {})
+    assert app.record_spend(ledger) is None and not ledger.exists()  # nothing spent, no row
+    monkeypatch.setattr(app, "USAGE", {"gpt-6-luna": {"input_tokens": 1000, "cached_tokens": 0, "output_tokens": 100}})
+    app.record_spend(ledger)
+    rows = ledger.read_text(encoding="utf-8").splitlines()
+    assert len(rows) == 2 and ",gui," in rows[1]

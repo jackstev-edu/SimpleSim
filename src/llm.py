@@ -24,6 +24,9 @@ MODEL = MODELS[MODE]
 PRICES = {"gpt-6-luna": (0.10, 0.01, 0.50),
           "gpt-6.1-sol": (2.00, 0.10, 10.00)}
 USAGE_KEYS = ("input_tokens", "cached_tokens", "output_tokens")
+LEDGER = Path(__file__).resolve().parents[1] / "practice" / "spend.csv"
+# Cap for one interactive session (the GUI, smoke scripts), USD; SIMPLESIM_SESSION_BUDGET_USD overrides it.
+SESSION_BUDGET_USD = {"debug": 0.20, "demo": 0.20, "deploy": 2.00}
 LEDGER_FIELDS = ("date", "label", "problems", "models", "cost_usd", "total_usd")
 
 
@@ -92,3 +95,17 @@ def append_spend(path: Path, label: str, problems: int, usage: dict) -> float:
                     "models": " ".join(sorted(usage)), "cost_usd": f"{run:.4f}",
                     "total_usd": f"{previous + run:.4f}"})
     return previous + run
+
+
+def session_budget(mode: str = MODE) -> float:
+    """The spending cap for one interactive session in this mode, or the SIMPLESIM_SESSION_BUDGET_USD override."""
+    raw = os.environ.get("SIMPLESIM_SESSION_BUDGET_USD")
+    if raw is None:
+        return SESSION_BUDGET_USD[mode]
+    try:
+        value = float(raw)
+    except ValueError:
+        value = 0.0
+    if value <= 0:
+        raise ValueError(f"SIMPLESIM_SESSION_BUDGET_USD must be a positive number of USD, got {raw!r}")
+    return value

@@ -23,10 +23,9 @@ from src.eval.problems import PROBLEMS_DIR, REPO, load_effects, load_problems, r
 from src.eval.report import compare_markdown, write_results
 from src.eval.runner import RecordingWorkbench, run_problem
 from src.eval.sim_user import SimUser
-from src.llm import add_usage, append_spend, cost, counted_client
+from src.llm import LEDGER, add_usage, append_spend, cost, counted_client
 
 RESULTS = REPO / "practice" / "results"
-LEDGER = REPO / "practice" / "spend.csv"
 BUDGET_USD = 0.20  # hard cap per run (decision 2026-11-15); the course key must last until deployment
 
 
