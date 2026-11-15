@@ -39,3 +39,30 @@ def test_numbers_inside_strings_of_the_result_count():
 
 def test_wrong_rounding_is_caught():
     assert unknown_numbers("safety factor 2.30", RESULT) == ["2.30"]
+
+
+def test_one_significant_figure_must_match_exactly():
+    # 2.756 mm rounds to 3, but "a safety factor of 3" is a wrong number, not a rounding
+    assert unknown_numbers("The safety factor of 3 is fine.", RESULT) == ["3"]
+    assert unknown_numbers("It weighs 0 kg.", RESULT) == ["0"]
+
+
+def test_exact_small_integers_from_the_result_still_pass():
+    assert unknown_numbers("The limit is 2 and 5 finalists were checked.", RESULT) == []
+
+
+def test_percent_direction_word_must_match_the_sign():
+    # mass changed -44.9 %: the design is lighter, not heavier
+    assert unknown_numbers("It is 45% heavier.", RESULT) == ["45%"]
+    assert unknown_numbers("It is 45% lighter.", RESULT) == []
+
+
+def test_explicit_sign_on_a_percent_is_kept():
+    assert unknown_numbers("Mass changed by +44.9%.", RESULT) == ["+44.9%"]
+    assert unknown_numbers("Mass changed by -44.9%.", RESULT) == []
+
+
+def test_heavier_is_checked_against_mass_only():
+    # safety factor rose +44.5 %, but "45% heavier" is a claim about mass
+    assert unknown_numbers("The safety factor is 45% higher.", RESULT) == []
+    assert unknown_numbers("It is 45% heavier (+44.9%).", RESULT) == ["45%", "+44.9%"]
