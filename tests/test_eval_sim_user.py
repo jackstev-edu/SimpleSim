@@ -8,11 +8,11 @@ from src.eval.sim_user import SIM_MODEL, SimUser
 class FakeClient:
     def __init__(self):
         self.calls = []
-        self.messages = self
+        self.responses = self
 
     def create(self, **kwargs):
-        self.calls.append({**kwargs, "messages": [dict(m) for m in kwargs["messages"]]})
-        return NS(content=[NS(type="text", text=f"reply {len(self.calls)}")])
+        self.calls.append({**kwargs, "input": [dict(m) for m in kwargs["input"]]})
+        return NS(output_text=f"reply {len(self.calls)}", status="completed")
 
 
 def problem(named=(), kind="clean_auto"):
@@ -25,7 +25,7 @@ def problem(named=(), kind="clean_auto"):
 def test_system_prompt_holds_hidden_facts_and_rules():
     fake = FakeClient()
     SimUser(problem(), fake).reply("Which face is fixed?")
-    s = fake.calls[0]["system"]
+    s = fake.calls[0]["instructions"]
     assert "The back face is bolted. 500 N down on the end." in s
     assert "Never volunteer" in s and "face ids" in s and "OK, go ahead." in s
 
@@ -33,7 +33,7 @@ def test_system_prompt_holds_hidden_facts_and_rules():
 def test_named_features_approval_phrase():
     fake = FakeClient()
     SimUser(problem(named=["wall"]), fake).reply("Shall I run this?")
-    s = fake.calls[0]["system"]
+    s = fake.calls[0]["instructions"]
     assert "OK, go ahead with the features I asked for." in s and "base thickness" in s
 
 
@@ -42,15 +42,15 @@ def test_history_alternates_and_grows():
     u = SimUser(problem(), fake)
     assert u.reply("first?") == "reply 1"
     u.reply("second?")
-    msgs = fake.calls[1]["messages"]
+    msgs = fake.calls[1]["input"]
     assert [m["role"] for m in msgs] == ["user", "assistant", "user"]
     assert msgs[0]["content"] == "first?" and msgs[1]["content"] == "reply 1"
 
 
-def test_uses_haiku():
+def test_uses_gpt_6_luna():
     fake = FakeClient()
     SimUser(problem(), fake).reply("x")
-    assert fake.calls[0]["model"] == SIM_MODEL == "claude-haiku-5-5"
+    assert fake.calls[0]["model"] == SIM_MODEL == "gpt-6-luna"
 
 
 def test_complex_part_user_does_not_claim_it_named_features():
@@ -60,5 +60,14 @@ def test_complex_part_user_does_not_claim_it_named_features():
     p = problem(named=["wall"])
     p.kind = "complex"
     SimUser(p, fake).reply("Shall I run this?")
-    s = fake.calls[0]["system"]
+    s = fake.calls[0]["instructions"]
     assert 'reply exactly: "OK, go ahead."' in s and "If the assistant asks which features" in s
+
+
+def test_empty_reply_raises():
+    class Empty(FakeClient):
+        def create(self, **kwargs):
+            return NS(output_text="", status="incomplete")
+    import pytest
+    with pytest.raises(RuntimeError, match="no text"):
+        SimUser(problem(), Empty()).reply("x")

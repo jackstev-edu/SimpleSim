@@ -1,21 +1,17 @@
 """Live smoke test of the full agent (LLM + tools) with a scripted user.
 
 Run from the repo root:  python -m scripts.smoke_agent
-Needs ANTHROPIC_API_KEY. Uses SIMPLESIM_MODE (default "debug" = Haiku, cheap).
+Needs OPENAI_API_KEY. Uses SIMPLESIM_MODE (default "debug" = gpt-6-luna, cheap).
 Prints every tool call and the token use and estimated cost of the run.
 """
 from pathlib import Path
 
-import anthropic
-
 from src.agent.agent import MODE, MODEL, Agent
 from src.agent.tools import Workbench
+from src.llm import cost, counted_client
 
 ROOT = Path(__file__).resolve().parents[1]
-
-# USD per million tokens: input, output, cache read, cache write (5 min)
-PRICES = {"claude-haiku-5-5": (0.10, 0.50, 0.01, 0.125),
-          "claude-sonnet-5-5": (2.00, 10.00, 0.20, 2.50)}
+BUDGET_USD = 0.05  # hard cap; one smoke run has cost about $0.006 on Haiku-priced models
 
 TURNS = [
     "I uploaded an L-shaped steel bracket. Please describe it.",
@@ -30,19 +26,8 @@ TURNS = [
 
 def main():
     print(f"mode {MODE}, model {MODEL}")
-    usage = {"input_tokens": 0, "output_tokens": 0, "cache_read_input_tokens": 0,
-             "cache_creation_input_tokens": 0, "calls": 0}
-    client = anthropic.Anthropic()
-    create = client.messages.create
-
-    def counted_create(**kwargs):
-        r = create(**kwargs)
-        usage["calls"] += 1
-        for k in ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"):
-            usage[k] += getattr(r.usage, k, 0) or 0
-        return r
-
-    client.messages.create = counted_create
+    usage: dict = {}
+    client = counted_client(usage, BUDGET_USD)
 
     wb = Workbench(ROOT / "outputs" / "smoke_agent")
     try:
@@ -52,7 +37,7 @@ def main():
             print(f"\n=== USER: {turn}")
             for ev in agent.run(turn):
                 if ev["type"] == "text":
-                    print(f"\n--- CLAUDE:\n{ev['text']}")
+                    print(f"\n--- AGENT:\n{ev['text']}")
                 elif ev["type"] == "tool":
                     print(f"\n[tool] {ev['name']} {ev['input']}")
                 elif ev["type"] == "tool_result":
@@ -63,11 +48,7 @@ def main():
         print("\ntable:", wb.table())
     finally:
         wb.close()
-        p_in, p_out, p_cr, p_cw = PRICES[MODEL]
-        cost = (usage["input_tokens"] * p_in + usage["output_tokens"] * p_out
-                + usage["cache_read_input_tokens"] * p_cr
-                + usage["cache_creation_input_tokens"] * p_cw) / 1e6
-        print(f"\nusage: {usage}\nestimated cost: ${cost:.4f}")
+        print(f"\nusage: {usage}\nestimated cost: ${cost(usage):.4f}")
 
 
 if __name__ == "__main__":

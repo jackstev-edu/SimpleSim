@@ -34,14 +34,13 @@ class FakeWB(RecordingWorkbench):
 
 
 class ScriptClient:
-    """Agent replies: each entry is a list of blocks for one API call."""
+    """Agent replies: each entry is a list of output items for one API call."""
     def __init__(self, script):
-        self.script, self.messages = list(script), self
+        self.script, self.responses = list(script), self
 
     def create(self, **kwargs):
-        blocks = self.script.pop(0) if self.script else [NS(type="text", text="Anything else?")]
-        stop = "tool_use" if any(b.type == "tool_use" for b in blocks) else "end_turn"
-        return NS(content=blocks, stop_reason=stop)
+        items = self.script.pop(0) if self.script else [text("Anything else?")]
+        return NS(output=items, status="completed")
 
 
 class FakeUser:
@@ -53,12 +52,17 @@ class FakeUser:
         return "OK, go ahead."
 
 
+class Item(NS):
+    def model_dump(self, **_):
+        return {k: ([vars(x) for x in v] if isinstance(v, list) else v) for k, v in vars(self).items()}
+
+
 def text(t):
-    return NS(type="text", text=t)
+    return Item(type="message", role="assistant", content=[NS(type="output_text", text=t, annotations=[])])
 
 
 def tool(name, inp, i="t1"):
-    return NS(type="tool_use", id=i, name=name, input=inp)
+    return Item(type="function_call", call_id=i, name=name, arguments=json.dumps(inp))
 
 
 def run(script, wb=None, max_user_turns=8):

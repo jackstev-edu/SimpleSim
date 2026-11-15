@@ -2,7 +2,7 @@
 # Python 3.12+ and a local ANSYS 2026 R1 install (Mechanical + SpaceClaim) are required.
 ansys-mechanical-core==0.13.5
 ansys-geometry-core==0.18.2
-anthropic==2.3.0
+openai==3.51.0
 gradio==6.31.0
 ansys-optislang-core==1.7.0  # optiSLang ARSM optimizer (needs optiSLang 25R1+ installed)
 # dev

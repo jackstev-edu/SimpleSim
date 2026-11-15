@@ -39,7 +39,7 @@ python -m scripts.smoke_loop     # geometry edit -> solve -> plausibility checks
 python -m scripts.smoke_tools    # the agent's tools, scripted, no LLM (no API cost)
 ```
 
-Run the chat app (needs `ANTHROPIC_API_KEY` set as an environment variable; never put the key in code):
+Run the chat app (needs `OPENAI_API_KEY` set as an environment variable; never put the key in code):
 
 ```bash
 python app.py                    # opens http://127.0.0.1:7860

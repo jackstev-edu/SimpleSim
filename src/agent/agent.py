@@ -1,33 +1,36 @@
-"""The design-optimization agent: Claude with the tools in tools.py.
+"""The design-optimization agent: an OpenAI model with the tools in tools.py.
 
-Manual tool-use loop (rather than the SDK's beta tool runner) so every tool call
-can be shown in the GUI as it happens. The API key comes from the
-ANTHROPIC_API_KEY environment variable, never from code.
+Manual tool-use loop on the Responses API so every tool call can be shown in the GUI as it
+happens. The API key comes from the OPENAI_API_KEY environment variable, never from code
+(course-provided key, decision 2026-11-15).
 
-SIMPLESIM_MODE picks the model: "debug" (default, Haiku 5.5, cheap) while we fix
-plumbing, "demo" (Sonnet 5.5) for real design runs and the demo.
+SIMPLESIM_MODE picks the model: "debug" (default) and "demo" use gpt-6-luna (cheap, priced like
+Haiku 5.5); "deploy" uses gpt-6.1-sol (priced like Sonnet 5.5, 20x luna) for the deployed demo.
 """
 from __future__ import annotations
 
+import json
 import os
 import queue
 from concurrent.futures import ThreadPoolExecutor
 from collections.abc import Iterator
 
-import anthropic
-
 from src.agent.tools import TOOLS, Workbench
 
-MODELS = {"debug": "claude-haiku-5-5", "demo": "claude-sonnet-5-5"}
+MODELS = {"debug": "gpt-6-luna", "demo": "gpt-6-luna", "deploy": "gpt-6.1-sol"}
 MODE = os.environ.get("SIMPLESIM_MODE", "debug")
 if MODE not in MODELS:
     raise ValueError(f"SIMPLESIM_MODE must be one of {sorted(MODELS)}, got {MODE!r}")
 MODEL = MODELS[MODE]
+REASONING_EFFORT = "low"  # keeps hidden reasoning tokens (billed as output) small
+MAX_OUTPUT_TOKENS = 8000
 MAX_TOOL_ROUNDS = 30  # per user message, a cost guard
-# Server-side web search, used only to find material prices (decision 2026-10-31). The dynamic-
-# filtering variant needs Sonnet 5.5 or Opus; Haiku gets the basic one.
-WEB_SEARCH = {"type": "web_search_20260209" if MODE == "demo" else "web_search_20250305",
-              "name": "web_search", "max_uses": 3}
+# The tool definitions stay in Anthropic's shape in tools.py; the Responses API wants function tools.
+# strict=False: our schemas have optional fields, which strict mode does not allow.
+FUNCTIONS = [{"type": "function", "name": t["name"], "description": t["description"],
+              "parameters": t["input_schema"], "strict": False} for t in TOOLS]
+# Hosted web search, used only to find material prices (decision 2026-10-31).
+WEB_SEARCH = {"type": "web_search"}
 
 SYSTEM = """\
 You are a structural design-optimization assistant for beginners who use ANSYS Mechanical.
@@ -134,12 +137,15 @@ def _progress_text(ev: dict) -> str:
 
 
 class Agent:
-    def __init__(self, workbench: Workbench, client: anthropic.Anthropic | None = None):
+    def __init__(self, workbench: Workbench, client=None):
         self.wb = workbench
         self._pool = ThreadPoolExecutor(max_workers=1)  # tools run here so progress can stream
-        self.client = client or anthropic.Anthropic()
-        self.messages: list[dict] = []
-        # Set while tools run: {"ids": tool_use ids, "results": tool_results so far, "future": running tool}.
+        if client is None:
+            from openai import OpenAI
+            client = OpenAI()
+        self.client = client
+        self.messages: list[dict] = []  # Responses API input items: the whole conversation so far
+        # Set while tools run: {"ids": call ids, "results": function_call_outputs so far, "future": running tool}.
         # Still set at the next run() only if the last turn was abandoned mid-tool (page refresh/close).
         self._open: dict | None = None
 
@@ -152,9 +158,9 @@ class Agent:
         self._open = None
 
     def _close_abandoned_turn(self) -> list[dict]:
-        """tool_result blocks that answer the tool calls of an abandoned turn ([] if there was none).
+        """function_call_output items that answer the calls of an abandoned turn ([] if there was none).
 
-        Every tool_use must be followed by its tool_result or the API rejects the whole history.
+        Every function_call must be followed by its output or the API rejects the whole history.
         Waits for the abandoned tool (it was asked to stop) and drops its progress events.
         """
         if self._open is None:
@@ -170,82 +176,90 @@ class Agent:
                 self.wb.progress.get_nowait()
             except queue.Empty:
                 break
-        done = {r["tool_use_id"] for r in self._open["results"]}
+        done = {r["call_id"] for r in self._open["results"]}
         results = list(self._open["results"]) + [
-            {"type": "tool_result", "tool_use_id": i, "is_error": True,
-             "content": "Interrupted: the turn was cancelled (page closed or refreshed) before this tool's "
-                        "result was delivered. Designs it finished are still stored; ask the user how to go on."}
+            {"type": "function_call_output", "call_id": i,
+             "output": "Interrupted: the turn was cancelled (page closed or refreshed) before this tool's "
+                       "result was delivered. Designs it finished are still stored; ask the user how to go on."}
             for i in self._open["ids"] if i not in done]
         self._open = None
         return results
 
-    def run(self, user_text: str) -> Iterator[dict]:
-        """Send one user message and run tools until Claude answers. Yields GUI events."""
-        repaired = self._close_abandoned_turn()
-        self.messages.append({"role": "user", "content": repaired + [{"type": "text", "text": user_text}]
-                              if repaired else user_text})
-        for _ in range(MAX_TOOL_ROUNDS):
-            response = self.client.messages.create(
-                model=MODEL,
-                max_tokens=8000,
-                system=SYSTEM,
-                tools=TOOLS + [WEB_SEARCH],
-                messages=self.messages,
-                cache_control={"type": "ephemeral"},
-            )
-            self.messages.append({"role": "assistant", "content": response.content})
-            # Web-search citations split one answer into many text blocks; join each run of text
-            # blocks back into one message for the GUI.
-            text = []
-            for block in response.content:
-                if block.type == "text":
-                    text.append(block.text)
-                    continue
-                if "".join(text).strip():
-                    yield {"type": "text", "text": "".join(text)}
-                text = []
-                if block.type == "server_tool_use":  # web search, run by the API itself
-                    yield {"type": "tool", "name": block.name, "input": block.input}
-                elif block.type == "web_search_tool_result":
-                    # Success is a list of results; an error is a single object.
-                    hits = block.content if isinstance(block.content, list) else []
-                    self.wb.seen_urls.update(h.url for h in hits)
-                    yield {"type": "tool_result", "name": "web_search", "is_error": not hits,
-                           "content": "\n".join(f"{h.title}: {h.url}" for h in hits) or str(block.content)}
-            if "".join(text).strip():
-                yield {"type": "text", "text": "".join(text)}
+    def _search_events(self, item) -> Iterator[dict]:
+        """GUI events for one hosted web search; its source URLs feed the price-citation rule."""
+        action = getattr(item, "action", None)
+        urls = [s.url for s in (getattr(action, "sources", None) or []) if getattr(s, "url", None)]
+        self.wb.seen_urls.update(urls)
+        yield {"type": "tool", "name": "web_search", "input": {"query": getattr(action, "query", None) or ""}}
+        status = getattr(item, "status", None)
+        yield {"type": "tool_result", "name": "web_search", "is_error": status == "failed",
+               "content": "\n".join(urls) or f"(search {status}, no sources listed)"}
 
-            if response.stop_reason == "pause_turn":  # server-side search loop paused; resend to resume
-                continue
-            if response.stop_reason != "tool_use":
+    def run(self, user_text: str) -> Iterator[dict]:
+        """Send one user message and run tools until the model answers. Yields GUI events."""
+        self.messages.extend(self._close_abandoned_turn())
+        self.messages.append({"role": "user", "content": user_text})
+        for _ in range(MAX_TOOL_ROUNDS):
+            response = self.client.responses.create(
+                model=MODEL,
+                instructions=SYSTEM,
+                input=self.messages,
+                tools=FUNCTIONS + [WEB_SEARCH],
+                include=["web_search_call.action.sources"],
+                reasoning={"effort": REASONING_EFFORT},
+                max_output_tokens=MAX_OUTPUT_TOKENS,
+            )
+            self.messages.extend(item.model_dump(exclude_none=True) for item in response.output)
+            calls = []
+            for item in response.output:
+                if item.type == "message":
+                    parts = [c for c in item.content if c.type == "output_text"]
+                    for c in parts:
+                        self.wb.seen_urls.update(a.url for a in (getattr(c, "annotations", None) or [])
+                                                 if a.type == "url_citation")
+                    text = "".join(c.text for c in parts)
+                    if text.strip():
+                        yield {"type": "text", "text": text}
+                elif item.type == "web_search_call":
+                    yield from self._search_events(item)
+                elif item.type == "function_call":
+                    calls.append(item)
+
+            if not calls:
+                if response.status == "incomplete":
+                    reason = getattr(response.incomplete_details, "reason", None) or "unknown reason"
+                    yield {"type": "error", "text": f"The model's reply was cut off ({reason})."}
                 return
 
             results = []
-            self._open = {"ids": [b.id for b in response.content if b.type == "tool_use"],
-                          "results": results, "future": None}
+            self._open = {"ids": [c.call_id for c in calls], "results": results, "future": None}
             try:
-                for block in response.content:
-                    if block.type != "tool_use":
-                        continue
-                    yield {"type": "tool", "name": block.name, "input": block.input}
-                    future = self._open["future"] = self._pool.submit(self.wb.call, block.name, block.input)
-                    while not future.done():
-                        try:
-                            yield self._progress_event(self.wb.progress.get(timeout=0.2))
-                        except queue.Empty:
-                            pass
-                    while True:  # drain what arrived just before the tool finished
-                        try:
-                            yield self._progress_event(self.wb.progress.get_nowait())
-                        except queue.Empty:
-                            break
+                for c in calls:
                     try:
-                        content, is_error = future.result(), False
-                    except Exception as e:  # noqa: BLE001 - report any tool failure back to Claude
-                        content, is_error = f"Error: {type(e).__name__}: {e}", True
-                    results.append({"type": "tool_result", "tool_use_id": block.id, "content": content,
-                                    "is_error": is_error})
-                    yield {"type": "tool_result", "name": block.name, "content": content, "is_error": is_error}
+                        args, bad = json.loads(c.arguments or "{}"), None
+                    except json.JSONDecodeError as e:
+                        args, bad = c.arguments, f"Error: the tool arguments are not valid JSON ({e})."
+                    yield {"type": "tool", "name": c.name, "input": args}
+                    if bad is None:
+                        future = self._open["future"] = self._pool.submit(self.wb.call, c.name, args)
+                        while not future.done():
+                            try:
+                                yield self._progress_event(self.wb.progress.get(timeout=0.2))
+                            except queue.Empty:
+                                pass
+                        while True:  # drain what arrived just before the tool finished
+                            try:
+                                yield self._progress_event(self.wb.progress.get_nowait())
+                            except queue.Empty:
+                                break
+                        try:
+                            content, is_error = future.result(), False
+                        except Exception as e:  # noqa: BLE001 - report any tool failure back to the model
+                            content, is_error = f"Error: {type(e).__name__}: {e}", True
+                    else:
+                        content, is_error = bad, True
+                    results.append({"type": "function_call_output", "call_id": c.call_id, "output": content})
+                    yield {"type": "tool_result", "name": c.name, "content": content, "is_error": is_error}
             except GeneratorExit:
                 # The GUI dropped this turn (page refresh/close): stop a running search. The next
                 # run() answers the open tool calls (self._open stays set).
@@ -254,6 +268,6 @@ class Agent:
                     stop.set()
                 raise
             self._open = None
-            self.messages.append({"role": "user", "content": results})
+            self.messages.extend(results)
 
         yield {"type": "error", "text": f"Stopped after {MAX_TOOL_ROUNDS} tool rounds (cost guard)."}

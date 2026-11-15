@@ -1,7 +1,7 @@
 """Local chat GUI (Gradio) for the design-optimization agent.
 
 Run from the repo root:  python app.py
-Needs ANTHROPIC_API_KEY in the environment and a local ANSYS 2026 R1 install.
+Needs OPENAI_API_KEY in the environment and a local ANSYS 2026 R1 install.
 """
 from __future__ import annotations
 
@@ -27,8 +27,8 @@ TABLE_HEADERS = ["design", "material", "mass (kg)", "max stress (MPa)", "safety 
 def agent() -> Agent:
     global _agent
     if _agent is None:
-        if not os.environ.get("ANTHROPIC_API_KEY"):
-            raise gr.Error("Set the ANTHROPIC_API_KEY environment variable and restart the app.")
+        if not os.environ.get("OPENAI_API_KEY"):
+            raise gr.Error("Set the OPENAI_API_KEY environment variable and restart the app.")
         _agent = Agent(wb)
     return _agent
 

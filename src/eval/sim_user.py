@@ -5,12 +5,10 @@ any proposal (spec: "Claude's calls"), so the graded tool arguments are the agen
 """
 from __future__ import annotations
 
-import anthropic
-
 from src.eval.problems import Problem
 
-SIM_MODEL = "claude-haiku-5-5"
-MAX_TOKENS = 2000  # thinking + reply
+SIM_MODEL = "gpt-6-luna"  # OpenAI course key (decision 2026-11-15)
+MAX_TOKENS = 2000  # reasoning + reply
 APPROVE = "OK, go ahead."
 APPROVE_NAMED = "OK, go ahead with the features I asked for."
 
@@ -32,9 +30,12 @@ Rules:
 
 
 class SimUser:
-    def __init__(self, problem: Problem, client: anthropic.Anthropic | None = None):
+    def __init__(self, problem: Problem, client=None):
         self.problem = problem
-        self.client = client or anthropic.Anthropic()
+        if client is None:
+            from openai import OpenAI
+            client = OpenAI()
+        self.client = client
         self.messages: list[dict] = []
         labels = {f["id"]: f.get("label", f["id"]) for f in problem.key.get("features", [])}
         named = [labels[i] for i in problem.user_named_features]
@@ -53,10 +54,10 @@ class SimUser:
         # The model thinks before it answers and thinking counts against max_tokens: with 300 the
         # whole budget went to thinking and the reply was empty (2026-11-11). The 60-word rule keeps
         # the reply itself short.
-        r = self.client.messages.create(model=SIM_MODEL, max_tokens=MAX_TOKENS, system=self.system,
-                                        messages=self.messages)
-        text = "".join(b.text for b in r.content if b.type == "text").strip()
+        r = self.client.responses.create(model=SIM_MODEL, max_output_tokens=MAX_TOKENS, instructions=self.system,
+                                         input=self.messages, reasoning={"effort": "low"})
+        text = (r.output_text or "").strip()
         if not text:
-            raise RuntimeError(f"simulated user gave no text (stop_reason {r.stop_reason})")
+            raise RuntimeError(f"simulated user gave no text (status {r.status})")
         self.messages.append({"role": "assistant", "content": text})
         return text
