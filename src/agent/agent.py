@@ -5,7 +5,7 @@ happens. The API key comes from the OPENAI_API_KEY environment variable, never f
 (course-provided key, decision 2026-11-15).
 
 SIMPLESIM_MODE picks the model: "debug" (default) and "demo" use gpt-6-luna (cheap, priced like
-Haiku 5.5); "deploy" uses gpt-6.1-sol (priced like Sonnet 5.5, 20x luna) for the deployed demo.
+Haiku 5.5); "deploy" also uses gpt-6-luna for now and moves to gpt-6.1-sol before submission.
 """
 from __future__ import annotations
 

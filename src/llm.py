@@ -11,9 +11,10 @@ import os
 import time
 from pathlib import Path
 
-# SIMPLESIM_MODE picks the model for every assistant: "debug" (default) and "demo" use gpt-6-luna
-# (cheap, priced like Haiku 5.5); "deploy" uses gpt-6.1-sol (priced like Sonnet 5.5, 20x luna).
-MODELS = {"debug": "gpt-6-luna", "demo": "gpt-6-luna", "deploy": "gpt-6.1-sol"}
+# SIMPLESIM_MODE picks the model for every assistant. All modes use gpt-6-luna (cheap, priced like
+# Haiku 5.5) for now; "deploy" switches to gpt-6.1-sol (priced like Sonnet 5.5, 20x luna) before
+# submission (user decision 2026-11-15).
+MODELS = {"debug": "gpt-6-luna", "demo": "gpt-6-luna", "deploy": "gpt-6-luna"}
 MODE = os.environ.get("SIMPLESIM_MODE", "debug")
 if MODE not in MODELS:
     raise ValueError(f"SIMPLESIM_MODE must be one of {sorted(MODELS)}, got {MODE!r}")

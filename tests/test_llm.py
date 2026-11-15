@@ -78,3 +78,9 @@ def test_session_budget_must_be_a_positive_number(monkeypatch):
         monkeypatch.setenv("SIMPLESIM_SESSION_BUDGET_USD", bad)
         with pytest.raises(ValueError, match="SIMPLESIM_SESSION_BUDGET_USD"):
             session_budget("debug")
+
+
+def test_every_mode_uses_luna_until_submission():
+    from src.llm import MODELS, PRICES
+    assert set(MODELS.values()) == {"gpt-6-luna"}
+    assert "gpt-6.1-sol" in PRICES  # priced already, for the switch before submission

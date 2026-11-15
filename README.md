@@ -73,7 +73,7 @@ python app.py                    # opens http://127.0.0.1:7860
 
 Upload a part (`.scdocx`, `.stp`, `.step`; try `examples/l_bracket.scdocx`), then describe the load case and the objective in the chat.
 
-Each app session has a spending cap: $0.20 in `debug`/`demo` mode (`gpt-6-luna`) and $2.00 in `deploy` mode (`gpt-6.1-sol`), set with `SIMPLESIM_MODE`. Override it with `SIMPLESIM_SESSION_BUDGET_USD`. When the app closes, its cost is added to `practice/spend.csv`.
+Each app session has a spending cap: $0.20 in `debug`/`demo` mode and $2.00 in `deploy` mode, set with `SIMPLESIM_MODE`. Every mode uses `gpt-6-luna` for now; `deploy` moves to `gpt-6.1-sol` before submission. Override it with `SIMPLESIM_SESSION_BUDGET_USD`. When the app closes, its cost is added to `practice/spend.csv`.
 
 Student licence note: SpaceClaim can only save `.scdocx` and `.pmdb` (STEP/IGES/Parasolid export is blocked), but STEP import works.
 
