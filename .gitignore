@@ -33,3 +33,6 @@ Thumbs.db
 .idea/
 practice/parts/external/
 practice/results/*/*/ws/
+
+# Reference screenshots and prompts for the UI (not ours to publish)
+src/ui/reference/
