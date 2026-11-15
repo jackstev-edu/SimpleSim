@@ -16,12 +16,8 @@ from concurrent.futures import ThreadPoolExecutor
 from collections.abc import Iterator
 
 from src.agent.tools import TOOLS, Workbench
+from src.llm import MODE, MODEL  # noqa: F401 - MODE is shown in the GUI header
 
-MODELS = {"debug": "gpt-6-luna", "demo": "gpt-6-luna", "deploy": "gpt-6.1-sol"}
-MODE = os.environ.get("SIMPLESIM_MODE", "debug")
-if MODE not in MODELS:
-    raise ValueError(f"SIMPLESIM_MODE must be one of {sorted(MODELS)}, got {MODE!r}")
-MODEL = MODELS[MODE]
 REASONING_EFFORT = "low"  # keeps hidden reasoning tokens (billed as output) small
 MAX_OUTPUT_TOKENS = 8000
 MAX_TOOL_ROUNDS = 30  # per user message, a cost guard

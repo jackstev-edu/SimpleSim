@@ -7,8 +7,17 @@ The API key comes from the OPENAI_API_KEY environment variable, never from code.
 from __future__ import annotations
 
 import csv
+import os
 import time
 from pathlib import Path
+
+# SIMPLESIM_MODE picks the model for every assistant: "debug" (default) and "demo" use gpt-6-luna
+# (cheap, priced like Haiku 5.5); "deploy" uses gpt-6.1-sol (priced like Sonnet 5.5, 20x luna).
+MODELS = {"debug": "gpt-6-luna", "demo": "gpt-6-luna", "deploy": "gpt-6.1-sol"}
+MODE = os.environ.get("SIMPLESIM_MODE", "debug")
+if MODE not in MODELS:
+    raise ValueError(f"SIMPLESIM_MODE must be one of {sorted(MODELS)}, got {MODE!r}")
+MODEL = MODELS[MODE]
 
 # USD per million tokens: input, cached input, output.
 # Source: developers.openai.com/api/docs/pricing, read 2026-11-15.
