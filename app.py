@@ -23,8 +23,9 @@ _agent: Agent | None = None
 USAGE: dict = {}  # tokens this GUI session spent, per model; written to the ledger when the app closes
 BUDGET_USD = session_budget()
 
-TABLE_HEADERS = ["design", "material", "mass (kg)", "max stress (MPa)", "safety factor", "max deflection (mm)",
-                 "cost (USD)", "reaction balance error", "mesh check"]
+TABLE_HEADERS = ["design", "material", "mass (kg)", "max stress (MPa)", "stress for limit (MPa)",
+                 "safety factor", "max deflection (mm)", "cost (USD)", "reaction balance error", "zone settled",
+                 "mesh check"]
 
 
 def agent() -> Agent:

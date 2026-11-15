@@ -25,12 +25,16 @@ from src.agent import screen
 from src.sim import materials, mechanical, optimizer, prices
 from src.sim.geometry import GeometrySession
 
-FIXED, LOAD, FILLETS = "NS_FIXED", "NS_LOAD", "NS_FILLETS"
+FIXED, LOAD, FILLETS, GUARD = "NS_FIXED", "NS_LOAD", "NS_FILLETS", "NS_GUARD"
 FILLET_ELEMENTS_PER_RADIUS = 4  # local mesh size on fillet faces = r / 4
 DEFAULT_SAFETY_FACTOR = 1.5  # decision 2026-10-31: default 1.5, user can change it
 DESIGN_NAME = re.compile(r"[A-Za-z0-9_-]{1,64}")
 # Responses the optimizer can use. cost_usd exists only once the user has given a price.
-RESPONSES = ("mass_kg", "max_stress_MPa", "max_def_mm", "safety_factor", "cost_usd")
+CHECK_FIELDS = ("element_size_mm", "local_size_mm", "max_stress_MPa", "max_stress_at_mm", "max_def_mm", "nodes",
+                "stress_for_limit_MPa", "zone_mm", "zone_settled", "excluded_peak_MPa", "excluded_at")
+RESPONSES = ("mass_kg", "max_stress_MPa", "stress_for_limit_MPa", "max_def_mm", "safety_factor", "cost_usd")
+RAW_PEAK_MSG = ("limit stress with stress_for_limit_MPa (the peak outside the support and load zones); "
+                "max_stress_MPa includes the singular spike")
 MAX_BUDGET = 30
 DEFAULT_SECONDS_PER_DESIGN = 30.0  # used for time estimates until a design has been timed
 
@@ -149,7 +153,9 @@ TOOLS = [
             "Mechanical with the load case and the current material. Returns volume, mass, max equivalent stress "
             "(MPa) and where it is "
             "(max_stress_at_mm, x/y/z of the peak node; compare with face bounding boxes to name the feature), max deformation (mm), "
-            "support reaction (N), the reaction-balance error, safety_factor = yield / peak stress (meets_safety_factor "
+            "support reaction (N), the reaction-balance error, stress_for_limit_MPa (the peak outside the zones around the "
+            "supports and load, where singular spikes sit; raw max_stress_MPa is reported but not used for limits), "
+            "safety_factor = yield / stress_for_limit_MPa (meets_safety_factor "
             "compares it with the required one), and cost_usd if a price is set. An empty edit list evaluates the original "
             "part (the baseline). Edits: 'offset' moves a planar face by value_mm along its outward normal "
             "(positive = adds material, e.g. a thicker wall; negative = removes material); 'radius' sets a "
@@ -336,6 +342,7 @@ class Workbench:
         self.progress: queue.Queue[dict] = queue.Queue()  # events for the GUI, one per finished design/solve
         self._timings: list[float] = []  # wall seconds per evaluated design
         self.element_size_mm = screen.MAX_ELEMENT_SIZE_MM  # default mesh size, set from the part at load time
+        self.min_wall_mm: float | None = None  # thinnest wall of the original part, sets the zone step
 
     def request_stop(self) -> None:
         """Ask the running first_look/optimize to end after the design in progress."""
@@ -352,8 +359,8 @@ class Workbench:
         self.progress.put(ev)
 
     # Everything that touches ANSYS goes through here.
-    def _run(self, fn, *args):
-        return self._pool.submit(fn, *args).result()
+    def _run(self, fn, *args, **kwargs):
+        return self._pool.submit(fn, *args, **kwargs).result()
 
     def _session(self) -> GeometrySession:
         if self._geo is None:
@@ -369,6 +376,7 @@ class Workbench:
         desc = self._run(self._describe)
         self.faces = desc["faces"]
         self.element_size_mm = desc["default_element_size_mm"]
+        self.min_wall_mm = desc["min_wall_mm"]
         return desc
 
     def _scale(self, factor: float) -> dict:
@@ -384,6 +392,7 @@ class Workbench:
         desc = self._describe()
         self.faces = desc["faces"]
         self.element_size_mm = desc["default_element_size_mm"]
+        self.min_wall_mm = desc["min_wall_mm"]
         self.designs, self.final_part, self.final_analysis = {}, None, None
         ids = {f["id"] for f in self.faces}
         note = "Part scaled; earlier design results were cleared."
@@ -411,8 +420,10 @@ class Workbench:
         """Derived design measures of a stored design: mass, safety factor and cost."""
         r, mat = d["results"], d["material"]
         mass = d["volume_mm3"] * mat["density_kg_m3"] * 1e-9
-        out = {"mass_kg": round(mass, 4), "max_stress_MPa": r["max_stress_MPa"], "max_def_mm": r["max_def_mm"],
-               "safety_factor": round(mat["yield_MPa"] / r["max_stress_MPa"], 3),
+        # the limit stress excludes the support and load zones; the raw peak stays for reference
+        limit = r["stress_for_limit_MPa"]
+        out = {"mass_kg": round(mass, 4), "max_stress_MPa": r["max_stress_MPa"], "stress_for_limit_MPa": limit,
+               "max_def_mm": r["max_def_mm"], "safety_factor": round(mat["yield_MPa"] / limit, 3),
                "required_safety_factor": self.safety_factor}
         out["meets_safety_factor"] = out["safety_factor"] >= self.safety_factor
         if self.price:
@@ -427,7 +438,7 @@ class Workbench:
         geo.name_faces(FIXED, self.load_case["fixed_face_ids"])
         geo.name_faces(LOAD, self.load_case["load_face_ids"])
         faces = {f["id"]: f for f in geo.describe_faces()}
-        radii = []
+        radii, edited = [], []  # edited = faces whose stress must never be excluded
         # Fillets last: they add new faces and must round the edges of the already-edited walls.
         for e in sorted(edits, key=lambda e: e["action"] == "fillet"):
             face = faces.get(e["face_id"])
@@ -448,6 +459,7 @@ class Workbench:
                 if face["type"] != "plane":
                     raise ValueError(f"offset needs a planar face; {e['face_id']} is {face['type']}")
                 geo.offset_face(e["face_id"], e["value_mm"], face["normal"])
+                edited.append(e["face_id"])
             elif e["action"] == "radius":
                 ids = []
                 for fid in [e["face_id"], *e.get("also_face_ids", [])]:
@@ -457,9 +469,15 @@ class Workbench:
                         raise ValueError(f"radius needs cylindrical faces; {fid} is {faces[fid]['type']}")
                     ids += [i for i in screen.hole_faces(list(faces.values()), fid) if i not in ids]
                 geo.set_radius(ids, e["value_mm"])
+                edited += ids
+        new = [f["id"] for f in geo.describe_faces() if f["id"] not in faces and f["type"] == "cylinder"] if radii else []
+        # a varied face that is also the support or load stays out of the guard, or it would block the zone
+        skip = {*self.load_case["fixed_face_ids"], *self.load_case["load_face_ids"]}
+        guard = [i for i in dict.fromkeys(edited + new) if i not in skip]
+        if guard:
+            geo.name_faces(GUARD, guard)
         if not radii:
             return geo, None
-        new = [f["id"] for f in geo.describe_faces() if f["id"] not in faces and f["type"] == "cylinder"]
         geo.name_faces(FILLETS, new)
         return geo, (FILLETS, round(min(radii) / FILLET_ELEMENTS_PER_RADIUS, 4))
 
@@ -473,7 +491,8 @@ class Workbench:
         geo, local = self._build(edits)
         volume = geo.volume_mm3()
         pmdb = geo.save(self.out_dir / f"{name}.pmdb")
-        res = mechanical.solve(pmdb, FIXED, LOAD, self.load_case["force_N"], element_size_mm, local, self.material)
+        res = mechanical.solve(pmdb, FIXED, LOAD, self.load_case["force_N"], element_size_mm, local, self.material,
+                               guard=GUARD, min_wall_mm=self.min_wall_mm)
         d = {"name": name, "edits": edits, "volume_mm3": round(volume, 1), "material": self.material,
              "pmdb": pmdb, "local": local, "results": res}
         self.designs[name] = d
@@ -494,6 +513,8 @@ class Workbench:
         self.stop_event.clear()
         limits = args.get("limits", [])
         used = {args["objective"], *(lim["response"] for lim in limits)}
+        if "max_stress_MPa" in used:
+            raise ValueError(RAW_PEAK_MSG)
         if "cost_usd" in used and not self.price:
             raise ValueError("cost_usd needs a material price: ask the user for one, then call set_material.")
 
@@ -540,6 +561,8 @@ class Workbench:
         for f in features:
             if not f["low"] < f["high"]:
                 raise ValueError(f"low must be below high for {f['face_id']}")
+        if "max_stress_MPa" in {objective, *(lim["response"] for lim in limits)}:
+            raise ValueError(RAW_PEAK_MSG)
         if "cost_usd" in {objective, *(lim["response"] for lim in limits)} and not self.price:
             raise ValueError("cost_usd needs a material price: ask the user for one, then call set_material.")
         faces = {f["id"]: f for f in self.faces}
@@ -622,16 +645,15 @@ class Workbench:
 
             def progress(which: str, res: dict) -> None:
                 self._emit("check_mesh", 1 if which == "coarse" else 2, 2, args["name"],
-                           {"max_stress_MPa": res["max_stress_MPa"], "element_size_mm": res["element_size_mm"]})
+                           {"max_stress_MPa": res["max_stress_MPa"], "stress_for_limit_MPa": res["stress_for_limit_MPa"],
+                            "element_size_mm": res["element_size_mm"]})
 
             chk = self._run(mechanical.refinement_check, d["pmdb"], FIXED, LOAD, self.load_case["force_N"], size,
-                            0.10, d["local"], d["material"], progress)
+                            0.10, d["local"], d["material"], progress, guard=GUARD, min_wall_mm=self.min_wall_mm)
             out = {"name": args["name"], "stress_change": round(chk["stress_change"], 4),
                    "converged": chk["converged"],
-                   "coarse": {k: chk["coarse"][k] for k in ("element_size_mm", "local_size_mm", "max_stress_MPa", "max_stress_at_mm", "max_def_mm",
-                                                   "nodes")},
-                   "fine": {k: chk["fine"][k] for k in ("element_size_mm", "local_size_mm", "max_stress_MPa", "max_stress_at_mm", "max_def_mm",
-                                                   "nodes")}}
+                   "coarse": {k: chk["coarse"][k] for k in CHECK_FIELDS},
+                   "fine": {k: chk["fine"][k] for k in CHECK_FIELDS}}
             d["mesh_check"] = out
             out = {**out, "seconds_per_design": self.seconds_per_design()}
         elif name == "optimize":
@@ -654,9 +676,10 @@ class Workbench:
             mechdb = self.out_dir / f"final_{args['name']}.mechdb"
             r = d["results"]
             res = self._run(mechanical.solve, d["pmdb"], FIXED, LOAD, self.load_case["force_N"],
-                            r["element_size_mm"], d["local"], d["material"], mechdb)
+                            r["element_size_mm"], d["local"], d["material"], mechdb, guard=GUARD, min_wall_mm=self.min_wall_mm)
             self.final_analysis = mechdb
             out = {"saved": str(path), "analysis": str(mechdb), "analysis_max_stress_MPa": res["max_stress_MPa"],
+                   "analysis_stress_for_limit_MPa": res["stress_for_limit_MPa"],
                    "note": "The user can open the analysis with the 'Open analysis in Mechanical' button."}
         else:
             raise ValueError(f"Unknown tool {name}")
@@ -696,8 +719,9 @@ class Workbench:
             mc = d.get("mesh_check")
             m = self._responses(d)
             rows.append([d["name"], d["material"]["name"], m["mass_kg"], round(r["max_stress_MPa"], 1),
-                         m["safety_factor"], round(r["max_def_mm"], 4), m.get("cost_usd", ""),
+                         round(m["stress_for_limit_MPa"], 1), m["safety_factor"], round(r["max_def_mm"], 4), m.get("cost_usd", ""),
                          f"{r['balance_error']:.2%}",
+                         "" if r.get("zone_settled") is None else ("yes" if r["zone_settled"] else "no"),
                          "" if mc is None else ("ok" if mc["converged"] else f"peak not converged "
                                                 f"({mc['stress_change']:.0%})")])
         return rows

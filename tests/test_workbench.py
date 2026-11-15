@@ -108,3 +108,91 @@ def test_reference_uses_face_radius(wb):
 
 def test_seconds_per_design_default(wb):
     assert wb.seconds_per_design() == 30.0
+
+
+# --- exclusion-zone stress and guard faces ---------------------------------
+class FakeGeo:
+    """Records name_faces calls; describe_faces grows by one cylinder after a fillet."""
+
+    def __init__(self):
+        self.named, self.filleted = [], False
+
+    def open(self, path): pass
+    def volume_mm3(self): return 1000.0
+    def save(self, path): return path
+    def offset_face(self, fid, value, normal): pass
+    def set_radius(self, ids, value): pass
+    def name_faces(self, name, ids): self.named.append((name, list(ids)))
+    def fillet_between(self, a, b, r): self.filleted = True
+
+    def describe_faces(self):
+        faces = [{"id": i, "type": "plane", "normal": [0, 0, 1]} for i in ("0:27", "0:36", "0:39", "0:40")]
+        if self.filleted:
+            faces.append({"id": "0:99", "type": "cylinder", "radius_mm": 3.0})
+        return faces
+
+
+@pytest.fixture
+def gwb(tmp_path, monkeypatch):
+    from src.agent import tools
+    w = Workbench(tmp_path)
+    w.part = tmp_path / "original.scdocx"
+    w.load_case = {"fixed_face_ids": ["0:27"], "load_face_ids": ["0:36"], "force_N": [0, 0, -500]}
+    w.geo = FakeGeo()
+    w._session = lambda: w.geo
+    w.min_wall_mm = 2.5
+    monkeypatch.setattr(tools.screen, "hole_faces", lambda faces, fid: [fid], raising=False)
+    yield w
+    w._pool.shutdown()
+
+
+def test_safety_factor_uses_zone_stress(gwb):
+    d = {"volume_mm3": 1000.0, "material": {"density_kg_m3": 7850.0, "yield_MPa": 250.0},
+         "results": {"max_stress_MPa": 400.0, "stress_for_limit_MPa": 100.0, "max_def_mm": 0.1}}
+    r = gwb._responses(d)
+    assert r["safety_factor"] == 2.5 and r["stress_for_limit_MPa"] == 100.0 and r["max_stress_MPa"] == 400.0
+
+
+def test_guard_excludes_fixed_and_loaded_faces(gwb):
+    gwb._build([{"face_id": "0:36", "action": "offset", "value_mm": 1.0},
+                {"face_id": "0:39", "action": "offset", "value_mm": 1.0}])
+    assert ("NS_GUARD", ["0:39"]) in gwb.geo.named
+
+
+def test_guard_includes_new_fillet_faces(gwb):
+    gwb._build([{"face_id": "0:39", "action": "fillet", "other_face_id": "0:40", "value_mm": 3.0}])
+    assert ("NS_GUARD", ["0:99"]) in gwb.geo.named
+
+
+def test_no_guard_when_set_empty(gwb):
+    gwb._build([{"face_id": "0:36", "action": "offset", "value_mm": 1.0}])
+    assert not any(n == "NS_GUARD" for n, _ in gwb.geo.named)
+
+
+def test_limit_on_raw_peak_is_refused(gwb):
+    with pytest.raises(ValueError, match="stress_for_limit_MPa"):
+        gwb.call("optimize", {"prefix": "o", "objective": "mass_kg", "variables": [
+            {"face_id": "F1", "action": "offset", "lower": 0, "upper": 1, "start": 0}],
+            "limits": [{"response": "max_stress_MPa", "max": 150}]})
+    with pytest.raises(ValueError, match="stress_for_limit_MPa"):
+        gwb.call("first_look", {"features": [{"face_id": "F1", "action": "offset", "low": 0, "high": 1}],
+                                "objective": "max_stress_MPa", "limits": []})
+
+
+def test_check_mesh_reports_zone_fields(gwb, monkeypatch):
+    from src.agent import tools
+    side = {"element_size_mm": 2.0, "local_size_mm": None, "max_stress_MPa": 400.0, "max_stress_at_mm": None,
+            "max_def_mm": 0.1, "nodes": 10, "stress_for_limit_MPa": 100.0, "zone_mm": 3.0,
+            "zone_settled": True, "excluded_peak_MPa": 400.0, "excluded_at": "support"}
+    seen = {}
+
+    def fake_check(*a, **k):
+        seen.update(k)
+        return {"coarse": side, "fine": side, "stress_change": 0.0, "converged": True}
+
+    monkeypatch.setattr(tools.mechanical, "refinement_check", fake_check)
+    gwb.designs["d"] = {"results": {"element_size_mm": 2.0}, "pmdb": "p", "local": None, "material": {}}
+    out = json.loads(gwb.call("check_mesh", {"name": "d"}))
+    assert out["coarse"]["stress_for_limit_MPa"] == 100.0 and out["coarse"]["zone_settled"] is True
+    assert out["fine"]["excluded_at"] == "support"
+    assert seen["guard"] == "NS_GUARD" and seen["min_wall_mm"] == 2.5
