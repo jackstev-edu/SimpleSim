@@ -29,6 +29,32 @@ class MeshTooLarge(ValueError):
     """The mesh exceeds the Ansys Student node/element limit; the design was not solved."""
 
 
+class SolveFailed(RuntimeError):
+    """Mechanical did not finish the solve; there are no results for this design."""
+
+
+def check_solved(status: str, messages: list[str], solver_output: str | None) -> None:
+    """Raise SolveFailed unless the solution status is Done.
+
+    A failed solve leaves stress, deflection and reaction at 0.0. Returned as a result, that became
+    a ZeroDivisionError in the safety factor far from the cause (seen 2026-11-11 to 2026-11-13).
+    """
+    if status == "Done":
+        return
+    raise SolveFailed(f"Design NOT solved: Mechanical solution status is {status}, not Done. "
+                      f"Messages: {messages or 'none'}. Solver output (last lines): {solver_output or 'not available'}")
+
+
+def _solver_output_tail(analysis, lines: int = 25) -> str | None:
+    """The end of MAPDL's solve.out for this analysis, where it states why it stopped."""
+    try:
+        out = Path(str(analysis.WorkingDir)) / "solve.out"
+        text = out.read_text(encoding="utf-8", errors="replace").splitlines()
+        return "\n".join(ln for ln in text[-lines:] if ln.strip())
+    except Exception:  # noqa: BLE001 - diagnostics only; the SolveFailed message says "not available"
+        return None
+
+
 def check_mesh_size(nodes: int, elements: int, element_size_mm: float,
                     local_size: tuple[str, float] | None, limit: int = STUDENT_NODE_LIMIT) -> None:
     """Raise MeshTooLarge, with what to change, when the mesh is over the Student limit."""
@@ -120,6 +146,8 @@ def solve(
     reaction = sol.AddForceReaction()
     reaction.BoundaryConditionSelection = support
     sol.Solve(True)
+    check_solved(str(sol.Status), [m.DisplayString for m in ExtAPI.Application.Messages],  # noqa: F821
+                 _solver_output_tail(analysis))
 
     peak_at = _peak_location(analysis, stress)
     reaction_N = [reaction.XAxis.Value, reaction.YAxis.Value, reaction.ZAxis.Value]

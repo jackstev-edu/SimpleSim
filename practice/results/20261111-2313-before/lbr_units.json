@@ -584,28 +584,9 @@
    },
    "extra_negligible": {
     "result": "pass",
-    "detail": "0 negligible; 2 unmatched (not graded): Arm length (end-face offset), Part width (side face offset)"
+    "detail": "0 negligible"
    }
   },
-  "unmatched_features": [
-   {
-    "face_id": "0:36",
-    "action": "offset",
-    "other_face_id": null,
-    "also_face_ids": [],
-    "low": -10,
-    "high": 0,
-    "label": "Arm length (end-face offset)"
-   },
-   {
-    "face_id": "0:27",
-    "action": "offset",
-    "other_face_id": null,
-    "also_face_ids": [],
-    "low": -4,
-    "high": 0,
-    "label": "Part width (side face offset)"
-   }
-  ]
+  "unmatched_features": []
  }
 }

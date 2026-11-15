@@ -23,3 +23,12 @@ def test_too_many_elements_refused():
 
 def test_is_a_value_error():
     assert issubclass(MeshTooLarge, ValueError)
+
+
+def test_unfinished_solve_is_refused_with_the_solver_messages():
+    from src.sim.mechanical import SolveFailed, check_solved
+    check_solved("Done", [], None)  # a finished solve passes
+    with pytest.raises(SolveFailed) as e:
+        check_solved("SolveRequired", ["An unknown error occurred during solution."], "*** ERROR ***\nlicense lost")
+    text = str(e.value)
+    assert "SolveRequired" in text and "unknown error" in text and "license lost" in text and "NOT solved" in text

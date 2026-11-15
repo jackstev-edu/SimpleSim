@@ -8,6 +8,8 @@ review_notes:
   by the user at review, 2026-11-11.'
 built: '2026-11-11'
 effects:
+  arm_length: controls_limit
+  part_width: controls_limit
   base_thickness: controls_limit
   wall_thickness: moves_objective
   corner_fillet: controls_limit
