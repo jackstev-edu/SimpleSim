@@ -189,9 +189,9 @@ TOOLS = [
     {
         "name": "check_mesh",
         "description": (
-            "Re-solve an evaluated design with half the element size. If max stress changes by more than "
-            "10%, the peak is mesh-dependent, usually a singularity at a sharp corner, and must not be "
-            "trusted as is. Run it on the baseline and on the final design. Takes about 1 minute."
+            "Re-solve an evaluated design with half the element size. If stress_for_limit_MPa changes by "
+            "more than 10%, the stress is mesh-dependent, usually a singularity at a sharp corner, and "
+            "must not be trusted as is. Run it on the baseline and on the final design. Takes about 1 minute."
         ),
         "input_schema": {
             "type": "object",

@@ -75,3 +75,10 @@ def test_prompt_explains_exclusion_zones():
 def test_tool_descriptions_point_to_limit_stress():
     for name in ("optimize", "first_look"):
         assert "stress_for_limit_MPa" in tool_desc(name), name
+
+
+def test_limit_stress_location_and_mesh_check_wording():
+    assert "conservative" in S
+    assert "stress_for_limit_at_mm" in S
+    assert "stress_for_limit_MPa" in tool_desc("check_mesh")
+    assert "If max stress changes" not in tool_desc("check_mesh")

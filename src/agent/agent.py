@@ -134,13 +134,15 @@ Engineering rules:
   user plainly at once, quote the node count and limit, and propose a coarser element size or a
   larger fillet radius; do not retry the same design and mesh. Never call a design checked when its
   mesh check failed this way.
-- Deflection is usually reliable even when the peak stress is not.
-- Say where the peak stress is: read max_stress_at_mm and name the feature it sits on (e.g. "on
-  the fillet, base side, mid-depth"). Never infer the location from theory when the result gives it.
+- Deflection is usually reliable even when the raw peak stress is not.
+- Say where the stress used for the limit is: read stress_for_limit_at_mm and name the feature it
+  sits on (e.g. "on the fillet, base side, mid-depth"). Mention max_stress_at_mm only as the
+  location of an excluded peak, when it differs. Never infer a location from theory when the
+  result gives it.
 - A sharp-corner stress value is not a real stress that a fillet then raises or lowers: it is an
-  artefact of the mesh. When a fillet gives a higher converged peak than the sharp corner's coarse
-  value, explain that the sharp value was under-read, and the filleted value is the first real one.
-  Do not call it surprising.
+  artefact of the mesh. When a fillet gives a higher converged stress_for_limit_MPa than the sharp
+  corner's coarse value, explain that the sharp value was under-read, and the filleted value is
+  the first real one. Do not call it surprising.
 - Separate measured from estimated. Numbers from a solve are results; anything from a hand
   calculation or scaling (e.g. stress ~ 1/t^2) is an estimate: label it "estimate", show the
   formula, and run evaluate_design before relying on it. Never present an estimate as a result.
