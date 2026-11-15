@@ -1,13 +1,22 @@
 """Item 4: every question, answer, assumption, shortlist and rejected finalist is logged with its reason."""
 import json
 
-from src.assistant.decision_log import DecisionLog
-from tests.test_assistant_numbers import RESULT
+import pytest
 
-FINALISTS = [
-    {"design_id": "a", "feasible": True, "violated": [], "mass_kg": 0.066, "safety_factor": 2.27},
-    {"design_id": "b", "feasible": False, "violated": ["safety_factor >= 2"], "mass_kg": 0.060, "safety_factor": 1.9},
-]
+from src.assistant.contract_adapter import ResultContractError, load_result
+from src.assistant.decision_log import DecisionLog
+from tests.test_assistant_contract_adapter import EXAMPLE
+
+RESULT = load_result(EXAMPLE)  # Jack's contract example, checked against contracts.models.Result
+
+
+def verified(design_id, feasible, violated, mass_kg, safety_factor):
+    """A contract-valid finalist: the example's first finalist with the fields a test cares about changed."""
+    return {**RESULT["finalists"][0], "design_id": design_id, "feasible": feasible, "violated": violated,
+            "mass_kg": mass_kg, "safety_factor": safety_factor}
+
+
+FINALISTS = [verified("a", True, [], 0.066, 2.27), verified("b", False, ["safety_factor >= 2"], 0.060, 1.9)]
 
 
 def test_entries_keep_order_kind_and_data():
@@ -22,7 +31,6 @@ def test_entries_keep_order_kind_and_data():
 
 
 def test_unknown_kind_is_refused():
-    import pytest
     with pytest.raises(ValueError, match="kind"):
         DecisionLog().add("musing", "x")
 
@@ -43,7 +51,7 @@ def test_result_logs_shortlist_finalists_rejections_and_pick():
 
 
 def test_feasible_but_not_picked_finalist_is_rejected_with_reason():
-    heavier = {"design_id": "c", "feasible": True, "violated": [], "mass_kg": 0.080, "safety_factor": 2.6}
+    heavier = verified("c", True, [], 0.080, 2.6)
     result = {**RESULT, "finalists": FINALISTS[:1] + [heavier], "recommended": {**RESULT["recommended"], "design_id": "a"}}
     log = DecisionLog()
     log.add_result(result)
@@ -60,3 +68,8 @@ def test_save_writes_jsonl_and_readable_markdown(tmp_path):
     assert [json.loads(x)["kind"] for x in lines] == ["question", "assumption"]
     md = (tmp_path / "decision_log.md").read_text(encoding="utf-8")
     assert "| 0 | question | Which material? |" in md
+
+
+def test_result_that_breaks_the_contract_is_refused():
+    with pytest.raises(ResultContractError):
+        DecisionLog().add_result({k: v for k, v in RESULT.items() if k != "finalists"})

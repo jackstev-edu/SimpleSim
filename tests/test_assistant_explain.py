@@ -1,11 +1,14 @@
 """Item 3: the LLM writes "why this won" from result.json; invented numbers get one retry, then the template."""
 from types import SimpleNamespace as NS
 
-from src.assistant.explain import explain
-from tests.test_assistant_numbers import RESULT
+import pytest
 
-TEMPLATE = "Recommended fake-0-00228: mass 0.066 kg (-45% vs baseline)."
-R = {**RESULT, "explanation": TEMPLATE, "warnings": []}
+from src.assistant.contract_adapter import ResultContractError, load_result
+from src.assistant.explain import explain
+from tests.test_assistant_contract_adapter import EXAMPLE
+
+R = load_result(EXAMPLE)  # Jack's contract example, checked against contracts.models.Result
+TEMPLATE = R["explanation"]
 
 
 class ScriptClient:
@@ -46,3 +49,11 @@ def test_instructions_forbid_new_numbers_and_ask_for_the_discovery_values():
     explain(R, c)
     ins = c.sent[0]["instructions"]
     assert "only numbers that appear in the result" in ins and "Discovery" in ins and "binding" in ins
+
+
+def test_result_that_breaks_the_contract_is_refused_before_any_api_call():
+    c = ScriptClient("unused")
+    bad = {k: v for k, v in R.items() if k != "explanation"}
+    with pytest.raises(ResultContractError):
+        explain(bad, c)
+    assert c.sent == []

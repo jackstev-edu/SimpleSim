@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 
+from src.assistant.contract_adapter import load_result
 from src.assistant.numbers import unknown_numbers
 from src.llm import MODEL
 
@@ -23,8 +24,12 @@ recommended design against the baseline. Never compute or invent any other numbe
 Plain text, no headings."""
 
 
-def explain(result: dict, client, model: str = MODEL) -> tuple[str, list[str]]:
-    """(explanation, warnings). Falls back to result['explanation'] when the numbers do not check out."""
+def explain(result, client, model: str = MODEL) -> tuple[str, list[str]]:
+    """(explanation, warnings). Falls back to result['explanation'] when the numbers do not check out.
+
+    `result` is a contracts Result, a dict or a path to result.json; it is checked against the contract
+    before any API call (ResultContractError if it does not match)."""
+    result = load_result(result)
     messages = [{"role": "user", "content": "The result:\n" + json.dumps(result, indent=1)}]
     bad: list[str] = []
     for attempt in range(2):

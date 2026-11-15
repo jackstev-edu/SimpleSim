@@ -9,6 +9,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from src.assistant.contract_adapter import load_result
+
 KINDS = ("question", "answer", "assumption", "spec", "shortlist", "verified", "rejected",
          "recommendation", "explanation", "warning")
 
@@ -24,8 +26,11 @@ class DecisionLog:
         self.entries.append(entry)
         return entry
 
-    def add_result(self, result: dict, shortlist_ids: list[str] | None = None) -> None:
-        """Log the shortlist, each verified finalist, why the others lost, and the pick."""
+    def add_result(self, result, shortlist_ids: list[str] | None = None) -> None:
+        """Log the shortlist, each verified finalist, why the others lost, and the pick.
+
+        `result` is a contracts Result, a dict or a path to result.json, checked against the contract."""
+        result = load_result(result)
         if shortlist_ids is not None:
             self.add("shortlist", f"{len(shortlist_ids)} candidates shortlisted by the predictor",
                      design_ids=list(shortlist_ids))
