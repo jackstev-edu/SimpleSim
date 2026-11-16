@@ -1,0 +1,1 @@
+scikit-learn>=1.4  # GP predictor (src/models/gp.py); the power law needs nothing extra

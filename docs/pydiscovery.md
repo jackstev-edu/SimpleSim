@@ -6,11 +6,13 @@ Ansys hasn't released PyDiscovery yet. This package stands in for it, so the age
 
 ```
 python -m src.pydiscovery.demo --yes                          # synthetic Discovery L-bracket, full loop
+python -m src.pydiscovery.demo --predictor gp --yes --gui     # GP shortlist, then the result in the team GUI
+python -m src.pydiscovery.gui                                 # show the last run in the GUI again
 python -m src.pydiscovery data/raw/<part>.dsco                # print what a part file carries
 python -m src.pydiscovery.demo --part data/raw/<part>.scdocx --yes   # SpaceClaim part: gaps filled with defaults
 ```
 
-Outputs land in `data/processed/pydiscovery_demo/` (gitignored): `result.json` in the contract format, plus the updated part.
+Run these from the repo root. Outputs land in `data/processed/pydiscovery_demo/` (gitignored): `study_spec.json`, `prediction.json` and `result.json` in the contract format, plus the updated part.
 
 ## The flow
 
@@ -47,6 +49,14 @@ part.save("data/processed/l_bracket_opt.dsco", result.recommended.design)
 | `discovery` | the real PyDiscovery | placeholder until Ansys releases it |
 
 An engine is any class with `name` and `solve(family, design_mm, force_n, material) -> {max_stress_mpa, max_disp_mm, mass_kg}`; see `backends.py`.
+
+## Predictors
+
+`App(predictor="power_law")` (default) or `App(predictor="gp")` picks the model that shortlists designs before the engine checks them. The GP needs scikit-learn and Role 1's `runs.csv`; see `docs/models.md` for both models and their accuracy.
+
+## In the GUI
+
+`--gui` (or `python -m src.pydiscovery.gui`) copies `src/ui` to a temporary folder, adds the run as the fixture `pydiscovery`, and opens the browser on it. Nothing in `src/ui` changes. The menu gains "PyDiscovery result" in that copy only. Known gap for Role 4: the Recommendations tab's "Mechanics behind the optimum" still describes the fake's beam formula.
 
 ## Agent tools
 

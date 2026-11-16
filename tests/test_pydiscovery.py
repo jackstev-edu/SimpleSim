@@ -75,7 +75,7 @@ def test_optimize_returns_a_contract_result_that_meets_the_limits(dsco):
     for name, value in result.discovery_values.items():
         lo, hi = L_BRACKET_V0.ranges_mm[name]
         assert lo <= value <= hi
-    assert any("same fitted model" in w for w in result.warnings)  # honest about circular checking
+    assert any("not a real solver" in w for w in result.warnings)  # honest about what checked the finalists
 
 
 def test_save_writes_new_values_into_a_discovery_copy(tmp_path, dsco):

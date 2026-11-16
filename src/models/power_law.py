@@ -54,6 +54,54 @@ def predict_arrays(X: np.ndarray, force_n: float, e_mpa: float) -> dict[str, np.
     return {"max_stress_mpa": stress, "max_disp_mm": disp}
 
 
+def build_prediction(spec: StudySpec, X: np.ndarray, med: dict[str, np.ndarray], band: dict[str, np.ndarray],
+                     mat: dict, model_name: str, trained_on_runs: int, train_ranges: dict, id_prefix: str,
+                     warnings: list[str]) -> Prediction:
+    """Shared shortlist step: judge every constraint at the pessimistic end of a multiplicative band."""
+    mass = volume_mm3(X) * mat["rho_kg_mm3"]
+    worst = {"mass_kg": mass, "max_stress_mpa": med["max_stress_mpa"] * band["max_stress_mpa"],
+             "max_disp_mm": med["max_disp_mm"] * band["max_disp_mm"]}
+    worst["safety_factor"] = mat["yield_mpa"] / worst["max_stress_mpa"]
+    ok = np.ones(len(X), dtype=bool)
+    for c in spec.constraints:  # feasible only if every constraint holds at the pessimistic end
+        ok &= worst[c.metric] >= c.value if c.op == ">=" else worst[c.metric] <= c.value
+    score = mass if spec.objective.metric == "mass_kg" else (
+        mat["yield_mpa"] / med["max_stress_mpa"] if spec.objective.metric == "safety_factor" else med[spec.objective.metric])
+    sign = 1 if spec.objective.direction == "minimize" else -1
+    order = [i for i in np.argsort(sign * score) if ok[i]][: spec.n_verify * 4]
+    lo = np.array([train_ranges[p][0] for p in PARAM_NAMES])
+    hi = np.array([train_ranges[p][1] for p in PARAM_NAMES])
+    shortlist = []
+    for i in order:
+        s, d = float(med["max_stress_mpa"][i]), float(med["max_disp_mm"][i])
+        ks, kd = float(band["max_stress_mpa"][i]), float(band["max_disp_mm"][i])
+        shortlist.append(Candidate(
+            design_id=f"{id_prefix}-{i:05d}",
+            design={p: float(X[i, j]) for j, p in enumerate(PARAM_NAMES)},
+            mass_kg=float(mass[i]),
+            max_stress_mpa=Estimate(value=s, p05=s / ks, p95=s * ks),
+            max_disp_mm=Estimate(value=d, p05=d / kd, p95=d * kd),
+            safety_factor=Estimate(value=mat["yield_mpa"] / s, p05=mat["yield_mpa"] / (s * ks), p95=mat["yield_mpa"] * ks / s),
+            feasible_p95=True,
+            in_training_range=bool(np.all((X[i] >= lo) & (X[i] <= hi))),
+        ))
+    if not shortlist:
+        warnings = warnings + [f"no design in {len(X)} samples met every constraint at the 90% bound"]
+    return Prediction(model_name=model_name, trained_on_runs=trained_on_runs, shortlist=shortlist, warnings=warnings)
+
+
+def sample_inside(spec: StudySpec, n: int, seed: int) -> np.ndarray:
+    """Uniform designs inside the spec's ranges, in contract column order."""
+    ranges = {p.name: (p.low_mm, p.high_mm) for p in spec.parameters}
+    rng = np.random.default_rng(seed)
+    return np.column_stack([rng.uniform(*ranges[name], n) for name in PARAM_NAMES])
+
+
+def resolve_material(spec: StudySpec, override: dict) -> dict:
+    """The part's own material wins; otherwise the contracts' table entry for spec.material_key."""
+    return {k: v if v is not None else MATERIALS[spec.material_key][k] for k, v in override.items()}
+
+
 class PowerLawPredictor:
     """Same interface as contracts.fakes.FakePredictor: predict(spec) -> Prediction."""
 
@@ -63,44 +111,12 @@ class PowerLawPredictor:
         self.override = {"E_mpa": e_mpa, "yield_mpa": yield_mpa, "rho_kg_mm3": density_kg_m3 * 1e-9 if density_kg_m3 else None}
 
     def predict(self, spec: StudySpec, n: int | None = None, seed: int = 0) -> Prediction:
-        mat = {k: v if v is not None else MATERIALS[spec.material_key][k] for k, v in self.override.items()}  # part's own material wins
-        ranges = {p.name: (p.low_mm, p.high_mm) for p in spec.parameters}
-        rng = np.random.default_rng(seed)
-        n = n or spec.n_candidates
-        X = np.column_stack([rng.uniform(*ranges[name], n) for name in PARAM_NAMES])
+        mat = resolve_material(spec, self.override)
+        X = sample_inside(spec, n or spec.n_candidates, seed)
         med = predict_arrays(X, spec.load.force_n, mat["E_mpa"])
-        k = {m: math.exp(Z90 * SIGMA_LOG[m]) for m in SIGMA_LOG}  # multiplicative 90% band
-        mass = volume_mm3(X) * mat["rho_kg_mm3"]
-        worst = {"mass_kg": mass, "max_stress_mpa": med["max_stress_mpa"] * k["max_stress_mpa"],
-                 "max_disp_mm": med["max_disp_mm"] * k["max_disp_mm"]}
-        worst["safety_factor"] = mat["yield_mpa"] / worst["max_stress_mpa"]
-        ok = np.ones(n, dtype=bool)
-        for c in spec.constraints:  # feasible only if every constraint holds at the pessimistic end
-            ok &= worst[c.metric] >= c.value if c.op == ">=" else worst[c.metric] <= c.value
-        score = mass if spec.objective.metric == "mass_kg" else (
-            mat["yield_mpa"] / med["max_stress_mpa"] if spec.objective.metric == "safety_factor" else med[spec.objective.metric])
-        sign = 1 if spec.objective.direction == "minimize" else -1
-        order = [i for i in np.argsort(sign * score) if ok[i]][: spec.n_verify * 4]
-        lo = np.array([TRAIN_RANGES_MM[p][0] for p in PARAM_NAMES])
-        hi = np.array([TRAIN_RANGES_MM[p][1] for p in PARAM_NAMES])
-        shortlist = []
-        for i in order:
-            s, d = med["max_stress_mpa"][i], med["max_disp_mm"][i]
-            shortlist.append(Candidate(
-                design_id=f"pl-{seed}-{i:05d}",
-                design={p: float(X[i, j]) for j, p in enumerate(PARAM_NAMES)},
-                mass_kg=float(mass[i]),
-                max_stress_mpa=Estimate(value=s, p05=s / k["max_stress_mpa"], p95=s * k["max_stress_mpa"]),
-                max_disp_mm=Estimate(value=d, p05=d / k["max_disp_mm"], p95=d * k["max_disp_mm"]),
-                safety_factor=Estimate(value=mat["yield_mpa"] / s, p05=mat["yield_mpa"] / (s * k["max_stress_mpa"]),
-                                       p95=mat["yield_mpa"] * k["max_stress_mpa"] / s),
-                feasible_p95=True,
-                in_training_range=bool(np.all((X[i] >= lo) & (X[i] <= hi))),
-            ))
-        warnings = [f"power-law surrogate fitted to {TRAINED_ON_RUNS} CalculiX runs; CV error about 1% median, 3.5% p95 on stress"]
-        if not shortlist:
-            warnings.append(f"no design in {n} samples met every constraint at the 90% bound")
-        return Prediction(model_name=self.model_name, trained_on_runs=TRAINED_ON_RUNS, shortlist=shortlist, warnings=warnings)
+        band = {m: np.full(len(X), math.exp(Z90 * SIGMA_LOG[m])) for m in SIGMA_LOG}  # same width everywhere
+        note = f"power-law surrogate fitted to {TRAINED_ON_RUNS} CalculiX runs; CV error about 1% median, 3.5% p95 on stress"
+        return build_prediction(spec, X, med, band, mat, self.model_name, TRAINED_ON_RUNS, TRAIN_RANGES_MM, f"pl-{seed}", [note])
 
 
 class PowerLawBackend:
