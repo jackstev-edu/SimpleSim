@@ -133,11 +133,14 @@ class PowerLawBackend:
                 "mass_kg": float(volume_mm3(X)[0] * material.density_kg_m3 * 1e-9)}
 
 
-def fit_power_law(runs_csv: str | Path) -> tuple[dict, dict]:
-    """Refit COEF and SIGMA_LOG from a runs.csv in the contract format (one load, one stiffness)."""
+def fit_power_law(runs_csv: "str | Path | pd.DataFrame") -> tuple[dict, dict]:
+    """Refit COEF and SIGMA_LOG from a runs.csv in the contract format (one load, one stiffness).
+
+    Takes a path or a DataFrame with the same columns, so compare.py can refit on training subsets.
+    """
     import pandas as pd
 
-    runs = pd.read_csv(runs_csv)
+    runs = runs_csv if isinstance(runs_csv, pd.DataFrame) else pd.read_csv(runs_csv)
     A = np.column_stack([np.ones(len(runs)), np.log(runs[list(PARAM_NAMES)].values)])
     folds = np.array_split(np.random.default_rng(0).permutation(len(runs)), 5)
     coef, sigma = {}, {}
