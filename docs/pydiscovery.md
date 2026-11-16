@@ -43,7 +43,7 @@ part.save("data/processed/l_bracket_opt.dsco", result.recommended.design)
 | `fitted` (default) | Power law fitted to Role 1's 200 CalculiX runs (`src/models/power_law.py`), about 1% median error | ready; checking its own shortlist is circular, so the result says so |
 | `calculix` | Role 1's CadQuery, gmsh and CalculiX pipeline, about 10 to 40 s per solve | needs `src/data` from Role 1's branch |
 | `formula` | the contracts' beam formula | parity with the fakes only; far off for this bracket |
-| `ansys` | Role 3 wraps `src/sim` (SpaceClaim edits, Mechanical solve) | placeholder |
+| `ansys` | Role 3's SpaceClaim edits and Mechanical solve on `l_bracket.scdocx` (`src/sim/ansys_engine.py`); stress is the peak outside the support and load zones; `backend.last_details` keeps the raw peak and zone data | ready; needs a local licensed ANSYS 2026 R1 |
 | `discovery` | the real PyDiscovery | placeholder until Ansys releases it |
 
 An engine is any class with `name` and `solve(family, design_mm, force_n, material) -> {max_stress_mpa, max_disp_mm, mass_kg}`; see `backends.py`.
