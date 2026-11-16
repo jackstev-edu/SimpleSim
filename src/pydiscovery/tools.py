@@ -53,8 +53,8 @@ TOOL_SPECS = [
 class PyDiscoveryTools:
     """One conversation's tool state: the engine and the currently open part."""
 
-    def __init__(self, backend: str = "fitted"):
-        self.app = App(backend)
+    def __init__(self, backend: str = "fitted", predictor: str = "power_law", runs=None):
+        self.app = App(backend, predictor, runs)  # same arguments as App, so the GUI server and the agent share one path
         self.part: Part | None = None
 
     def call(self, name: str, args: dict | None = None) -> dict:
@@ -114,8 +114,11 @@ class PyDiscoveryTools:
 
     def _optimize_design(self, objective: str = "mass_kg", direction: str = "minimize", constraints: list | None = None,
                          vary: list[str] | None = None, n_verify: int = 5) -> dict:
-        r = self._need_part().optimize(objective, direction, constraints, vary, n_verify=n_verify)
-        return {"message": r.explanation, "result": r.model_dump(mode="json")}
+        part = self._need_part()
+        r = part.optimize(objective, direction, constraints, vary, n_verify=n_verify)
+        # study_spec and prediction let the GUI show the run with the same three files the fixtures use
+        return {"message": r.explanation, "result": r.model_dump(mode="json"),
+                "study_spec": r.spec.model_dump(mode="json"), "prediction": part.last_prediction.model_dump(mode="json")}
 
     def _save_design(self, path: str, values: dict | None = None) -> dict:
         part = self._need_part()
