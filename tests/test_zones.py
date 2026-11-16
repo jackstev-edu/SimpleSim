@@ -95,6 +95,14 @@ def test_all_zero_stress_does_not_raise():
     assert r["zone_settled"] is False  # spec: settled needs a change strictly below 5 %
 
 
+def test_reused_zero_zone_still_excludes_nothing():
+    # check_mesh reuses the coarse zone_mm; a coarse "no zone fits" (0) must not exclude face nodes.
+    stress = 100.0 + 1000.0 * np.exp(-X / 1.0)
+    r = _run(stress, zone_mm=0)
+    assert r["stress_for_limit_MPa"] == stress.max()
+    assert r["excluded_peak_MPa"] is None and r["zone_mm"] == 0
+
+
 def test_non_positive_step_is_rejected():
     with pytest.raises(ValueError):
         _run(np.ones_like(X), step=0.0)

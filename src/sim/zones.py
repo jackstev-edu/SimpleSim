@@ -71,8 +71,21 @@ def exclusion_zone(coords_mm: np.ndarray, stress_mpa: np.ndarray,
             "zone_settled": settled,
         }
 
+    def no_zone(settled: bool | None) -> dict:
+        # Nothing is excluded and the raw peak is the answer.
+        return {
+            "stress_for_limit_MPa": float(stress_mpa[raw_i]),
+            "stress_for_limit_at_mm": _xyz(coords_mm, raw_i),
+            "excluded_peak_MPa": None,
+            "excluded_peak_at_mm": None,
+            "excluded_at": None,
+            "zone_mm": 0,
+            "zone_settled": settled,
+        }
+
     if zone_mm is not None:
-        return build(float(zone_mm), None)
+        # A reused zone of 0 means none fitted: d > 0 would still drop the face nodes themselves.
+        return no_zone(None) if zone_mm <= 0 else build(float(zone_mm), None)
     # The raw peak is already outside the first zone: nothing to exclude.
     if d[raw_i] > step_mm:
         return build(step_mm, True)
@@ -81,16 +94,7 @@ def exclusion_zone(coords_mm: np.ndarray, stress_mpa: np.ndarray,
     d_guard = float(d[np.asarray(guard_idx, dtype=int)].min()) if len(guard_idx) else np.inf
     sizes = [step_mm * k for k in range(1, n_steps + 1) if step_mm * k < d_guard]
     if not sizes:
-        # No zone fits: nothing is excluded and the raw peak is the answer.
-        return {
-            "stress_for_limit_MPa": float(stress_mpa[raw_i]),
-            "stress_for_limit_at_mm": _xyz(coords_mm, raw_i),
-            "excluded_peak_MPa": None,
-            "excluded_peak_at_mm": None,
-            "excluded_at": None,
-            "zone_mm": 0,
-            "zone_settled": False,
-        }
+        return no_zone(False)  # no zone fits between the sources and the guard faces
     peaks = [peak_outside(s)[0] for s in sizes]
     for k in range(1, len(sizes)):
         # Settled when growing the zone no longer changes the outside peak.
