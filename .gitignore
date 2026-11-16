@@ -20,6 +20,10 @@ data/generated/
 !data/processed/formal_v0/
 !data/processed/formal_v0/*.csv
 !data/processed/formal_v0/*.json
+!data/processed/formal_v1_l_bracket_gusset_v1/
+!data/processed/formal_v1_l_bracket_gusset_v1/*.csv
+!data/processed/formal_v1_l_bracket_gusset_v1/*.json
+!data/processed/formal_v1_l_bracket_gusset_v1/README.md
 
 models/
 *.pt

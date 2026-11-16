@@ -12,6 +12,7 @@ from .bracket_spec import (
     HOLE_CENTER_Z_MM,
     VERTICAL_HEIGHT_MM,
 )
+from .family import GeometryFamily
 
 
 class GeometryDependencyError(RuntimeError):
@@ -169,8 +170,9 @@ def summarize_geometry(solid: Any) -> GeometrySummary:
 def export_step(
     case: BracketCaseInput,
     output_path: str | Path,
+    family: GeometryFamily | None = None,
 ) -> Path:
-    """Build one case and export it as a STEP file."""
+    """Build one case and export it as a STEP file. Default family: the v0 L-bracket."""
 
     path = Path(output_path)
 
@@ -179,7 +181,7 @@ def export_step(
 
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    solid = build_bracket_geometry(case)
+    solid = (family or L_BRACKET_V0).build(case)
     solid.exportStep(str(path))
 
     if not path.exists() or path.stat().st_size == 0:
@@ -188,3 +190,11 @@ def export_step(
         )
 
     return path
+
+
+# The v0 family: the behaviour every v0 caller gets when no family is passed.
+L_BRACKET_V0 = GeometryFamily(
+    key="l_bracket_v0",
+    build=build_bracket_geometry,
+    load_face_x_mm=lambda case: case.flange_length_mm,
+)

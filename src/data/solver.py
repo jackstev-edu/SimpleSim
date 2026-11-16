@@ -6,12 +6,14 @@ import math
 import os
 import shutil
 import subprocess
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
 from .bracket_spec import BracketCaseInput
-from .geometry import build_bracket_geometry, summarize_geometry
+from .family import GeometryFamily
+from .geometry import L_BRACKET_V0, summarize_geometry
 from .mesh import MeshSettings, MeshSummary, generate_mesh
 
 
@@ -72,6 +74,10 @@ class SolverResult:
     frd_path: Path
     dat_path: Path
     log_path: Path
+    # Wall-clock split of one solve; defaults keep older callers and fakes working.
+    elapsed_geometry_s: float = 0.0  # rebuilding the solid for its volume
+    elapsed_mesh_s: float = 0.0  # STEP export plus Gmsh
+    elapsed_solve_s: float = 0.0  # deck, CalculiX and result parsing
 
 
 def find_ccx(executable: str | Path | None = None) -> str:
@@ -96,6 +102,13 @@ def find_ccx(executable: str | Path | None = None) -> str:
         resolved = shutil.which(candidate)
         if resolved:
             return resolved
+
+    try:
+        import cad_ccx  # the pip-installed launcher, when its Scripts folder is not on PATH
+
+        return str(cad_ccx.executable())
+    except Exception:  # noqa: BLE001  any import or lookup failure means it is not available
+        pass
 
     raise SolverDependencyError(
         "CalculiX was not found. Install the local prototype launcher with "
@@ -598,17 +611,23 @@ def solve_case(
     mesh_settings: MeshSettings | None = None,
     ccx_executable: str | Path | None = None,
     timeout_seconds: float = 120.0,
+    family: GeometryFamily | None = None,
 ) -> SolverResult:
     """Generate, solve, validate, and summarize one bracket analysis."""
 
     output_dir = Path(output_directory)
     output_dir.mkdir(parents=True, exist_ok=True)
+    shape_family = family or L_BRACKET_V0
 
+    mesh_started = time.perf_counter()
     mesh_summary: MeshSummary = generate_mesh(
         case,
         output_dir,
         settings=mesh_settings,
+        family=shape_family,
     )
+    elapsed_mesh_s = time.perf_counter() - mesh_started
+    solve_started = time.perf_counter()
 
     job_stem = f"{mesh_summary.msh_path.stem}_ccx"
     deck_path = output_dir / f"{job_stem}.inp"
@@ -680,9 +699,12 @@ def solve_case(
     )
 
     reaction_relative_imbalance = residual_magnitude / applied_magnitude
+    elapsed_solve_s = time.perf_counter() - solve_started
 
-    solid = build_bracket_geometry(case)
+    geometry_started = time.perf_counter()
+    solid = shape_family.build(case)
     geometry_summary = summarize_geometry(solid)
+    elapsed_geometry_s = time.perf_counter() - geometry_started
     mass_kg = (
         geometry_summary.volume_mm3
         * case.material.density_kg_m3
@@ -714,4 +736,7 @@ def solve_case(
         frd_path=frd_path,
         dat_path=dat_path,
         log_path=log_path,
+        elapsed_geometry_s=elapsed_geometry_s,
+        elapsed_mesh_s=elapsed_mesh_s,
+        elapsed_solve_s=elapsed_solve_s,
     )

@@ -8,7 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from .bracket_spec import BracketCaseInput
-from .geometry import export_step
+from .family import GeometryFamily
+from .geometry import L_BRACKET_V0, export_step
 
 
 class MeshDependencyError(RuntimeError):
@@ -26,6 +27,7 @@ class MeshSettings:
     minimum_size_mm: float = 1.5
     maximum_size_mm: float = 3.0
     element_order: int = 2
+    curvature_elements: int = 0  # elements per full circle on curved faces; 0 keeps the v0 uniform sizing
 
     def __post_init__(self) -> None:
         if self.minimum_size_mm <= 0.0:
@@ -42,13 +44,19 @@ class MeshSettings:
         if self.element_order not in {1, 2}:
             raise ValueError("element_order must be 1 or 2.")
 
+        if self.curvature_elements < 0:
+            raise ValueError("curvature_elements cannot be negative.")
+
     @property
     def mesh_rule(self) -> str:
-        return (
+        rule = (
             f"tet{self.element_order}_"
             f"{self.minimum_size_mm:g}to"
             f"{self.maximum_size_mm:g}mm"
         )
+        if self.curvature_elements:
+            rule += f"_curv{self.curvature_elements}"  # v0 rule names stay unchanged when off
+        return rule
 
 
 @dataclass(frozen=True)
@@ -130,11 +138,13 @@ def generate_mesh(
     output_directory: str | Path,
     settings: MeshSettings | None = None,
     verbose: bool = False,
+    family: GeometryFamily | None = None,
 ) -> MeshSummary:
     """Generate STEP, Gmsh, and CalculiX-compatible input files."""
 
     gmsh = _gmsh()
     mesh_settings = settings or MeshSettings()
+    shape_family = family or L_BRACKET_V0  # v0 L-bracket unless a family says otherwise
 
     output_dir = Path(output_directory)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -145,7 +155,7 @@ def generate_mesh(
     msh_path = output_dir / f"{file_stem}.msh"
     inp_path = output_dir / f"{file_stem}.inp"
 
-    export_step(case, step_path)
+    export_step(case, step_path, family=shape_family)
 
     gmsh.initialize()
 
@@ -180,13 +190,13 @@ def generate_mesh(
         fixed_surface_tag = _find_x_surface(
             gmsh,
             surface_entities,
-            target_x_mm=0.0,
+            target_x_mm=shape_family.fixed_face_x_mm,
         )
 
         load_surface_tag = _find_x_surface(
             gmsh,
             surface_entities,
-            target_x_mm=case.flange_length_mm,
+            target_x_mm=shape_family.load_face_x_mm(case),
         )
 
         volume_group = gmsh.model.addPhysicalGroup(
@@ -231,6 +241,12 @@ def generate_mesh(
             "Mesh.ElementOrder",
             mesh_settings.element_order,
         )
+        if mesh_settings.curvature_elements:
+            # Size elements on fillets and the hole from their radius, floored by MeshSizeMin.
+            gmsh.option.setNumber(
+                "Mesh.MeshSizeFromCurvature",
+                mesh_settings.curvature_elements,
+            )
 
         gmsh.model.mesh.generate(3)
 
