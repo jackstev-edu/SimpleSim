@@ -14,7 +14,10 @@ from scipy.spatial import cKDTree
 
 def step_for(min_wall_mm: float | None, element_size_mm: float) -> float:
     """Zone growth step: half the thinnest wall, or the element size if unknown."""
-    return min_wall_mm / 2 if min_wall_mm is not None else element_size_mm
+    step = min_wall_mm / 2 if min_wall_mm is not None else element_size_mm
+    if not step > 0:
+        raise ValueError(f"zone step must be positive, got {step} mm")
+    return step
 
 
 def _dist(coords_mm: np.ndarray, idx: np.ndarray) -> np.ndarray:
@@ -37,6 +40,8 @@ def exclusion_zone(coords_mm: np.ndarray, stress_mpa: np.ndarray,
     guard_idx are nodes whose stress must never be excluded (they cap the zone).
     With zone_mm given, that one size is used with no search (zone_settled None).
     """
+    if not step_mm > 0:
+        raise ValueError(f"zone step must be positive, got {step_mm} mm")
     coords_mm = np.asarray(coords_mm, dtype=float)
     stress_mpa = np.asarray(stress_mpa, dtype=float)
     d_s = _dist(coords_mm, np.asarray(support_idx, dtype=int))
@@ -89,6 +94,6 @@ def exclusion_zone(coords_mm: np.ndarray, stress_mpa: np.ndarray,
     peaks = [peak_outside(s)[0] for s in sizes]
     for k in range(1, len(sizes)):
         # Settled when growing the zone no longer changes the outside peak.
-        if abs(peaks[k] - peaks[k - 1]) <= tol * abs(peaks[k - 1]):
+        if abs(peaks[k] - peaks[k - 1]) < tol * abs(peaks[k - 1]):
             return build(sizes[k - 1], True)
     return build(sizes[0], False)

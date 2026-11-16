@@ -137,6 +137,9 @@ def test_progress_text_tolerates_missing_keys_and_errors():
     assert "boom" in _progress_text({"k": 1, "n": 2, "design": "d", "error": "boom"})
     assert "MPa" in _progress_text({"k": 1, "n": 2, "design": "d",
                                     "responses": {"max_stress_MPa": 140.0, "element_size_mm": 1.0}})
+    zoned = _progress_text({"k": 1, "n": 2, "design": "d",
+                            "responses": {"max_stress_MPa": 400.0, "stress_for_limit_MPa": 120.0}})
+    assert "limit stress 120.0 MPa" in zoned and "raw peak 400.0 MPa" in zoned
 
 
 class StopAwareWB(FakeWB):

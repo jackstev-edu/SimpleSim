@@ -68,3 +68,48 @@ def test_refinement_check_compares_zone_stress_and_reuses_zone(monkeypatch):
     assert out["stress_change"] == pytest.approx(0.02)
     assert calls[1]["zone_mm"] == 3.0
     assert calls[1]["guard"] == "G" and calls[1]["min_wall_mm"] == 4.0
+    assert out["basis"] == "stress_for_limit_MPa" and "note" not in out
+
+
+def test_refinement_check_compares_raw_peaks_when_one_zone_fell_back(monkeypatch):
+    from src.sim import mechanical
+    results = iter([
+        {"max_stress_MPa": 100.0, "stress_for_limit_MPa": 60.0, "zone_mm": 3.0, "nodes": 1},
+        {"max_stress_MPa": 105.0, "stress_for_limit_MPa": 105.0, "zone_mm": None, "nodes": 1},
+    ])
+    monkeypatch.setattr(mechanical, "solve", lambda *a, **k: next(results))
+    out = mechanical.refinement_check("p.pmdb", "F", "L", (0, 0, 1))
+    assert out["basis"] == "max_stress_MPa"
+    assert out["stress_change"] == pytest.approx(0.05)
+    assert "raw peak" in out["note"]
+
+
+def test_refinement_check_zero_coarse_stress_does_not_divide_by_zero(monkeypatch):
+    from src.sim import mechanical
+    zero = {"max_stress_MPa": 0.0, "stress_for_limit_MPa": 0.0, "zone_mm": 3.0, "nodes": 1}
+    monkeypatch.setattr(mechanical, "solve", lambda *a, **k: dict(zero))
+    out = mechanical.refinement_check("p.pmdb", "F", "L", (0, 0, 1))
+    assert out["converged"] is False and "zero" in out["note"]
+
+
+def test_mesh_too_large_on_fine_solve_quotes_the_limit_stress(monkeypatch):
+    from src.sim import mechanical
+    coarse = {"max_stress_MPa": 400.0, "stress_for_limit_MPa": 120.0, "zone_mm": 3.0, "nodes": 1000}
+    calls = iter([coarse])
+
+    def fake_solve(*a, **k):
+        try:
+            return next(calls)
+        except StopIteration:
+            raise mechanical.MeshTooLarge("too many nodes.")
+
+    monkeypatch.setattr(mechanical, "solve", fake_solve)
+    with pytest.raises(mechanical.MeshTooLarge, match="120.0 MPa"):
+        mechanical.refinement_check("p.pmdb", "F", "L", (0, 0, 1))
+
+
+def test_zone_fallback_message_does_not_repeat_the_plotdata_message():
+    from src.sim.mechanical import _zone_from_mesh
+    fields, msg = _zone_from_mesh(None, [None, None, None], [], [], 3.0, None, 50.0)
+    assert fields["stress_for_limit_MPa"] == 50.0
+    assert "PlotData" not in msg and "raw peak" in msg

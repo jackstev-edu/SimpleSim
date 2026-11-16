@@ -512,13 +512,13 @@ class Workbench:
         budget = min(args.get("budget", 15), MAX_BUDGET)
         sign = -1 if args.get("sense", "min") == "max" else 1
         best = [None, None]  # [design name, objective value] of the best feasible design so far
-        self.stop_event.clear()
         limits = args.get("limits", [])
         used = {args["objective"], *(lim["response"] for lim in limits)}
         if "max_stress_MPa" in used:
             raise ValueError(RAW_PEAK_MSG)
         if "cost_usd" in used and not self.price:
             raise ValueError("cost_usd needs a material price: ask the user for one, then call set_material.")
+        self.stop_event.clear()  # only once the run is accepted, so a refused call keeps a pending Stop
 
         def evaluate(values: dict[str, float]) -> dict[str, float]:
             count[0] += 1
@@ -652,8 +652,10 @@ class Workbench:
 
             chk = self._run(mechanical.refinement_check, d["pmdb"], FIXED, LOAD, self.load_case["force_N"], size,
                             0.10, d["local"], d["material"], progress, guard=GUARD, min_wall_mm=self.min_wall_mm)
-            out = {"name": args["name"], "stress_change": round(chk["stress_change"], 4),
-                   "converged": chk["converged"],
+            change = chk["stress_change"]
+            out = {"name": args["name"], "stress_change": round(change, 4) if math.isfinite(change) else None,
+                   "converged": chk["converged"], "basis": chk.get("basis", "stress_for_limit_MPa"),
+                   **({"note": chk["note"]} if chk.get("note") else {}),
                    "coarse": {k: chk["coarse"][k] for k in CHECK_FIELDS},
                    "fine": {k: chk["fine"][k] for k in CHECK_FIELDS}}
             d["mesh_check"] = out
@@ -724,8 +726,8 @@ class Workbench:
                          round(m["stress_for_limit_MPa"], 1), m["safety_factor"], round(r["max_def_mm"], 4), m.get("cost_usd", ""),
                          f"{r['balance_error']:.2%}",
                          "" if r.get("zone_settled") is None else ("yes" if r["zone_settled"] else "no"),
-                         "" if mc is None else ("ok" if mc["converged"] else f"peak not converged "
-                                                f"({mc['stress_change']:.0%})")])
+                         "" if mc is None else ("ok" if mc["converged"] else "peak not converged" + (
+                             "" if mc["stress_change"] is None else f" ({mc['stress_change']:.0%})"))])
         return rows
 
     def close(self) -> None:

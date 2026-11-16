@@ -236,9 +236,11 @@ def _zone_from_mesh(analysis, selections, nodes, values_pa, step_mm, zone_mm, ma
     """Gather coordinates and face node ids from Mechanical, then call _zone_fields.
 
     Returns (fields, message or None). Any ANSYS API failure falls back to the raw peak."""
+    if not nodes:
+        # The peak-location message already says PlotData failed; say only what it means here.
+        fields = _zone_fields([], [], {}, set(), set(), set(), step_mm, zone_mm, max_stress_mpa)
+        return fields, "No exclusion zone either, so the limit uses the raw peak."
     try:
-        if not nodes:
-            raise RuntimeError("stress PlotData was not readable")
         mesh = analysis.MeshData
         coords = {}
         for n in nodes:  # per-node lookup; Task 5 measures the time at 120K nodes
@@ -276,9 +278,20 @@ def refinement_check(pmdb: str | Path, fixed: str, load: str, force_N, element_s
     except MeshTooLarge as e:
         raise MeshTooLarge(
             f"Mesh check not possible: the halved mesh is over the Student limit. {e} The coarse result "
-            f"stands but is NOT mesh-verified: {coarse['max_stress_MPa']:.1f} MPa peak, "
+            f"stands but is NOT mesh-verified: {coarse['stress_for_limit_MPa']:.1f} MPa used for the limit "
+            f"({coarse['max_stress_MPa']:.1f} MPa raw peak), "
             f"{coarse['nodes']:,} nodes at {element_size_mm} mm.") from e
     if on_solve:
         on_solve("fine", fine)
-    change = abs(fine["stress_for_limit_MPa"] - coarse["stress_for_limit_MPa"]) / coarse["stress_for_limit_MPa"]
-    return {"coarse": coarse, "fine": fine, "stress_change": change, "converged": change <= tolerance}
+    out = {"coarse": coarse, "fine": fine, "basis": "stress_for_limit_MPa"}
+    if coarse["zone_mm"] is None or fine["zone_mm"] is None:
+        # One solve had no zone (PlotData unreadable): compare like with like on the raw peaks.
+        out["basis"] = "max_stress_MPa"
+        out["note"] = ("The exclusion zone was missing on one of the two solves, so the mesh check "
+                       "compares the raw peak stresses instead.")
+    a, b = coarse[out["basis"]], fine[out["basis"]]
+    if a == 0:
+        out["note"] = "The coarse stress is zero, so the change cannot be measured; treat the check as failed."
+        return {**out, "stress_change": float("inf"), "converged": False}
+    change = abs(b - a) / abs(a)
+    return {**out, "stress_change": change, "converged": change <= tolerance}

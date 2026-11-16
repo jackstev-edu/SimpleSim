@@ -109,8 +109,8 @@ Engineering rules:
 - Stress limits use stress_for_limit_MPa: the peak outside a zone around each fixed and loaded
   face. Safety factor = yield / stress_for_limit_MPa. max_stress_MPa is the raw peak and may be a
   singular spike; do not judge the limit on it.
-- When excluded_peak_MPa is set, say that the excluded peak is not physical (it grows with mesh
-  refinement) and say where it is (excluded_at, excluded_peak_at_mm). At a support: the bolted
+- When excluded_peak_MPa is set, say that the excluded peak is not physical (it usually grows with
+  mesh refinement) and say where it is (excluded_at, excluded_peak_at_mm). At a support: the bolted
   joint needs its own check. At a load: the value depends on how the load is really applied, so
   check it separately.
 - When zone_settled is false, say the zone did not settle and the stress used is the conservative
@@ -161,7 +161,11 @@ def _progress_text(ev: dict) -> str:
         text += f" · mass {r['mass_kg']:.3f} kg"
     if "safety_factor" in r:
         text += f" · SF {r['safety_factor']:.2f}"
-    if "max_stress_MPa" in r:
+    if "stress_for_limit_MPa" in r:
+        text += f" · limit stress {r['stress_for_limit_MPa']:.1f} MPa"
+        if "max_stress_MPa" in r and r["max_stress_MPa"] != r["stress_for_limit_MPa"]:
+            text += f" (raw peak {r['max_stress_MPa']:.1f} MPa)"
+    elif "max_stress_MPa" in r:
         text += f" · peak {r['max_stress_MPa']:.1f} MPa"
     if "element_size_mm" in r:
         text += f" · {r['element_size_mm']:g} mm mesh"

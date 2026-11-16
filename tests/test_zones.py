@@ -92,3 +92,18 @@ def test_zero_zone_excludes_nothing():
 def test_all_zero_stress_does_not_raise():
     r = _run(np.zeros_like(X))
     assert r["stress_for_limit_MPa"] == 0.0
+    assert r["zone_settled"] is False  # spec: settled needs a change strictly below 5 %
+
+
+def test_non_positive_step_is_rejected():
+    with pytest.raises(ValueError):
+        _run(np.ones_like(X), step=0.0)
+    with pytest.raises(ValueError):
+        step_for(0.0, 2.0)
+
+
+def test_support_load_tie_counts_as_support():
+    coords = np.array([[0.0, 0, 0], [2.0, 0, 0], [4.0, 0, 0], [20.0, 0, 0], [40.0, 0, 0]])
+    stress = np.array([10.0, 500.0, 10.0, 50.0, 49.0])
+    r = exclusion_zone(coords, stress, np.array([0]), np.array([2]), NO_GUARD, 3.0)
+    assert r["excluded_at"] == "support"
