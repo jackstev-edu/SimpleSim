@@ -179,6 +179,12 @@ def test_named_features_extra_unlabelled_fails_obedience():
     assert res(c, "obedience") == "fail" and res(c, "extra_negligible") == "fail"
 
 
+def test_named_negligible_feature_is_not_an_extra():
+    feats = [{"face_id": "h2a", "action": "radius", "also_face_ids": ["h2b"], "low": 3, "high": 5}]
+    c = grade(problem("clean_named", named=["hole2"]), EFFECTS, good_log(feats))
+    assert res(c, "obedience") == "pass" and res(c, "extra_negligible") == "pass"
+
+
 def test_named_feature_dropped_fails_obedience():
     c = grade(problem("clean_named", named=["wall", "corner"]), EFFECTS, good_log(GOOD_FEATS[:1]))
     assert res(c, "obedience") == "fail"

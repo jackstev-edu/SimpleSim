@@ -8999,8 +8999,8 @@
     "detail": "1 set_load_case call(s)"
    },
    "extra_negligible": {
-    "result": "pass",
-    "detail": "0 negligible; 1 unmatched (not graded): Both lug pin bores"
+    "result": "fail",
+    "detail": "1 negligible; 1 unmatched (not graded): Both lug pin bores"
    }
   },
   "unmatched_features": [

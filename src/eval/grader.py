@@ -209,6 +209,8 @@ def grade(problem: Problem, effects: dict | None, run_log: dict | None) -> dict:
             hit = [k for k in feats if matches(k, p, faces)]
             if not hit:
                 out["unmatched_features"].append(p)
+            elif any(k in named for k in hit):
+                continue  # the user named it, so proposing it is not an extra
             elif all(labels.get(k["id"]) == "negligible" for k in hit):
                 n += 1
         detail = f"{n} negligible"
