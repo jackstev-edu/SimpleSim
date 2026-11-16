@@ -1,0 +1,150 @@
+"""Ansys engine for the PyDiscovery emulator, on a fake workbench (no ANSYS)."""
+import json
+
+import pytest
+
+from src.pydiscovery.families import L_BRACKET_V0 as FAMILY
+from src.pydiscovery.part_file import Material
+from src.sim import materials
+from src.sim.ansys_engine import BASELINE_MM, AnsysEngine, edits_for, find_faces, library_material
+
+STEEL_E = materials.catalog()["Structural Steel"]["youngs_modulus_GPa"] * 1000
+DESIGN = {"thickness_mm": 7.0, "flange_length_mm": 90.0, "arm_width_mm": 45.0,
+          "hole_diameter_mm": 10.0, "fillet_radius_mm": 3.0}
+STEEL = Material(name="Structural Steel", youngs_mpa=200000, density_kg_m3=7850)
+
+
+def plane(fid, lo, hi, normal):
+    return {"id": fid, "type": "plane", "bbox_min_mm": lo, "bbox_max_mm": hi, "normal": normal}
+
+
+def cyl(fid):
+    return {"id": fid, "type": "cylinder", "radius_mm": 4.0, "bbox_min_mm": [56, 0, 16], "bbox_max_mm": [64, 6, 24],
+            "axis_point_mm": [60, 0, 20], "axis_dir": [0, 1, 0]}
+
+
+FACES = [
+    plane("b", [0, 0, 0], [0, 60, 40], [-1, 0, 0]),
+    plane("vi", [6, 6, 0], [6, 60, 40], [1, 0, 0]),
+    plane("e", [80, 0, 0], [80, 6, 40], [1, 0, 0]),
+    plane("ht", [6, 6, 0], [80, 6, 40], [0, 1, 0]),
+    plane("bot", [0, 0, 0], [80, 0, 40], [0, -1, 0]),
+    plane("s", [0, 0, 40], [80, 60, 40], [0, 0, 1]),
+    plane("s0", [0, 0, 0], [80, 60, 0], [0, 0, -1]),
+    plane("top", [0, 60, 0], [6, 60, 40], [0, 1, 0]),
+    cyl("h1"), cyl("h2"),
+]
+
+
+class FakeWorkbench:
+    fail_next = False
+
+    def __init__(self, out_dir):
+        self.loads, self.load_cases, self.materials, self.calls = 0, [], [], []
+
+    def load_part(self, path):
+        self.loads += 1
+        return {"faces": FACES}
+
+    def call(self, name, args):
+        self.calls.append((name, args))
+        if name == "set_material":
+            self.materials.append(args["material"])
+            return json.dumps({"note": "ok"})
+        if name == "set_load_case":
+            self.load_cases.append(args)
+            return json.dumps({"ok": True})
+        if name == "evaluate_design":
+            if FakeWorkbench.fail_next:
+                FakeWorkbench.fail_next = False
+                raise RuntimeError("solve failed")
+            return json.dumps({"name": args["name"], "volume_mm3": 30000.0, "stress_for_limit_MPa": 120.0,
+                               "max_stress_MPa": 400.0, "max_def_mm": 0.5, "zone_mm": 3.0, "zone_settled": True,
+                               "excluded_at": "support", "stress_for_limit_at_mm": [6, 10, 20],
+                               "max_stress_at_mm": [0, 0, 0], "nodes": 9000, "messages": []})
+        if name == "check_mesh":
+            return json.dumps({"converged": True, "stress_change": 0.02})
+        raise KeyError(name)
+
+    def close(self):
+        pass
+
+
+def test_find_faces_by_geometry():
+    r = find_faces(FACES)
+    assert (r["back"], r["end"], r["side"], r["vert_inner"], r["horiz_top"]) == ("b", "e", "s", "vi", "ht")
+    assert sorted(r["hole"]) == ["h1", "h2"]
+
+
+def test_find_faces_names_the_missing_role():
+    with pytest.raises(ValueError, match="end"):
+        find_faces([f for f in FACES if f["id"] != "e"])
+
+
+def test_edits_for_offsets_from_baseline():
+    e = edits_for({"thickness_mm": 4.0, "flange_length_mm": 120.0, "arm_width_mm": 32.0,
+                   "hole_diameter_mm": 12.0, "fillet_radius_mm": 2.0}, find_faces(FACES))
+    assert {"face_id": "vi", "action": "offset", "value_mm": -2.0} in e
+    assert {"face_id": "ht", "action": "offset", "value_mm": -2.0} in e
+    assert {"face_id": "e", "action": "offset", "value_mm": 40.0} in e
+    assert {"face_id": "s", "action": "offset", "value_mm": -8.0} in e
+    assert {"face_id": "h1", "action": "radius", "also_face_ids": ["h2"], "value_mm": 6.0} in e
+    assert e[-1] == {"face_id": "vi", "action": "fillet", "other_face_id": "ht", "value_mm": 2.0}
+
+
+def test_edits_for_baseline_is_only_the_fillet():
+    assert [x["action"] for x in edits_for({**BASELINE_MM, "fillet_radius_mm": 4.0}, find_faces(FACES))] == ["fillet"]
+
+
+def test_library_material_matches_loosely():
+    assert library_material("structural_steel") == "Structural Steel"
+    assert library_material("unobtainium") is None
+
+
+def test_solve_library_material_returns_zone_stress_and_part_density():
+    eng = AnsysEngine(workbench_factory=FakeWorkbench)
+    out = eng.solve(FAMILY, DESIGN, 500.0, STEEL)
+    assert out == {"max_stress_mpa": 120.0, "max_disp_mm": 0.5, "mass_kg": pytest.approx(30000 * 7850e-9)}
+    assert eng.last_details["raw_peak_mpa"] == 400.0 and eng.last_details["material_used"] == "Structural Steel"
+
+
+def test_solve_unknown_material_scales_deflection_by_E():
+    eng = AnsysEngine(workbench_factory=FakeWorkbench)
+    out = eng.solve(FAMILY, DESIGN, 500.0, Material(name="Custom", youngs_mpa=100000, density_kg_m3=2000))
+    assert out["max_stress_mpa"] == 120.0
+    assert out["max_disp_mm"] == pytest.approx(0.5 * STEEL_E / 100000)
+    assert out["mass_kg"] == pytest.approx(30000 * 2000e-9)
+    assert "rescaled" in eng.last_details["material_note"]
+
+
+def test_solve_rejects_material_without_density():
+    with pytest.raises(ValueError, match="density"):
+        AnsysEngine(workbench_factory=FakeWorkbench).solve(FAMILY, DESIGN, 500.0, Material(name="X", youngs_mpa=1e5))
+
+
+def test_force_follows_family_direction_and_load_case_is_reused():
+    eng = AnsysEngine(workbench_factory=FakeWorkbench)
+    eng.solve(FAMILY, DESIGN, 500.0, STEEL)
+    eng.solve(FAMILY, DESIGN, 500.0, STEEL)
+    wb = eng._wb
+    assert wb.loads == 1 and wb.materials == ["Structural Steel"]
+    assert wb.load_cases == [{"fixed_face_ids": ["b"], "load_face_ids": ["e"], "force_N": [0.0, -500.0, 0.0]}]
+    eng.solve(FAMILY, DESIGN, 800.0, STEEL)
+    assert len(wb.load_cases) == 2
+
+
+def test_failed_solve_leaves_engine_usable():
+    eng = AnsysEngine(workbench_factory=FakeWorkbench)
+    FakeWorkbench.fail_next = True
+    with pytest.raises(RuntimeError):
+        eng.solve(FAMILY, DESIGN, 500.0, STEEL)
+    assert eng.solve(FAMILY, DESIGN, 500.0, STEEL)["max_stress_mpa"] == 120.0
+
+
+def test_mesh_check_is_opt_in():
+    eng = AnsysEngine(mesh_check=True, workbench_factory=FakeWorkbench)
+    eng.solve(FAMILY, DESIGN, 500.0, STEEL)
+    assert eng.last_details["mesh_check"]["converged"] is True
+    plain = AnsysEngine(workbench_factory=FakeWorkbench)
+    plain.solve(FAMILY, DESIGN, 500.0, STEEL)
+    assert "check_mesh" not in [c[0] for c in plain._wb.calls]
