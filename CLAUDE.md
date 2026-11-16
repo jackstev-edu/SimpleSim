@@ -7,6 +7,7 @@ Read `contracts/README.md` before writing code. Every role's code talks to the o
 - `contracts/` shared Pydantic models, fakes and examples. Changing a model needs both sides of that hand-off to approve.
 - `src/data/` Role 1 (Can): solver backends and the generator that writes `runs.csv`.
 - `src/models/` Role 2 (Jack): Gaussian process and AutoGluon predictors, learning curves, the design benchmark.
+- `src/pydiscovery/` PyDiscovery emulator (Jack): reads part files, gates on user confirmation, engines behind one interface, agent tools. See `docs/pydiscovery.md`.
 - `src/agent/` Role 3 (Yunus): goal parsing, tool loop, verification, explanations.
 - `src/ui/` Role 4 (Arin): the interface, built on `result.json` fixtures first.
 
