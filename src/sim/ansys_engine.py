@@ -7,6 +7,7 @@ Stress for the safety factor is the peak outside the support and load zones (str
 """
 from __future__ import annotations
 
+import atexit
 import itertools
 import json
 import re
@@ -80,9 +81,20 @@ def _key(name: str) -> str:
     return re.sub(r"[\s_\-]", "", name.lower())
 
 
+def _tokens(name: str) -> set[str]:
+    return set(re.findall(r"[a-z0-9]+", name.lower()))
+
+
 def library_material(name: str) -> str | None:
-    """The ANSYS library material with this name, ignoring case, spaces, '_' and '-'."""
-    return next((n for n in materials.catalog() if _key(n) == _key(name)), None)
+    """The ANSYS library material with this name: exact up to case, spaces, '_' and '-', else the one
+    library name containing every word of it ("Aluminum alloy 6061-T6" -> "Aluminum alloy, wrought, 6061, T6")."""
+    names = list(materials.catalog())
+    exact = next((n for n in names if _key(n) == _key(name)), None)
+    if exact:
+        return exact
+    words = _tokens(name)
+    hits = [n for n in names if words and words <= _tokens(n)]
+    return hits[0] if len(hits) == 1 else None  # ambiguous or none: fall back to steel
 
 
 def _default_workbench(out_dir):
@@ -114,8 +126,14 @@ class AnsysEngine:
                 raise ValueError(f"The Ansys engine needs the material's {field.replace('_', ' ')}; set the material first.")
         if self._wb is None:
             wb = self._factory(self.out_dir)
-            self._roles = find_faces(wb.load_part(PART)["faces"])
+            try:
+                self._roles = find_faces(wb.load_part(PART)["faces"])
+            except Exception:
+                wb.close()  # never leak a SpaceClaim session: the Student licence allows only a few
+                raise
             self._wb = wb
+            # Mechanical lives on the workbench thread; disposing it from the main thread at exit deadlocks.
+            atexit.register(self.close)
         lib = library_material(material.name)
         used = lib or FALLBACK
         if used != self._material:
@@ -129,13 +147,15 @@ class AnsysEngine:
         name = f"pyd_{next(self._ids):04d}"
         edits = edits_for(design_mm, self._roles)
         r = json.loads(self._wb.call("evaluate_design", {"name": name, "edits": edits}))
-        disp = r["max_def_mm"]
+        e_used = materials.catalog()[used]["youngs_modulus_GPa"] * 1000
+        ratio = e_used / material.youngs_mpa
+        disp = r["max_def_mm"] * ratio  # linear: deflection scales with 1/E, stress does not
         note = f"Solved with the ANSYS library material {used}."
         if lib is None:
-            e_lib = materials.catalog()[FALLBACK]["youngs_modulus_GPa"] * 1000
-            disp *= e_lib / material.youngs_mpa  # linear: deflection scales with 1/E, stress does not
             note = (f"{material.name} is not in the ANSYS library: solved as {FALLBACK}, deflection rescaled by E, "
                     "stress unchanged (Poisson's ratio effect ignored), mass from the part's density.")
+        elif abs(ratio - 1) > 1e-3:
+            note += f" Deflection rescaled to the part's E ({material.youngs_mpa:g} MPa vs library {e_used:g} MPa)."
         self.last_details = {
             "design": name, "edits": edits, "raw_peak_mpa": r["max_stress_MPa"],
             "stress_for_limit_mpa": r["stress_for_limit_MPa"], "zone_mm": r.get("zone_mm"),

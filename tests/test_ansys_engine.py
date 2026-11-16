@@ -148,3 +148,36 @@ def test_mesh_check_is_opt_in():
     plain = AnsysEngine(workbench_factory=FakeWorkbench)
     plain.solve(FAMILY, DESIGN, 500.0, STEEL)
     assert "check_mesh" not in [c[0] for c in plain._wb.calls]
+
+
+def test_library_material_matches_the_contract_aluminium_by_tokens():
+    assert library_material("Aluminum alloy 6061-T6") == "Aluminum alloy, wrought, 6061, T6"
+
+
+def test_library_match_still_uses_the_parts_own_E():
+    eng = AnsysEngine(workbench_factory=FakeWorkbench)
+    out = eng.solve(FAMILY, DESIGN, 500.0, Material(name="Structural Steel", youngs_mpa=STEEL_E / 2, density_kg_m3=7850))
+    assert out["max_disp_mm"] == pytest.approx(1.0)
+
+
+def test_engine_closes_itself_at_exit(monkeypatch):
+    hooks = []
+    monkeypatch.setattr("src.sim.ansys_engine.atexit.register", hooks.append)
+    eng = AnsysEngine(workbench_factory=FakeWorkbench)
+    eng.solve(FAMILY, DESIGN, 500.0, STEEL)
+    assert hooks == [eng.close]
+
+
+def test_failed_first_setup_closes_the_workbench():
+    closed = []
+
+    class Broken(FakeWorkbench):
+        def load_part(self, path):
+            return {"faces": []}
+
+        def close(self):
+            closed.append(1)
+
+    with pytest.raises(ValueError):
+        AnsysEngine(workbench_factory=Broken).solve(FAMILY, DESIGN, 500.0, STEEL)
+    assert closed == [1]
