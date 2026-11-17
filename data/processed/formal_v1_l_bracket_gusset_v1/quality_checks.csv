@@ -1,0 +1,17 @@
+check_name,passed,expected,observed
+all_cases_solved,False,2048 successful rows and zero unresolved failures,successes=512; failures=0
+aligned_output_tables,True,"runs, diagnostics and model rows have identical design IDs",runs=512; diagnostics=512; model_rows=512
+positive_model_outputs,True,"all reference stress, displacement and volume values are positive",checked_rows=512
+reaction_force_balance,True,every relative reaction imbalance is at most 0.01,maximum=2.44477225e-07
+minimum_element_quality,True,every minimum element quality is above 0.1,batch_minimum=0.151280616
+inputs_within_family_ranges,True,every model row stays inside the documented ranges,checked_rows=512
+every_row_from_calculix,True,source starts with calculix on every row,checked_rows=512
+sobol_balance_thickness_mm,True,each of 16 equal bins holds 128 planned points,counts=128..128
+sobol_balance_flange_length_mm,True,each of 16 equal bins holds 128 planned points,counts=128..128
+sobol_balance_arm_width_mm,True,each of 16 equal bins holds 128 planned points,counts=128..128
+sobol_balance_hole_diameter_mm,True,each of 16 equal bins holds 128 planned points,counts=128..128
+sobol_balance_fillet_radius_mm,True,each of 16 equal bins holds 128 planned points,counts=128..128
+sobol_balance_vertical_height_mm,True,each of 16 equal bins holds 128 planned points,counts=128..128
+sobol_balance_gusset_thickness_mm,True,each of 16 equal bins holds 128 planned points,counts=128..128
+sobol_balance_gusset_length_mm,True,each of 16 equal bins holds 128 planned points,counts=128..128
+sobol_balance_poissons_ratio,True,each of 16 equal bins holds 128 planned points,counts=128..128
