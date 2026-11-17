@@ -95,6 +95,20 @@ Same file set as `formal_v0`: `sample_plan.csv`, `runs.csv`, `model_dataset.csv`
 
 Parameter table: see "Design variables" above. v0 pipeline reuse, in short: the deck builder, FRD/DAT parsers, reaction check and checkpoint writers are reused as they are; `generate_mesh` and `solve_case` gained an optional geometry family (default v0) and `MeshSettings` an optional curvature setting (default off, so v0 mesh rules and names are unchanged); the v0 spec, geometry, LHS and serial loop stay as they were.
 
+## Gate 2 (checked 2026-11-16, replaces STOP 2)
+
+Mesh study (`mesh_study.csv` and `mesh_study.json` in the dataset folder; 3 workers, one thread per CalculiX process):
+
+| Design | Coarse (s = 1.5) | Medium (s = 1.0) | Fine (s = 2/3) | Coarse vs medium | Medium vs fine |
+|---|---:|---:|---:|---:|---:|
+| baseline | 255.65 MPa, 16.6k nodes, 12 s | 273.72 MPa, 39.7k nodes, 35 s | 275.05 MPa, 107k nodes, 216 s | 6.60% | 0.48% |
+| thinnest/longest | 975.03 MPa, 27.2k nodes, 16 s | 1062.17 MPa, 70.2k nodes, 55 s | 1077.77 MPa, 202k nodes, 696 s | 8.20% | 1.45% |
+| thickest/shortest | 60.28 MPa, 22.1k nodes, 19 s | 63.28 MPa, 54.5k nodes, 69 s | 63.40 MPa, 157k nodes, 1031 s | 4.74% | 0.18% |
+
+1. Mesh rule: **medium** (s = 1.0), the coarsest level within 3% of the next finer level on all three designs. Displacement changes are below 0.2% at every level. The study ran with Gmsh's Delaunay algorithm; the production rule uses HXT with high-order optimization, re-checked at the medium level on the same designs: 273.55, 1081.77 and 62.75 MPa, within 0.55%, 0.37% and 1.01% of the fine results.
+2. Timing pilot: the first 20 plan rows at 3 workers (physical cores minus one; 4 workers was measured twice as slow per case on this 4-core laptop). 20 of 20 solved, 0 failed, wall 8.1 min. Seconds per case inside its worker: mean 68.2, max 131.3 (mesh 9.6, CalculiX 58.4 on average; 57.7k nodes mean, 79.1k max). Minimum element quality 0.235, reaction imbalance at most 1.7e-7. Output ranges over the pilot: stress 94 to 672 MPa, displacement 0.055 to 2.605 mm, mass 0.220 to 0.763 kg.
+3. Projection: 20 cases per 8.1 min is 24.3 s per case, so about 13.8 hours of wall clock for all 2,048 cases on this machine. That is over the 12 hour mark, so it is flagged here; the run proceeds in four committed waves (512, 1024, 1536, 2048) because every wave is resumable.
+
 ## Reproducing
 
 See `data/processed/formal_v1_l_bracket_gusset_v1/README.md`. In short, from the repo root with `src/data/requirements.txt` installed:
