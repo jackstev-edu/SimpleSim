@@ -5,11 +5,13 @@
   "bracket_family": "l_bracket_gusset_v1",
   "dataset_stage": "formal_training_data",
   "planned_cases": 2048,
-  "successful_cases": 512,
-  "remaining_cases": 1536,
-  "unresolved_failures": 0,
-  "failure_attempts": 0,
-  "unresolved_failures_by_stage": {},
+  "successful_cases": 1023,
+  "remaining_cases": 1025,
+  "unresolved_failures": 1,
+  "failure_attempts": 1,
+  "unresolved_failures_by_stage": {
+    "solve": 1
+  },
   "sampling": {
     "method": "scipy.stats.qmc.Sobol, scrambled",
     "seed": 20261116,
@@ -77,26 +79,26 @@
   "retry_policy": "one retry at 0.75 times the production sizes after a nonpositive Jacobian",
   "output_ranges": {
     "max_stress_mpa": {
-      "min": 78.07577246645593,
+      "min": 66.64694917249776,
       "max": 1032.1304366923719,
-      "mean": 272.20659927695687
+      "mean": 272.3023633398131
     },
     "max_disp_mm": {
-      "min": 0.03711581657077322,
-      "max": 4.2018066545298565,
-      "mean": 0.5150436514958722
+      "min": 0.029454176390833673,
+      "max": 4.2110033860149745,
+      "mean": 0.5155376487025822
     },
     "mass_kg": {
-      "min": 0.1686314097496703,
-      "max": 0.8380853895113726,
-      "mean": 0.4187893948548825
+      "min": 0.14926675006681414,
+      "max": 0.8643602669931252,
+      "mean": 0.4187105857485918
     }
   },
   "elapsed": {
-    "cases": 512,
-    "mean_s": 77.60926487324366,
-    "max_s": 220.64338369999314,
-    "total_s": 39735.943615100754
+    "cases": 1023,
+    "mean_s": 145.5548622448688,
+    "max_s": 33025.697595100035,
+    "total_s": 148902.62407650077
   },
   "platform": "Windows-11-10.0.26200-SP0",
   "ccx_version": "2.23",

@@ -1,9 +1,9 @@
 {
   "dataset_name": "l_bracket_gusset_v1_formal_2048",
   "planned_cases": 2048,
-  "completed_cases": 512,
-  "remaining_cases": 1536,
-  "unresolved_failures": 0,
-  "attempted_this_run": 492,
+  "completed_cases": 1023,
+  "remaining_cases": 1025,
+  "unresolved_failures": 1,
+  "attempted_this_run": 512,
   "resume_instruction": "Run the same command and output directory again. Completed design IDs are skipped."
 }
