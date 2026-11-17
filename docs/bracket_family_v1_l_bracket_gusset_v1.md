@@ -29,13 +29,13 @@ The gusset's right-angle corner sits at the inside corner (X = t, Y = t); its hy
 | `flange_length_mm` | 80 | 75 to 120 | v0, unchanged |
 | `arm_width_mm` | 40 | 32 to 60 | v0, unchanged |
 | `hole_diameter_mm` | 8 | 6 to 12 | v0, unchanged |
-| `fillet_radius_mm` | 4 | 2 to 8 | v0, unchanged |
+| `fillet_radius_mm` | 4 | 2.5 to 8 | v0 range, lower bound raised from 2 (see Gate 1) |
 | `vertical_height_mm` | 60 | 50 to 90 | new (fixed at 60 in v0) |
 | `gusset_thickness_mm` | 6 | 3 to 10 | new |
 | `gusset_length_mm` | 20 | 12 to 35 | new, both gusset legs |
 | `poissons_ratio` | 0.30 | 0.25 to 0.35 | sampled, as in v0 |
 
-Fixed: hole centre (X = 60, Z = 20), load 500 N in -Y on the free-end face, load angle -90 degrees, E = 200,000 MPa, Sy = 250 MPa, rho = 7,850 kg/m3, junction fillet 2 mm. Every shared variable's range includes its v0 baseline value (Gate 1, item 4).
+Fixed: hole centre (X = 60, Z = 20), load 500 N in -Y on the free-end face, load angle -90 degrees, E = 200,000 MPa, Sy = 250 MPa, rho = 7,850 kg/m3, junction fillet 2 mm. Every shared variable's range includes its v0 baseline value (Gate 1, item 4). The fillet range starts at 2.5 mm rather than v0's 2 mm: an inside fillet within about 0.4 mm of the 2 mm junction fillet makes OpenCascade blend two near-equal radii into sliver faces that mesh to inverted elements (details under Gate 1).
 
 Why these ranges: the gusset reach (t + g + 2 mm fillet) is at most 47 mm. The hole edge is never nearer than X = 54 mm and the vertical leg never shorter than 50 mm, so every combination clears the hole by at least 7 mm and the leg top by at least 3 mm. The rules below are still enforced on every design, so the guarantee comes from validation, not from luck.
 
@@ -52,6 +52,7 @@ Unchanged from v0: the back face at X = 0 is fully fixed (all translations); a t
 | `gusset_clears_vertical_top` | t + g + 2 mm fillet + margin <= vertical height | 3 mm |
 | `gusset_within_width` | g_t/2 + 2 mm fillet + margin <= width/2 | 3 mm |
 | `gusset_past_fillet` | g >= inside fillet radius + 2 mm fillet + margin | 2 mm |
+| `fillet_distinct_from_junction` | abs(inside fillet radius - 2 mm junction fillet) >= gap | 0.4 mm |
 
 Plus the pydantic range checks on every variable (out-of-range values are rejected, never clamped). A failed rule is reported by name with the measured gap, in the model's error and in `failure_attempts.csv` under stage `geometry_validation`.
 
@@ -61,9 +62,11 @@ Scrambled Sobol (`scipy.stats.qmc.Sobol`, seed 20261116), n = 2048 = 2^11 over t
 
 ## Mesh
 
-Rule at scale s: tet10, maximum element size = s x min(3 mm, thickness/2, gusset thickness), minimum size = maximum/4, and Gmsh `Mesh.MeshSizeFromCurvature` = round(16/s) elements per full circle on fillets and the hole. Levels: coarse s = 1.5, medium s = 1.0, fine s = 2/3. The production level is chosen at Gate 2 (below) and recorded in `summary.json` as `mesh_level` and `production_mesh_strategy`. Retry policy as in v0: a CalculiX "nonpositive Jacobian" gets one retry at 0.75 x the production sizes.
+Rule at scale s: tet10, maximum element size = s x min(3 mm, thickness/2, gusset thickness), minimum size = maximum/4, Gmsh `Mesh.MeshSizeFromCurvature` = round(16/s) elements per full circle on fillets and the hole, `Mesh.Algorithm3D` = 10 (HXT) and `Mesh.HighOrderOptimize` = 2. Levels: coarse s = 1.5, medium s = 1.0, fine s = 2/3. All three settings are new fields on v0's `MeshSettings` with defaults that leave v0 meshes and rule names unchanged. The production level is chosen at Gate 2 (below) and recorded in `summary.json` as `mesh_level` and `production_mesh_strategy`. Retry policy as in v0: a CalculiX "nonpositive Jacobian" gets one retry at 0.75 x the production sizes.
 
-Why curvature sizing: on the baseline the peak stress sits on the 2 mm junction fillet at the gusset tip. v0's uniform 1 to 2 mm rule gave 240.7 MPa there and kept climbing with refinement (226 -> 241 -> 261 MPa). With curvature sizing the coarse and medium levels agree within 0.5% (273.7 vs 275.1 MPa), so the fillet is resolved.
+Why curvature sizing: on the baseline the peak stress sits on the 2 mm junction fillet at the gusset tip. v0's uniform 1 to 2 mm rule gave 240.7 MPa there and kept climbing with refinement (226 -> 241 -> 261 MPa). With curvature sizing the medium and fine levels agree within 0.5% on the baseline (273.7 vs 275.1 MPa), so the fillet is resolved.
+
+Why HXT and high-order optimization: with Gmsh's default Delaunay algorithm about 1 design in 10 produced curved tet10 elements with a negative or near-zero scaled Jacobian (minSICN) on the junction fillets; HXT with `HighOrderOptimize = 2` gave minSICN above 0.18 on every one of the first 50 plan rows except the two near-equal-radius designs that the `fillet_distinct_from_junction` rule now excludes. Re-solving the three study designs at the medium level with HXT gave 273.6, 1081.8 and 62.8 MPa, within 0.6%, 0.4% and 1.0% of the fine-level Delaunay results, so the study's conclusion stands.
 
 ## Output schema
 
@@ -87,7 +90,7 @@ Same file set as `formal_v0`: `sample_plan.csv`, `runs.csv`, `model_dataset.csv`
 |---|---|
 | 1. Baseline builds, meshes and passes validation | Pass. CadQuery solid valid, 22 faces, 33,240 mm3; Gmsh mesh with non-empty fixed and load node sets; CalculiX solves (reaction imbalance 1e-7). |
 | 2. Gusset-to-hole clearance is a named rule with a stated margin | Pass. `gusset_clears_hole`: gusset reach (t + g + 2 mm junction fillet) at least 3 mm short of the hole edge. Three more named rules cover the leg top, the side faces and the inside fillet. |
-| 3. At least 99% of a 256-row Sobol preview passes validation | Pass. 256 of 256 rows pass the rules (100%), and all 256 also build as valid CadQuery solids with 22 faces (36 s total). No re-parameterization was needed. |
+| 3. At least 99% of a 256-row Sobol preview passes validation | Pass. First parameterization (fillet 2 to 8 mm): 256 of 256 rows pass and build. One re-parameterization followed the timing pilot: designs whose inside fillet sits within about 0.4 mm of the 2 mm junction fillet meshed to sliver elements (minSICN 0.002 to 0.007 under every Gmsh setting tried, against 0.25 to 0.28 with the junction fillet at 1.5 or 2.5 mm), so the fillet range now starts at 2.5 mm and `fillet_distinct_from_junction` names the rule. Rechecked: 256 of 256 preview rows pass and build (25 s), and all 2,048 plan rows pass. |
 | 4. Ranges include the v0 baseline for every shared variable | Pass. 6, 80, 40, 8 and 4 mm all sit inside their unchanged v0 ranges; the three new ranges include 60, 6 and 20 mm. |
 
 Parameter table: see "Design variables" above. v0 pipeline reuse, in short: the deck builder, FRD/DAT parsers, reaction check and checkpoint writers are reused as they are; `generate_mesh` and `solve_case` gained an optional geometry family (default v0) and `MeshSettings` an optional curvature setting (default off, so v0 mesh rules and names are unchanged); the v0 spec, geometry, LHS and serial loop stay as they were.

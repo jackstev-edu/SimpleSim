@@ -61,6 +61,7 @@ def test_ranges_include_every_v0_baseline_value() -> None:
         ("gusset_clears_vertical_top", {"thickness_mm": 10.0, "gusset_length_mm": 35.0, "vertical_height_mm": 50.0}),
         ("gusset_within_width", {"arm_width_mm": 32.0, "gusset_thickness_mm": 10.0}),
         ("gusset_past_fillet", {"fillet_radius_mm": 8.0, "gusset_length_mm": 12.0}),
+        ("fillet_distinct_from_junction", {"fillet_radius_mm": 2.1}),
     ],
 )
 def test_each_rule_rejects_a_known_bad_case(rule: str, change: dict[str, float]) -> None:
@@ -86,6 +87,8 @@ def test_each_rule_rejects_a_known_bad_case(rule: str, change: dict[str, float])
         bad.gusset_thickness_mm = 24.0
     elif rule == "gusset_past_fillet":
         bad.gusset_length_mm = 9.0
+    elif rule == "fillet_distinct_from_junction":
+        bad.fillet_radius_mm = 2.1  # within 0.4 mm of the 2 mm junction fillet
     names = {msg.split(":")[0].replace("rule ", "") for msg in failed_rules(bad)}
     assert rule in names
 

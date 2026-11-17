@@ -28,6 +28,8 @@ class MeshSettings:
     maximum_size_mm: float = 3.0
     element_order: int = 2
     curvature_elements: int = 0  # elements per full circle on curved faces; 0 keeps the v0 uniform sizing
+    algorithm_3d: int = 1  # Gmsh Mesh.Algorithm3D; 1 is Delaunay (v0), 10 is HXT
+    high_order_optimize: int = 0  # Gmsh Mesh.HighOrderOptimize; 0 keeps v0's straight placement of midside nodes
 
     def __post_init__(self) -> None:
         if self.minimum_size_mm <= 0.0:
@@ -56,6 +58,10 @@ class MeshSettings:
         )
         if self.curvature_elements:
             rule += f"_curv{self.curvature_elements}"  # v0 rule names stay unchanged when off
+        if self.algorithm_3d == 10:
+            rule += "_hxt"
+        if self.high_order_optimize:
+            rule += f"_hoo{self.high_order_optimize}"
         return rule
 
 
@@ -247,6 +253,11 @@ def generate_mesh(
                 "Mesh.MeshSizeFromCurvature",
                 mesh_settings.curvature_elements,
             )
+        if mesh_settings.algorithm_3d != 1:
+            gmsh.option.setNumber("Mesh.Algorithm3D", mesh_settings.algorithm_3d)
+        if mesh_settings.high_order_optimize:
+            # Moves midside nodes so curved tet10s on small fillets keep a positive Jacobian.
+            gmsh.option.setNumber("Mesh.HighOrderOptimize", mesh_settings.high_order_optimize)
 
         gmsh.model.mesh.generate(3)
 

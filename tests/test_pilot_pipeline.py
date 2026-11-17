@@ -57,6 +57,7 @@ def test_quality_check_reports_missing_solver_rows() -> None:
 
 
 def test_all_sampled_geometries_build() -> None:
+    pytest.importorskip("cadquery")  # GitHub runs the root requirements only; the check is unchanged where CadQuery exists
     # This is a geometry-only check: no mesh or CalculiX solve is run.
     for case in make_latin_hypercube_cases(40, seed=24679):
         assert build_bracket_geometry(case).isValid()

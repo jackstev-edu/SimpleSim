@@ -399,7 +399,8 @@ def load_checkpoint(output_dir: Path, plan_ids: set[str]):
 def generate_dataset(output_directory: str | Path, *, limit: int | None = None, workers: int | None = None,
                      shard: int = 0, num_shards: int = 1, timeout_seconds: float = DEFAULT_SOLVER_TIMEOUT_SECONDS,
                      keep_case_files: bool = False, failure_rate_limit: float = FAILURE_RATE_LIMIT,
-                     plan: Sequence[dict[str, object]] | None = None, solve=run_one_case) -> WaveSummary:
+                     plan: Sequence[dict[str, object]] | None = None, solve=run_one_case,
+                     case_directory: str | Path | None = None) -> WaveSummary:
     """Run (or resume) the plan rows selected by --limit and --shard, checkpointing after every case."""
     if num_shards < 1 or not 0 <= shard < num_shards:
         raise ValueError("Need 0 <= shard < num_shards.")
@@ -408,7 +409,7 @@ def generate_dataset(output_directory: str | Path, *, limit: int | None = None, 
     worker_count = workers or default_workers()
     output_dir = Path(output_directory)
     output_dir.mkdir(parents=True, exist_ok=True)
-    case_root = output_dir / "cases"
+    case_root = Path(case_directory) if case_directory else output_dir / "cases"  # heavy files; keep them off synced folders
 
     full_plan = list(plan) if plan is not None else make_plan(PLAN_SAMPLE_COUNT, PLAN_SEED)
     plan_path = output_dir / "sample_plan.csv"
@@ -500,10 +501,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--timeout-seconds", type=float, default=DEFAULT_SOLVER_TIMEOUT_SECONDS)
     parser.add_argument("--keep-case-files", action="store_true", help="retain STEP, mesh, deck, FRD and DAT files")
     parser.add_argument("--failure-rate-limit", type=float, default=FAILURE_RATE_LIMIT, help="stop starting cases above this failed fraction")
+    parser.add_argument("--case-dir", default=None, help="folder for per-case solver files (default: <output>/cases)")
     args = parser.parse_args(argv)
     summary = generate_dataset(args.output, limit=args.limit, workers=args.workers, shard=args.shard, num_shards=args.num_shards,
                                timeout_seconds=args.timeout_seconds, keep_case_files=args.keep_case_files,
-                               failure_rate_limit=args.failure_rate_limit)
+                               failure_rate_limit=args.failure_rate_limit, case_directory=args.case_dir)
     if summary.stopped_early:
         return 3
     return 0 if summary.failed_this_run == 0 or summary.failed_this_run / max(summary.attempted_this_run, 1) <= args.failure_rate_limit else 3

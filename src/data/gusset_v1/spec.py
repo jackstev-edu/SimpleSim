@@ -14,7 +14,6 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..bracket_spec import (
     ARM_WIDTH_RANGE_MM,
-    FILLET_RADIUS_RANGE_MM,
     FLANGE_LENGTH_RANGE_MM,
     HOLE_CENTER_X_MM,
     HOLE_CENTER_Z_MM,
@@ -36,8 +35,13 @@ HOLE_CLEARANCE_MM = 3.0  # gap between the gusset footprint (fillet included) an
 TOP_CLEARANCE_MM = 3.0  # gap between the gusset tip and the top of the vertical leg
 SIDE_CLEARANCE_MM = 3.0  # gap between the gusset (fillet included) and the bracket side faces
 FILLET_CLEARANCE_MM = 2.0  # how far the gusset must reach past the inside fillet
+# An inside fillet within 0.4 mm of the 2 mm junction fillet makes OCC blend two near-equal radii into
+# sliver faces that mesh to inverted tet10s, so v1 keeps the two radii apart (see the family doc, Gate 1).
+JUNCTION_RADIUS_GAP_MM = 0.4
 
-# v0 ranges are kept as they are; the three new variables get ranges that include the baseline.
+# v0 ranges are kept, except the fillet's lower bound moves from 2 to 2.5 mm (JUNCTION_RADIUS_GAP_MM);
+# the three new variables get ranges that include the baseline.
+FILLET_RADIUS_RANGE_MM = (2.5, 8.0)
 VERTICAL_HEIGHT_RANGE_MM = (50.0, 90.0)
 GUSSET_THICKNESS_RANGE_MM = (3.0, 10.0)
 GUSSET_LENGTH_RANGE_MM = (12.0, 35.0)
@@ -152,8 +156,16 @@ def rule_gusset_past_fillet(g: Any) -> str | None:
     return None
 
 
+def rule_fillet_distinct_from_junction(g: Any) -> str | None:
+    gap = abs(g.fillet_radius_mm - GUSSET_JUNCTION_FILLET_MM)
+    if gap < JUNCTION_RADIUS_GAP_MM:
+        return f"the inside fillet of {g.fillet_radius_mm:.2f} mm is within {gap:.2f} mm of the {GUSSET_JUNCTION_FILLET_MM:g} mm junction fillet; keep them at least {JUNCTION_RADIUS_GAP_MM:g} mm apart"
+    return None
+
+
 RULES: tuple[tuple[str, Callable[[Any], str | None]], ...] = (
     ("hole_inside_flange", rule_hole_inside_flange),
+    ("fillet_distinct_from_junction", rule_fillet_distinct_from_junction),
     ("gusset_clears_hole", rule_gusset_clears_hole),
     ("gusset_clears_vertical_top", rule_gusset_clears_vertical_top),
     ("gusset_within_width", rule_gusset_within_width),
@@ -201,7 +213,7 @@ def make_baseline_case() -> GussetCaseInput:
 # The two most extreme corners of the design space, for the mesh study.
 THINNEST_LONGEST_MM: dict[str, float] = {
     "thickness_mm": 4.0, "flange_length_mm": 120.0, "arm_width_mm": 32.0, "hole_diameter_mm": 12.0,
-    "fillet_radius_mm": 2.0, "vertical_height_mm": 90.0, "gusset_thickness_mm": 3.0, "gusset_length_mm": 35.0,
+    "fillet_radius_mm": 2.5, "vertical_height_mm": 90.0, "gusset_thickness_mm": 3.0, "gusset_length_mm": 35.0,
 }
 THICKEST_SHORTEST_MM: dict[str, float] = {
     "thickness_mm": 10.0, "flange_length_mm": 75.0, "arm_width_mm": 60.0, "hole_diameter_mm": 6.0,
@@ -210,7 +222,7 @@ THICKEST_SHORTEST_MM: dict[str, float] = {
 
 __all__ = [
     "FAMILY_KEY", "DATASET_SCHEMA_VERSION", "GUSSET_JUNCTION_FILLET_MM", "HOLE_CLEARANCE_MM", "TOP_CLEARANCE_MM",
-    "SIDE_CLEARANCE_MM", "FILLET_CLEARANCE_MM", "GEOMETRY_RANGES_MM", "GEOMETRY_NAMES", "NEW_GEOMETRY_NAMES",
+    "SIDE_CLEARANCE_MM", "FILLET_CLEARANCE_MM", "JUNCTION_RADIUS_GAP_MM", "GEOMETRY_RANGES_MM", "GEOMETRY_NAMES", "NEW_GEOMETRY_NAMES",
     "SAMPLED_RANGES", "BASELINE_MM", "POISSONS_RATIO_RANGE", "LOAD_ANGLE_DEG", "HOLE_CENTER_X_MM", "HOLE_CENTER_Z_MM",
     "GussetCaseInput", "RULES", "failed_rules", "reference_material", "make_case", "make_baseline_case",
     "THINNEST_LONGEST_MM", "THICKEST_SHORTEST_MM", "REFERENCE_MATERIAL_KEY",

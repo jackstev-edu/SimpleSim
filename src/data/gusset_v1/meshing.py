@@ -18,7 +18,7 @@ CURVATURE_ELEMENTS = 16  # elements per full circle on curved faces at scale 1
 
 # Level name -> scale on the element sizes. Curvature elements scale the other way.
 MESH_LEVELS: dict[str, float] = {"coarse": 1.5, "medium": 1.0, "fine": 2.0 / 3.0}
-PRODUCTION_LEVEL = "coarse"  # chosen at Gate 2 from the mesh study; see the family doc
+PRODUCTION_LEVEL = "medium"  # chosen at Gate 2 from the mesh study; see the family doc
 NONPOSITIVE_JACOBIAN_RETRY_SCALE = 0.75  # v0's one-step refinement after an inverted tet10
 
 
@@ -31,6 +31,8 @@ def mesh_settings_for(case: GussetCaseInput, scale: float) -> MeshSettings:
         maximum_size_mm=maximum,
         element_order=2,
         curvature_elements=max(4, round(CURVATURE_ELEMENTS / scale)),
+        algorithm_3d=10,  # HXT: Delaunay left inverted curved tet10s on about 1 design in 10
+        high_order_optimize=2,
     )
 
 
@@ -52,4 +54,5 @@ def retry_mesh_settings(case: GussetCaseInput) -> MeshSettings:
 def describe_rule(level: str = PRODUCTION_LEVEL) -> str:
     scale = MESH_LEVELS[level]
     return (f"tet2; maximum_size_mm = {scale:g} * min({MAX_SIZE_CAP_MM:g}, thickness_mm/{THICKNESS_DIVISOR:g}, gusset_thickness_mm); "
-            f"minimum_size_mm = maximum_size_mm/{MIN_SIZE_RATIO:g}; Mesh.MeshSizeFromCurvature = {max(4, round(CURVATURE_ELEMENTS / scale))} (level {level})")
+            f"minimum_size_mm = maximum_size_mm/{MIN_SIZE_RATIO:g}; Mesh.MeshSizeFromCurvature = {max(4, round(CURVATURE_ELEMENTS / scale))}; "
+            f"Mesh.Algorithm3D = 10 (HXT); Mesh.HighOrderOptimize = 2 (level {level})")
