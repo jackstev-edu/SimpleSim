@@ -249,6 +249,22 @@
   ol.steps li { margin-bottom: 7px; color: #d6d5cf; }
   ol.steps b { color: #fff; }
 
+  /* PyDiscovery tab: the live emulator behind launch_gui.py; hidden when the page has no API */
+  .wtabs .t[hidden] { display: none; }
+  .pyd > * { max-width: 760px; }
+  .pyd h3 { margin: 12px 0 5px; font-size: 14.5px; font-weight: 400; font-variant: small-caps; letter-spacing: .04em; color: #fff; border-bottom: 1px solid #2f6fb5; padding-bottom: 2px; }
+  .pyd .prow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 5px 0; }
+  .pyd .prow label { display: inline-flex; gap: 5px; align-items: center; color: #d0d0d0; }
+  .pyd input[type="number"], .pyd select { background: #141414; border: 1px solid #2f7fd0; color: var(--text); padding: 2px 4px; height: 24px; width: 72px; }
+  .pyd select { width: auto; }
+  .pbtn { background: #141414; border: 1px solid #2f7fd0; color: var(--text); height: 24px; padding: 0 10px; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; }
+  .pbtn:hover:not(:disabled) { background: var(--sel); }
+  .pbtn:disabled, .pyd .btn-run:disabled { opacity: .45; cursor: default; }
+  .pyd pre.card { margin: 4px 0; padding: 6px 8px; background: #1f1f1f; border-left: 3px solid #2f6fb5; font: 12px/1.4 Consolas, "Cascadia Mono", monospace; white-space: pre-wrap; overflow-wrap: anywhere; color: #d6d5cf; }
+  .pyd .perr { color: var(--red); margin: 4px 0; overflow-wrap: anywhere; }
+  .pyd .pwork { color: var(--amber); }
+  .pyd .pname, .pyd .pok { color: #7ee08a; overflow-wrap: anywhere; }
+
   .statusbar { display: flex; gap: 14px; align-items: center; padding: 0 10px; background: var(--bar); color: #dcdcdc; font-size: 13px; white-space: nowrap; overflow: hidden; }
   .statusbar .grow { flex: 1; }
   .statusbar .files { color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
@@ -332,6 +348,7 @@
       <button class="t" role="tab" data-atab="chat" aria-selected="true" type="button">Agent</button>
       <button class="t" role="tab" data-atab="graphs" aria-selected="false" type="button">Graphs</button>
       <button class="t" role="tab" data-atab="recs" aria-selected="false" type="button">Recommendations</button>
+      <button class="t" role="tab" data-atab="pyd" aria-selected="false" type="button" id="pydTab" hidden>PyDiscovery</button>
       <span class="wctl"><button type="button" tabindex="-1" data-max="winAgent" aria-label="Maximise window"></button><button type="button" tabindex="-1" data-close="winAgent" aria-label="Close window"></button></span>
     </div>
     <div class="wtools">
@@ -348,6 +365,7 @@
     <div class="log" id="log" aria-live="polite"></div>
     <div class="apane" id="graphs" hidden></div>
     <div class="apane" id="recs" hidden></div>
+    <div class="apane pyd" id="pyd" hidden></div>
   </section>
 </main>
 
@@ -620,6 +638,7 @@ async function fetchJson(path) {
   try { return JSON.parse(text); } catch (e) { throw new Error(`${path}: not valid JSON (${e.message})`); }
 }
 async function loadFixture(key) {
+  if (key === PYD_LIVE) { pydShowLast(); return; } // the live run is kept in memory, nothing to fetch
   S.run++; // cancels a demo that is still playing
   const sfx = key in SUFFIX ? SUFFIX[key] : "_" + key;
   const names = ["study_spec", "prediction", "result"].map((k) => `fixtures/${k}${sfx}.json`);
@@ -1236,7 +1255,7 @@ function renderRecs() {
 }
 function showATab(tab) {
   for (const b of document.querySelectorAll("#winAgent .wtabs .t")) b.setAttribute("aria-selected", String(b.dataset.atab === tab));
-  $("log").hidden = tab !== "chat"; $("graphs").hidden = tab !== "graphs"; $("recs").hidden = tab !== "recs";
+  $("log").hidden = tab !== "chat"; $("graphs").hidden = tab !== "graphs"; $("recs").hidden = tab !== "recs"; $("pyd").hidden = tab !== "pyd";
   hideTip();
   if (tab === "graphs") renderGraphs();
   if (tab === "recs") renderRecs();
@@ -1424,6 +1443,128 @@ async function runDemo() {
     document.body.dataset.demo = "done";
   } catch (e) { if (e !== "cancelled") throw e; }
 }
+
+// ---- PyDiscovery tab: the live emulator served by launch_gui.py, through the same 11 tools the agent calls.
+// If the API is not there (page opened from disk, or served by anything else) the tab stays hidden.
+const PYD_API = "api/pydiscovery", PYD_LIVE = "pydiscovery_live";
+const PYD_NAMES = ["PyDiscovery study_spec", "PyDiscovery prediction", "PyDiscovery result"];
+const PYD = { on: false, engine: "", predictor: "", note: "", card: null, busy: "", error: "", last: null, saved: "",
+  form: { force_n: 500, material: "structural_steel", min_sf: 1.5, max_disp_mm: 0.5 } };
+async function pydFetch(path, opts) {
+  let resp;
+  try { resp = await fetch(PYD_API + path, Object.assign({ cache: "no-store" }, opts || {})); }
+  catch (e) { throw new Error("The PyDiscovery server did not answer. Start the page with launch_gui.py."); }
+  let data;
+  try { data = await resp.json(); } catch (e) { throw new Error(`HTTP ${resp.status}: the reply was not JSON`); }
+  if (!resp.ok && !(isObj(data) && isStr(data.message))) throw new Error(`HTTP ${resp.status}`);
+  return data;
+}
+const pydTool = (name, args) => pydFetch("/tool/" + name, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(args || {}) });
+// One request at a time: the pane's buttons disable, "Working..." shows, and every ok:false message is shown inline.
+async function pydRun(label, fn) {
+  if (PYD.busy) return null;
+  PYD.busy = label; PYD.error = ""; renderPyd();
+  try {
+    const data = await fn();
+    if (isObj(data) && isObj(data.state)) PYD.card = { message: String(data.message || ""), state: data.state };
+    if (isObj(data) && data.ok === false) PYD.error = data.message || "The request failed.";
+    return data;
+  } catch (e) { PYD.error = e.message; return null; }
+  finally { PYD.busy = ""; renderPyd(); }
+}
+function pydLiveOption(selectIt) {
+  const sel = $("fixture");
+  let opt = sel.querySelector(`option[value="${PYD_LIVE}"]`);
+  if (!opt) { opt = document.createElement("option"); opt.value = PYD_LIVE; opt.textContent = "PyDiscovery (live)"; sel.append(opt); }
+  if (selectIt) sel.value = PYD_LIVE;
+}
+function pydShowLast() {
+  if (PYD.last) { S.run++; accept(PYD.last.spec, PYD.last.pred, PYD.last.res, PYD_NAMES); return; }
+  // Nothing live yet: keep what is on screen, or the normal fixture, and point at the tab.
+  if (!S.res) { $("fixture").value = "normal"; loadFixture("normal"); }
+  if (PYD.on) { PYD.error = "No live run yet. Open a part, confirm the setup and optimize."; renderPyd(); showATab("pyd"); }
+}
+async function pydOptimize() {
+  const f = PYD.form;
+  const constraints = [{ metric: "safety_factor", op: ">=", value: Number(f.min_sf) }, { metric: "max_disp_mm", op: "<=", value: Number(f.max_disp_mm) }];
+  const data = await pydRun("Optimizing", () => pydTool("optimize_design", { objective: "mass_kg", direction: "minimize", constraints }));
+  if (!data || data.ok !== true) return;
+  S.run++;
+  accept(data.study_spec, data.prediction, data.result, PYD_NAMES);
+  if (S.res !== data.result) return; // accept() showed why it did not pass the contract check
+  PYD.last = { spec: data.study_spec, pred: data.prediction, res: data.result }; PYD.saved = "";
+  pydLiveOption(true);
+  showWin("winAgent", true); showTab("variations"); showATab("chat");
+  renderPyd();
+}
+async function pydUpload(file) {
+  if (!file) return;
+  await pydRun("Uploading " + file.name, () => pydFetch("/upload?name=" + encodeURIComponent(file.name), { method: "POST", body: file }));
+}
+function renderPyd() {
+  const el = $("pyd");
+  if (!PYD.on) { el.innerHTML = ""; return; }
+  const st = PYD.card ? PYD.card.state : null, busy = !!PYD.busy;
+  const missing = st ? st.missing || [] : [], problems = st ? st.problems || [] : [];
+  const needs = (k) => missing.some((m) => m === k || m.includes("(" + k + ")"));
+  const f = PYD.form, dis = busy ? " disabled" : "";
+  const btn = (act, label, enabled, cls = "pbtn") => `<button type="button" class="${cls}" data-pyd="${act}"${enabled && !busy ? "" : " disabled"}>${label}</button>`;
+  const status = busy ? `<p class="pwork">Working: ${esc(PYD.busy)}...</p>` : PYD.error ? `<p class="perr">${esc(PYD.error)}</p>` : "";
+  let setup = '<p class="mutedp">Open a part to see its setup card.</p>';
+  if (st) {
+    setup = `<pre class="card">${esc(PYD.card.message)}</pre>`;
+    const fill = [];
+    if (needs("use_family")) fill.push(`<label>Which bracket? ${btn("family", "It's the L-bracket", true)}</label>`);
+    if (needs("supports")) fill.push(`<label>Supports ${btn("support", "Fix the back face", true)}</label>`);
+    if (needs("load")) fill.push(`<label>Load <input type="number" data-form="force_n" value="${esc(f.force_n)}" min="0" step="10"${dis}> N ${btn("load", "Set load", true)}</label>`);
+    if (needs("material")) fill.push(`<label>Material <select data-form="material"${dis}>${["structural_steel", "aluminum_6061"].map((m) => `<option value="${m}"${f.material === m ? " selected" : ""}>${m}</option>`).join("")}</select> ${btn("material", "Set material", true)}</label>`);
+    if (fill.length) setup += `<div class="prow">${fill.join("")}</div>`;
+    setup += problems.map((pr) => `<p class="perr">${esc(pr)}</p>`).join("");
+  }
+  const canConfirm = !!st && !missing.length && !problems.length, confirmed = !!st && st.confirmed === true;
+  el.innerHTML = `
+    <p class="mutedp">Live emulator through launch_gui.py. Engine <b>${esc(PYD.engine)}</b>, predictor <b>${esc(PYD.predictor)}</b>. ${esc(PYD.note)}</p>
+    ${status}
+    <h3>Part</h3>
+    <div class="prow">${btn("demo", "Use demo L-bracket", true)}<label class="pbtn" for="pydFile">Open part file...</label><input type="file" id="pydFile" accept=".dsco,.scdocx,.scdoc,.step,.stp" hidden${dis}>
+      ${st ? `<span class="pname" title="${esc(st.part)}">${esc(String(st.part).split(/[\\/]/).pop())}</span>` : '<span class="mutedp">No part open</span>'}</div>
+    <h3>Setup</h3>
+    ${setup}
+    <h3>Confirm</h3>
+    <div class="prow">${btn("confirm", "The setup is right", canConfirm)}${confirmed ? '<span class="pok">Confirmed</span>' : '<span class="mutedp">Enabled once nothing is missing and there are no problems</span>'}</div>
+    <h3>Goal</h3>
+    <div class="prow"><span>Minimize mass</span>
+      <label>Safety factor &ge; <input type="number" data-form="min_sf" value="${esc(f.min_sf)}" min="1" step="0.1"${dis}></label>
+      <label>Deflection &le; <input type="number" data-form="max_disp_mm" value="${esc(f.max_disp_mm)}" min="0" step="0.05"${dis}> mm</label>
+      ${btn("optimize", "Optimize", confirmed, "btn-run")}</div>
+    <p class="mutedp">${confirmed ? "The result lands in the Variations table, the Agent chat, Graphs and Recommendations." : "Optimize unlocks after you confirm the setup."}</p>
+    <h3>Save</h3>
+    <div class="prow">${btn("save", "Save updated part", !!PYD.last)}${PYD.saved ? `<span class="pok">Saved to ${esc(PYD.saved)}</span>` : ""}</div>`;
+}
+$("pyd").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-pyd]");
+  if (!b || b.disabled) return;
+  const act = b.dataset.pyd;
+  if (act === "demo") await pydRun("Opening the demo part", () => pydFetch("/demo-part", { method: "POST" }));
+  else if (act === "family") await pydRun("Using the L-bracket", () => pydTool("use_family", { family: "l_bracket_v0" }));
+  else if (act === "support") await pydRun("Setting the support", () => pydTool("set_support", {}));
+  else if (act === "load") await pydRun("Setting the load", () => pydTool("set_load", { force_n: Number(PYD.form.force_n) }));
+  else if (act === "material") await pydRun("Setting the material", () => pydTool("set_material", { material: PYD.form.material }));
+  else if (act === "confirm") await pydRun("Confirming", () => pydTool("confirm_setup"));
+  else if (act === "optimize") await pydOptimize();
+  else if (act === "save") { const d = await pydRun("Saving", () => pydTool("save_design", {})); if (d && d.ok === true) { PYD.saved = d.path; renderPyd(); } }
+});
+$("pyd").addEventListener("change", (e) => { if (e.target.id === "pydFile") pydUpload(e.target.files[0]); });
+$("pyd").addEventListener("input", (e) => { const k = e.target.dataset.form; if (k) PYD.form[k] = e.target.value; });
+(async function pydInit() {
+  try {
+    const data = await pydFetch("");
+    if (!isObj(data) || data.ok !== true) return;
+    Object.assign(PYD, { on: true, engine: data.engine, predictor: data.predictor, note: data.predictor_note || "" });
+    $("pydTab").hidden = false;
+    renderPyd();
+  } catch (e) { /* no API: the page behaves as before */ }
+})();
 
 buildChrome();
 draggable($("winVar")); draggable($("winAgent"));

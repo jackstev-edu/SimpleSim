@@ -25,7 +25,7 @@ data/generated/
 !data/processed/formal_v1_l_bracket_gusset_v1/*.json
 !data/processed/formal_v1_l_bracket_gusset_v1/README.md
 
-models/
+/models/
 *.pt
 *.pkl
 *.joblib
