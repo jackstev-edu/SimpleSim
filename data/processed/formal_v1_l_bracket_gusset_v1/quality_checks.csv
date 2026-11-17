@@ -1,11 +1,11 @@
 check_name,passed,expected,observed
-all_cases_solved,False,2048 successful rows and zero unresolved failures,successes=1023; failures=1
-aligned_output_tables,True,"runs, diagnostics and model rows have identical design IDs",runs=1023; diagnostics=1023; model_rows=1023
-positive_model_outputs,True,"all reference stress, displacement and volume values are positive",checked_rows=1023
+all_cases_solved,False,2048 successful rows and zero unresolved failures,successes=1530; failures=6
+aligned_output_tables,True,"runs, diagnostics and model rows have identical design IDs",runs=1530; diagnostics=1530; model_rows=1530
+positive_model_outputs,True,"all reference stress, displacement and volume values are positive",checked_rows=1530
 reaction_force_balance,True,every relative reaction imbalance is at most 0.01,maximum=3.2047211e-07
-minimum_element_quality,True,every minimum element quality is above 0.1,batch_minimum=0.150103096
-inputs_within_family_ranges,True,every model row stays inside the documented ranges,checked_rows=1023
-every_row_from_calculix,True,source starts with calculix on every row,checked_rows=1023
+minimum_element_quality,True,every minimum element quality is above 0.1,batch_minimum=0.128136327
+inputs_within_family_ranges,True,every model row stays inside the documented ranges,checked_rows=1530
+every_row_from_calculix,True,source starts with calculix on every row,checked_rows=1530
 sobol_balance_thickness_mm,True,each of 16 equal bins holds 128 planned points,counts=128..128
 sobol_balance_flange_length_mm,True,each of 16 equal bins holds 128 planned points,counts=128..128
 sobol_balance_arm_width_mm,True,each of 16 equal bins holds 128 planned points,counts=128..128
