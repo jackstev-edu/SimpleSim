@@ -42,12 +42,9 @@ def optimize_blocker(part, inputs: StudyInputs) -> str | None:
         missing.append("a safety factor")
     if inputs.objective is None:
         missing.append("an objective")
+    elif inputs.direction is None:
+        missing.append("whether to minimise or maximise the objective")
     return ("Can't search yet. Missing: " + ", ".join(missing) + ".") if missing else None
-
-
-def _given(part, key: str) -> bool:
-    """A value counts when the user set it, or when the user confirmed the card it was on."""
-    return key in part.sources and (part.sources[key] == "user" or part.confirmed)
 
 
 def _direction_words(d) -> str:
@@ -60,20 +57,28 @@ def _material_name(m) -> str:
     return LIBRARY_NAMES.get(key, m.name) if key else m.name
 
 
-def handoff_message(filename: str, part, inputs: StudyInputs, reason: str) -> str:
-    """First message to the ANSYS agent: what the user already confirmed, and what is left."""
+def handoff_message(filename: str, part, inputs: StudyInputs, reason: str, given: dict | None = None) -> str:
+    """First message to the ANSYS agent: what the user already confirmed, and what is left.
+
+    `given` holds the values the user stated in tool calls (force_n, direction, material key). Other
+    card values count only once the user confirmed the card; a value Jack filled in never counts."""
+    given = given or {}
+    card = part is not None and part.confirmed
     done = []
-    if part is not None:
-        if _given(part, "load") and part.force_n is not None:
-            way = f", direction {_direction_words(part.direction)}" if part.direction else ""
-            done.append(f"load {part.force_n:g} N{way}")
-        if _given(part, "material") and part.material is not None:
-            done.append(f"material {_material_name(part.material)}")
+    force = given.get("force_n", part.force_n if card else None)
+    way = given.get("direction", part.direction if card else None)
+    if force is not None:
+        done.append(f"load {force:g} N" + (f", direction {_direction_words(way)}" if way else ""))
+    if "material" in given:
+        done.append(f"material {LIBRARY_NAMES.get(given['material'], given['material'])}")
+    elif card and part.material is not None:
+        done.append(f"material {_material_name(part.material)}")
     if inputs.safety_factor is not None:
         done.append(f"safety factor {inputs.safety_factor:g}")
     if inputs.objective is not None:
-        verb = "maximise" if inputs.direction == "maximize" else "minimise"
-        done.append(f"objective: {verb} {METRIC_WORDS.get(inputs.objective, inputs.objective)}")
+        what = METRIC_WORDS.get(inputs.objective, inputs.objective)
+        verb = {"maximize": "maximise ", "minimize": "minimise "}.get(inputs.direction or "", "")
+        done.append(f"objective: {verb}{what}" + ("" if verb else " (direction not given yet)"))
     for c in inputs.limits:
         if c.get("metric") != "safety_factor":
             done.append(f"limit {METRIC_WORDS.get(c['metric'], c['metric'])} {c['op']} {c['value']:g}")

@@ -102,3 +102,39 @@ def test_text_is_streamed(make):
 def test_prompt_rules():
     for want in ("1.5", "confirm_setup", "use ANSYS", "L-bracket"):
         assert want in PROMPT
+
+
+def test_values_the_user_gave_are_tracked(make):
+    agent = make(resp(call("set_load", {"force_n": 500})), resp(call("set_material", {"material": "structural_steel"}, "b")))
+    _events(agent)
+    assert agent.given == {"force_n": 500, "material": "structural_steel"}
+
+
+def test_triggering_value_is_tracked(make):
+    agent = make(resp(call("set_load", {"force_n": 1500, "direction": [0, 0, -1]})))
+    _events(agent)
+    assert agent.given == {"force_n": 1500, "direction": [0, 0, -1]}
+
+
+def test_explain_failure_keeps_the_result(make, monkeypatch):
+    def boom(result, client, model=None):
+        raise RuntimeError("budget cap reached")
+    monkeypatch.setattr(front, "explain", boom)
+    agent = make(resp(call("record_study_inputs", INPUTS, "a")), resp(call("confirm_setup", {}, "b")),
+                 resp(call("optimize_design", {}, "c")))
+    res = [e for e in _events(agent) if e["type"] == "tool_result" and e["name"] == "optimize_design"]
+    assert not res[0]["is_error"]
+    run = agent.last_run_dir
+    assert (run / "result.json").exists() and (run / "explanation.txt").read_text(encoding="utf-8")
+    assert any(e["kind"] == "warning" and "budget cap reached" in e["text"] for e in agent.log.entries)
+
+
+def test_conversation_is_logged(make):
+    agent = make(resp(msg("Which material?")))
+    _events(agent, "It is bolted at the back.")
+    kinds = [(e["kind"], e["text"]) for e in agent.log.entries]
+    assert ("answer", "It is bolted at the back.") in kinds and ("question", "Which material?") in kinds
+
+
+def test_prompt_switches_for_other_materials():
+    assert "another material" in PROMPT and "switch_to_ansys" in PROMPT.split("another material")[1][:200]

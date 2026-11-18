@@ -50,7 +50,8 @@ Rules:
   lists as missing and for the safety factor, the objective, and which dimensions may change.
 - Safety factor: offer 1.5 as a common choice and use it only after the user says yes.
 - Material: the fast search knows {' and '.join(FAST_MATERIALS)}. Recommend one for the user's goal
-  (lighter or cheaper) and say the ANSYS search has more materials. The user picks.
+  (lighter or cheaper) and say the ANSYS search has more materials. The user picks. If the user wants
+  another material, call switch_to_ansys.
 - A part file with no parameters: ask whether it is the L-bracket. Never decide that yourself.
 - Store the safety factor, objective and limits with record_study_inputs as soon as the user gives them.
 - Show the setup card with the safety factor and objective, and call confirm_setup only after the
@@ -70,6 +71,7 @@ class FrontAgent:
         self.inputs = StudyInputs()
         self.log = DecisionLog()
         self.handoff_reason: str | None = None
+        self.given: dict = {}  # values the user stated in tool calls; the hand-off passes only these on
         self.last_run_dir: Path | None = None
         self.messages: list[dict] = []
         self._pool = ThreadPoolExecutor(max_workers=1)  # Mechanical must stay on one thread
@@ -110,17 +112,24 @@ class FrontAgent:
         if name == "set_material":
             why = outside_family(family, material=args.get("material"))  # material check needs no family
             if why:
+                self._note(args, ("material",))
                 return self._handoff(why)
         if name == "set_load" and family is not None:
             why = outside_family(family, force_n=args.get("force_n"), direction=args.get("direction"))
             if why:
+                self._note(args, ("force_n", "direction"))
                 return self._handoff(why)
         if name == "optimize_design":
             return self._optimize(args)
         out = self.call_tool(name, args)
+        if out.get("ok") and name in ("set_load", "set_material"):
+            self._note(args, ("force_n", "direction", "material"))
         if name == "confirm_setup" and out.get("ok"):
             self.log.add("spec", "setup confirmed by the user", state=out.get("state"))
         return json.dumps(out), not out.get("ok", False)
+
+    def _note(self, args: dict, keys: tuple[str, ...]) -> None:
+        self.given.update({k: args[k] for k in keys if args.get(k) is not None})
 
     def _optimize(self, args: dict) -> tuple[str, bool]:
         blocker = optimize_blocker(self.tools.part, self.inputs)
@@ -136,7 +145,11 @@ class FrontAgent:
         out = self.call_tool("optimize_design", sent)
         if not out.get("ok"):
             return json.dumps(out), True
-        text, warnings = explain(out["result"], self.client, model=self.model)
+        try:
+            text, warnings = explain(out["result"], self.client, model=self.model)
+        except Exception as e:  # noqa: BLE001 - a paid search result must never be lost
+            text = out["result"].get("explanation", "")
+            warnings = [f"The explanation step failed ({type(e).__name__}: {e}); showing the template explanation."]
         self._save_run(out, text, warnings)
         tail = ("\nWarnings: " + " ".join(warnings)) if warnings else ""
         return f"{out.get('message', '')}\n\nExplanation for the user:\n{text}{tail}", False
@@ -160,6 +173,7 @@ class FrontAgent:
     def run(self, user_text: str) -> Iterator[dict]:
         """One user message; yields text, tool, tool_result, error and handoff events."""
         self.messages.append({"role": "user", "content": user_text})
+        self.log.add("answer", user_text)  # the conversation itself goes in the decision log
         for _ in range(MAX_TOOL_ROUNDS):
             response = self.client.responses.create(
                 model=self.model, instructions=PROMPT, input=self.messages, tools=FUNCTIONS,
@@ -170,6 +184,7 @@ class FrontAgent:
                 if item.type == "message":
                     text = "".join(c.text for c in item.content if c.type == "output_text")
                     if text.strip():
+                        self.log.add("question", text)
                         yield {"type": "text", "text": text}
                 elif item.type == "function_call":
                     calls.append(item)

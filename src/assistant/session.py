@@ -7,6 +7,7 @@ events. Events are the ANSYS agent's (text, tool, progress, tool_result, error) 
 from __future__ import annotations
 
 from collections.abc import Iterator
+from datetime import datetime
 from pathlib import Path
 
 from src.agent.agent import Agent
@@ -126,11 +127,18 @@ class AssistantSession:
         front.close()  # ends the fast loop; the shared workbench stays open
         if front.handoff_reason is None:
             front.log.add("spec", f"path: slow ({reason})")
-        front.log.save(self.out_dir / "assistant" / "handoff_log")
+        front.log.save(self.out_dir / "assistant" / f"handoff_log-{datetime.now():%Y%m%d-%H%M%S-%f}")
         self.path = "slow"
         yield {"type": "path", "path": "slow", "reason": reason}
         yield {"type": "text", "text": "Starting ANSYS (about a minute)…"}
-        self.workbench = self._shared_wb()
-        self.workbench.load_part(self.part_path)
-        self.agent = self.make_agent(self.workbench, self.client)
-        yield from self.agent.run(handoff_message(self.part_path.name, front.tools.part, front.inputs, reason))
+        try:
+            self.workbench = self._shared_wb()
+            self.workbench.load_part(self.part_path)
+            self.agent = self.make_agent(self.workbench, self.client)
+        except Exception as e:  # noqa: BLE001 - no ANSYS, licence limit, unreadable file
+            self.path, self.front, self.workbench, self.agent = None, None, None, None
+            yield {"type": "error", "text": f"ANSYS could not start ({type(e).__name__}: {e}). "
+                                            "Upload the part again to retry."}
+            return
+        yield from self.agent.run(handoff_message(self.part_path.name, front.tools.part, front.inputs, reason,
+                                                  front.given))

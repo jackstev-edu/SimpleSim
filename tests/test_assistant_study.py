@@ -45,10 +45,9 @@ def test_blocker_lists_all_missing(tmp_path):
 
 def test_handoff_lists_confirmed_values_only(tmp_path):
     part = _bare_part(tmp_path)
-    part.set_load(500.0, (0.0, -1.0, 0.0))
-    part.set_material("structural_steel")
+    given = {"force_n": 500.0, "direction": [0.0, -1.0, 0.0], "material": "structural_steel"}
     inputs = StudyInputs(safety_factor=1.5, objective="mass_kg", direction="minimize")
-    text = handoff_message("l.scdocx", part, inputs, "the user asked for ANSYS")
+    text = handoff_message("l.scdocx", part, inputs, "the user asked for ANSYS", given)
     for want in ("500 N", "-Y", "Structural Steel", "1.5", "minimise mass", "the user asked for ANSYS",
                  "confirm the faces with the user"):
         assert want in text
@@ -64,3 +63,24 @@ def test_handoff_with_nothing_confirmed():
     text = handoff_message("saddle.scdoc", None, StudyInputs(), "its shape is not a known bracket")
     assert "saddle.scdoc" in text and "Nothing is confirmed yet" in text
     assert not re.search(r"\d", text)
+
+
+def test_blocker_needs_a_direction(tmp_path):
+    part = _bare_part(tmp_path)
+    part.set_support()
+    part.set_load(500.0)
+    part.set_material("structural_steel")
+    part.confirm()
+    assert "minimise or maximise" in optimize_blocker(part, StudyInputs(safety_factor=1.5, objective="mass_kg"))
+
+
+def test_handoff_skips_values_jack_filled_in(tmp_path):
+    part = _bare_part(tmp_path)
+    part.set_load(500.0)  # Jack fills in -Y, but the user only gave the force
+    text = handoff_message("l.scdocx", part, StudyInputs(), "the user asked for ANSYS", {"force_n": 500.0})
+    assert "500 N" in text and "-Y" not in text
+
+
+def test_handoff_objective_without_direction(tmp_path):
+    text = handoff_message("l.scdocx", None, StudyInputs(objective="mass_kg"), "the user asked for ANSYS")
+    assert "minimise" not in text and "mass" in text

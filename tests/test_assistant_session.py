@@ -10,10 +10,14 @@ from tests.test_agent_loop import ScriptClient, call, msg, resp
 
 
 class FakeWB:
+    fail = False
+
     def __init__(self, out_dir, order):
         self.order, self.loaded, self.closed = order, None, False
 
     def load_part(self, path):
+        if FakeWB.fail:
+            raise RuntimeError("SpaceClaim did not start")
         self.order.append("load_part")
         self.loaded = str(path)
 
@@ -151,3 +155,35 @@ def test_one_workbench_for_the_whole_session(make, tmp_path):
     shared = s.workbench
     s.shutdown()
     assert shared.closed
+
+
+def test_assumed_direction_not_handed_over(make, tmp_path):
+    s, _ = make(resp(msg("ok")), resp(call("set_load", {"force_n": 500}, "a")),
+                resp(call("switch_to_ansys", {"reason": "the user asked for ANSYS"}, "b")))
+    list(s.upload(_family_part(tmp_path)))
+    list(s.send("500 N. Actually, use ANSYS."))
+    assert "500 N" in s.agent.texts[0] and "-Y" not in s.agent.texts[0]
+
+
+def test_triggering_value_is_handed_over(make, tmp_path):
+    s, _ = make(resp(msg("ok")), resp(call("set_load", {"force_n": 1500}, "a")))
+    list(s.upload(_family_part(tmp_path)))
+    list(s.send("1500 N down."))
+    assert "Already confirmed" in s.agent.texts[0] and "load 1500 N" in s.agent.texts[0]
+
+
+def test_failed_handoff_resets_the_session(make, tmp_path, monkeypatch):
+    monkeypatch.setattr(FakeWB, "fail", True)
+    s, _ = make()
+    events = list(s.upload(_odd_part(tmp_path)))
+    assert events[-1]["type"] == "error" and "SpaceClaim did not start" in events[-1]["text"]
+    assert s.path is None and s.agent is None and s.workbench is None
+    assert list(s.send("hi")) == [{"type": "error", "text": "Upload a part first."}]
+
+
+def test_each_handoff_log_is_kept(make, tmp_path):
+    s, _ = make()
+    list(s.upload(_odd_part(tmp_path)))
+    list(s.upload(_odd_part(tmp_path)))
+    logs = list((tmp_path / "out" / "assistant").glob("handoff_log*.md"))
+    assert len(logs) == 2
