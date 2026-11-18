@@ -73,12 +73,16 @@ class FrontAgent:
         self.last_run_dir: Path | None = None
         self.messages: list[dict] = []
         self._pool = ThreadPoolExecutor(max_workers=1)  # Mechanical must stay on one thread
+        self._closed = False
 
     def call_tool(self, name: str, args: dict) -> dict:
         """Jack's tool, run on the single worker thread."""
         return self._pool.submit(self.tools.call, name, args).result()
 
     def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
         backend = getattr(getattr(self.tools, "app", None), "backend", None)
         if backend is not None and hasattr(backend, "close"):
             self._pool.submit(backend.close).result()  # dispose ANSYS on the thread that started it
