@@ -1,0 +1,9 @@
+{
+  "dataset_name": "l_bracket_v0_formal_200",
+  "planned_cases": 200,
+  "completed_cases": 200,
+  "remaining_cases": 0,
+  "unresolved_failures": 0,
+  "attempted_this_run": 1,
+  "resume_instruction": "Run the same command and output directory again. Completed design IDs will be skipped."
+}

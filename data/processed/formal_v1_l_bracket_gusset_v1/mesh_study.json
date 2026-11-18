@@ -1,0 +1,239 @@
+{
+  "family": "l_bracket_gusset_v1",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "workers": 3,
+  "designs": {
+    "baseline": {
+      "thickness_mm": 6.0,
+      "flange_length_mm": 80.0,
+      "arm_width_mm": 40.0,
+      "hole_diameter_mm": 8.0,
+      "fillet_radius_mm": 4.0,
+      "vertical_height_mm": 60.0,
+      "gusset_thickness_mm": 6.0,
+      "gusset_length_mm": 20.0
+    },
+    "thinnest_longest": {
+      "thickness_mm": 4.0,
+      "flange_length_mm": 120.0,
+      "arm_width_mm": 32.0,
+      "hole_diameter_mm": 12.0,
+      "fillet_radius_mm": 2.0,
+      "vertical_height_mm": 90.0,
+      "gusset_thickness_mm": 3.0,
+      "gusset_length_mm": 35.0
+    },
+    "thickest_shortest": {
+      "thickness_mm": 10.0,
+      "flange_length_mm": 75.0,
+      "arm_width_mm": 60.0,
+      "hole_diameter_mm": 6.0,
+      "fillet_radius_mm": 8.0,
+      "vertical_height_mm": 50.0,
+      "gusset_thickness_mm": 10.0,
+      "gusset_length_mm": 12.0
+    }
+  },
+  "levels": {
+    "coarse": 1.5,
+    "medium": 1.0,
+    "fine": 0.6666666666666666
+  },
+  "limits_pct": {
+    "tight": 3.0,
+    "loose": 5.0
+  },
+  "seconds_per_solve_by_level": {
+    "coarse": {
+      "mean": 15.92260233334188,
+      "max": 18.936012000020128
+    },
+    "medium": {
+      "mean": 52.84248493334356,
+      "max": 68.70115949999308
+    },
+    "fine": {
+      "mean": 647.5276781333183,
+      "max": 1030.490933299996
+    }
+  },
+  "chosen_level": "medium",
+  "basis": "coarsest level within 3% of the next finer level on all designs",
+  "stress_changes_pct": {
+    "coarse": {
+      "baseline": 6.6041620224402635,
+      "thinnest_longest": 8.203769497170214,
+      "thickest_shortest": 4.738496510208578
+    },
+    "medium": {
+      "baseline": 0.4825600465175349,
+      "thinnest_longest": 1.448151149671599,
+      "thickest_shortest": 0.18167101776420636
+    }
+  },
+  "passed": true,
+  "rows": [
+    {
+      "design": "baseline",
+      "level": "coarse",
+      "mesh_rule": "tet2_1.125to4.5mm_curv11",
+      "ok": true,
+      "error": "",
+      "max_stress_mpa": 255.64749541461086,
+      "max_stress_x_mm": 26.0565815546,
+      "max_stress_y_mm": 6.15493782872,
+      "max_stress_z_mm": 20.5229013681,
+      "max_disp_mm": 0.2974502423712339,
+      "mass_kg": 0.26093124225926717,
+      "node_count": 16560,
+      "volume_element_count": 9368,
+      "minimum_element_quality": 0.2006802486935461,
+      "reaction_relative_imbalance": 7.906035288253927e-08,
+      "elapsed_s": 12.389081100001931
+    },
+    {
+      "design": "thinnest_longest",
+      "level": "coarse",
+      "mesh_rule": "tet2_0.75to3mm_curv11",
+      "ok": true,
+      "error": "",
+      "max_stress_mpa": 975.0282099868077,
+      "max_stress_x_mm": 38.760748674,
+      "max_stress_y_mm": 4.30882800231,
+      "max_stress_z_mm": 16.0000019915,
+      "max_disp_mm": 3.8331068435230926,
+      "mass_kg": 0.21897547117814,
+      "node_count": 27244,
+      "volume_element_count": 14641,
+      "minimum_element_quality": 0.1689794231879991,
+      "reaction_relative_imbalance": 6.90160659546176e-08,
+      "elapsed_s": 16.442713900003582
+    },
+    {
+      "design": "thickest_shortest",
+      "level": "coarse",
+      "mesh_rule": "tet2_1.125to4.5mm_curv11",
+      "ok": true,
+      "error": "",
+      "max_stress_mpa": 60.282631022177526,
+      "max_stress_x_mm": 22.0310963557,
+      "max_stress_y_mm": 10.1658070863,
+      "max_stress_z_mm": 32.5460912442,
+      "max_disp_mm": 0.04323417220886639,
+      "mass_kg": 0.550746208735838,
+      "node_count": 22063,
+      "volume_element_count": 13120,
+      "minimum_element_quality": 0.25206763449165986,
+      "reaction_relative_imbalance": 3.432795723984145e-08,
+      "elapsed_s": 18.936012000020128
+    },
+    {
+      "design": "baseline",
+      "level": "medium",
+      "mesh_rule": "tet2_0.75to3mm_curv16",
+      "ok": true,
+      "error": "",
+      "max_stress_mpa": 273.72471937779005,
+      "max_stress_x_mm": 26.106191173,
+      "max_stress_y_mm": 6.1349597243,
+      "max_stress_z_mm": 19.816092751,
+      "max_disp_mm": 0.2978323142426414,
+      "mass_kg": 0.26093124225926717,
+      "node_count": 39670,
+      "volume_element_count": 23769,
+      "minimum_element_quality": 0.22590665278440805,
+      "reaction_relative_imbalance": 7.852201614273291e-08,
+      "elapsed_s": 34.84217469999567
+    },
+    {
+      "design": "thinnest_longest",
+      "level": "medium",
+      "mesh_rule": "tet2_0.5to2mm_curv16",
+      "ok": true,
+      "error": "",
+      "max_stress_mpa": 1062.1658478195907,
+      "max_stress_x_mm": 39.1026649377,
+      "max_stress_y_mm": 4.13632909347,
+      "max_stress_z_mm": 15.4670006171,
+      "max_disp_mm": 3.8399696472881497,
+      "mass_kg": 0.21897547117814,
+      "node_count": 70173,
+      "volume_element_count": 41140,
+      "minimum_element_quality": 0.25821047668935515,
+      "reaction_relative_imbalance": 1.573269662673186e-07,
+      "elapsed_s": 54.98412060004193
+    },
+    {
+      "design": "thickest_shortest",
+      "level": "medium",
+      "mesh_rule": "tet2_0.75to3mm_curv16",
+      "ok": true,
+      "error": "",
+      "max_stress_mpa": 63.28120889739856,
+      "max_stress_x_mm": 22.1269511143,
+      "max_stress_y_mm": 10.1270527485,
+      "max_stress_z_mm": 30.1875188292,
+      "max_disp_mm": 0.04329305626190424,
+      "mass_kg": 0.550746208735838,
+      "node_count": 54498,
+      "volume_element_count": 34282,
+      "minimum_element_quality": 0.25743912450216627,
+      "reaction_relative_imbalance": 8.138250945400234e-08,
+      "elapsed_s": 68.70115949999308
+    },
+    {
+      "design": "baseline",
+      "level": "fine",
+      "mesh_rule": "tet2_0.5to2mm_curv24",
+      "ok": true,
+      "error": "",
+      "max_stress_mpa": 275.05201048754617,
+      "max_stress_x_mm": 26.0667451967,
+      "max_stress_y_mm": 6.15071888551,
+      "max_stress_z_mm": 19.7481656813,
+      "max_disp_mm": 0.2979585975181215,
+      "mass_kg": 0.26093124225926717,
+      "node_count": 106981,
+      "volume_element_count": 67889,
+      "minimum_element_quality": 0.26588680698736683,
+      "reaction_relative_imbalance": 4.518268723979045e-08,
+      "elapsed_s": 216.33830539998598
+    },
+    {
+      "design": "thinnest_longest",
+      "level": "fine",
+      "mesh_rule": "tet2_0.333333to1.33333mm_curv24",
+      "ok": true,
+      "error": "",
+      "max_stress_mpa": 1077.773639166031,
+      "max_stress_x_mm": 38.8926631873,
+      "max_stress_y_mm": 4.23241807734,
+      "max_stress_z_mm": 15.6202788783,
+      "max_disp_mm": 3.8437614576397268,
+      "mass_kg": 0.21897547117814,
+      "node_count": 202162,
+      "volume_element_count": 126504,
+      "minimum_element_quality": 0.24881289558653438,
+      "reaction_relative_imbalance": 3.8008087602440684e-09,
+      "elapsed_s": 695.7537956999731
+    },
+    {
+      "design": "thickest_shortest",
+      "level": "fine",
+      "mesh_rule": "tet2_0.5to2mm_curv24",
+      "ok": true,
+      "error": "",
+      "max_stress_mpa": 63.39638174934828,
+      "max_stress_x_mm": 22.0321708416,
+      "max_stress_y_mm": 10.1653403772,
+      "max_stress_z_mm": 27.4068132896,
+      "max_disp_mm": 0.04331881511752203,
+      "mass_kg": 0.550746208735838,
+      "node_count": 156720,
+      "volume_element_count": 103958,
+      "minimum_element_quality": 0.2944655979188192,
+      "reaction_relative_imbalance": 5.7369514036446866e-09,
+      "elapsed_s": 1030.490933299996
+    }
+  ]
+}
