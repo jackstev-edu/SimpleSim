@@ -47,22 +47,40 @@ def material_key(material: Material) -> str | None:
     return None
 
 
-class App:
-    """Entry point. App(backend="fitted" | "calculix" | "formula" | "ansys" | "discovery")."""
+PREDICTORS = ("power_law", "gp")
 
-    def __init__(self, backend: str | Backend = "fitted"):
+
+class App:
+    """Entry point. App(backend="fitted" | "calculix" | ..., predictor="power_law" | "gp", runs=path to runs.csv)."""
+
+    def __init__(self, backend: str | Backend = "fitted", predictor: str = "power_law", runs: str | Path | None = None):
+        if predictor not in PREDICTORS:
+            raise ValueError(f"Unknown predictor {predictor!r}. Choose from {PREDICTORS}.")
         self.backend = get_backend(backend) if isinstance(backend, str) else backend
+        self.predictor, self.runs = predictor, runs
+        self._gp = None  # trained once per App, about a second for 200 runs
 
     def open(self, path: str | Path) -> "Part":
-        return Part(open_part(path), self.backend)
+        return Part(open_part(path), self.backend, self._predictor_for)
+
+    def _predictor_for(self, m: Material):
+        """The shortlisting model for a part's material."""
+        if self.predictor == "gp":
+            if self._gp is None:
+                from src.models.gp import DEFAULT_RUNS, GPPredictor  # needs scikit-learn and Role 1's runs.csv
+                self._gp = GPPredictor(self.runs or DEFAULT_RUNS)
+            return self._gp.for_material(m.youngs_mpa, m.yield_mpa, m.density_kg_m3)
+        return PowerLawPredictor(e_mpa=m.youngs_mpa, yield_mpa=m.yield_mpa, density_kg_m3=m.density_kg_m3)
 
 
 class Part:
     """One open part: its setup, current dimensions and whether the user has confirmed it."""
 
-    def __init__(self, setup: PartSetup, backend: Backend):
+    def __init__(self, setup: PartSetup, backend: Backend, predictor_for=None):
         self.setup = setup
         self.backend = backend
+        self._predictor_for = predictor_for or (lambda m: PowerLawPredictor(e_mpa=m.youngs_mpa, yield_mpa=m.yield_mpa, density_kg_m3=m.density_kg_m3))
+        self.last_prediction = None  # the shortlist behind last_result, for the GUI
         self.family: Family | None = None
         self.file_names: dict[str, str] = {}  # contract name -> parameter name inside the file
         self.values_mm: dict[str, float] = {}
@@ -240,10 +258,10 @@ class Part:
         """The team workflow: predictor shortlists, this engine verifies finalists, contract Result out."""
         self._ready()
         fam, m = self.family, self.material
-        if predictor is None and fam.key == "l_bracket_v0":  # Role 2's fitted model, using the part's own material
-            predictor = PowerLawPredictor(e_mpa=m.youngs_mpa, yield_mpa=m.yield_mpa, density_kg_m3=m.density_kg_m3)
+        if predictor is None and fam.key == "l_bracket_v0":  # Role 2's model, using the part's own material
+            predictor = self._predictor_for(m)
         key = material_key(m)
-        if key is None and not isinstance(predictor, PowerLawPredictor):
+        if key is None and predictor is None:
             raise SetupError(f"The stand-in predictor knows {sorted(MATERIALS)} only; {m.name} needs a trained model.")
         cons = _constraints(constraints or [("safety_factor", ">=", 2.0)])
         varied = {fam.contract_name(n) for n in (vary or list(fam.labels))}
@@ -262,12 +280,13 @@ class Part:
             n_verify=n_verify,
             assumptions=self._assumptions(),
         )
-        result = run_pipeline(spec, dict(self.values_mm), predictor=predictor or FakePredictor(), solver=_PipelineSolver(self))
+        capture = _Capture(predictor or FakePredictor())
+        result = run_pipeline(spec, dict(self.values_mm), predictor=capture, solver=_PipelineSolver(self))
         if self.backend.name == "formula_emulator":
             result.warnings.append("Formula engine: stress and deflection come from beam theory for a different bracket, not FEA. Use the fitted or CalculiX engine.")
-        if self.backend.name == "power_law_v0" and isinstance(predictor, PowerLawPredictor):
-            result.warnings.append("Finalists were checked with the same fitted model that shortlisted them, not an independent solver. Use the CalculiX engine (Role 1) for a real check.")
-        self.last_result = result
+        if self.backend.name == "power_law_v0":
+            result.warnings.append("Finalists were checked with the fitted power law, not a real solver. Use the CalculiX engine (Role 1) for a real check.")
+        self.last_result, self.last_prediction = result, capture.prediction
         return result
 
     def save(self, dst: str | Path, values: dict[str, float] | None = None) -> Path:
@@ -331,6 +350,17 @@ class Part:
             out.append("Self-weight ignored.")
         out.append("Setup confirmed by the user.")
         return out
+
+
+class _Capture:
+    """Keeps the Prediction that run_pipeline asks for, so the GUI can show the shortlist."""
+
+    def __init__(self, inner):
+        self.inner, self.prediction = inner, None
+
+    def predict(self, spec: StudySpec, *args, **kwargs):
+        self.prediction = self.inner.predict(spec, *args, **kwargs)
+        return self.prediction
 
 
 class _PipelineSolver:

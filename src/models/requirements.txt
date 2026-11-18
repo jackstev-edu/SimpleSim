@@ -1,0 +1,3 @@
+scikit-learn>=1.4  # GP predictor (src/models/gp.py) and the tree stand-in in compare.py; the power law needs nothing extra
+matplotlib>=3.8  # learning-curve figure (src/models/compare.py)
+autogluon.tabular>=1.1  # optional third model in compare.py; large install, compare.py falls back to the stand-in without it
