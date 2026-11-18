@@ -40,8 +40,8 @@ class FakeAgent:
 def make(tmp_path):
     order = []
 
-    def _make(*script):
-        return AssistantSession(ScriptClient(*script), tmp_path / "out", backend="formula",
+    def _make(*script, backend="formula"):
+        return AssistantSession(ScriptClient(*script), tmp_path / "out", backend=backend,
                                 make_workbench=lambda out_dir: FakeWB(out_dir, order),
                                 make_agent=lambda wb, client: FakeAgent(wb, client)), order
     return _make
@@ -103,7 +103,7 @@ def test_new_upload_resets_to_front(make, tmp_path):
     list(s.upload(_odd_part(tmp_path)))
     old_wb = s.workbench
     events = list(s.upload(_family_part(tmp_path)))
-    assert old_wb.closed and s.workbench is None and s.agent is None
+    assert not old_wb.closed and s.workbench is None and s.agent is None  # kept for the next ANSYS start
     assert s.path == "fast" and events[0]["path"] == "fast"
     assert s.front.inputs.safety_factor is None
 
@@ -133,3 +133,21 @@ def test_close_twice_is_safe(make, tmp_path):
     list(s.upload(_family_part(tmp_path)))
     s.close()
     s.close()
+    s.shutdown()
+    s.shutdown()
+
+
+def test_one_workbench_for_the_whole_session(make, tmp_path):
+    """PyMechanical starts once per process: the fast engine and the ANSYS agent share one workbench."""
+    s, order = make(resp(msg("ok")), resp(call("switch_to_ansys", {"reason": "the user asked for ANSYS"})),
+                    backend="ansys")
+    list(s.upload(_family_part(tmp_path)))
+    engine = s.front.tools.app.backend._engine
+    lent = engine._factory(tmp_path)
+    list(s.send("use ANSYS"))
+    assert s.workbench is lent._wb  # the agent got the same workbench the engine borrowed
+    s.front.close()  # the engine's close must not shut the shared workbench
+    assert not s.workbench.closed
+    shared = s.workbench
+    s.shutdown()
+    assert shared.closed

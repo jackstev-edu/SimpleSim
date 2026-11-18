@@ -188,7 +188,7 @@ if __name__ == "__main__":
         demo.launch(inbrowser=True)
     finally:
         if _session is not None:
-            _session.close()
+            _session.shutdown()  # closes SpaceClaim and Mechanical
         total = record_spend()
         if total is not None:
             print(f"session cost ${cost(USAGE):.4f}; all runs so far (practice/spend.csv): ${total:.4f}")

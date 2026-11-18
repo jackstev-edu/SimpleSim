@@ -17,6 +17,19 @@ from src.assistant.study import handoff_message
 from src.pydiscovery.tools import PyDiscoveryTools
 
 
+class _Borrowed:
+    """The session's workbench lent to Jack's ANSYS engine: the engine's close() must not shut it down."""
+
+    def __init__(self, wb):
+        self._wb = wb
+
+    def __getattr__(self, name):
+        return getattr(self._wb, name)
+
+    def close(self) -> None:
+        pass
+
+
 class AssistantSession:
     def __init__(self, client, out_dir: Path, backend: str = "ansys",
                  make_workbench=Workbench, make_agent=Agent):
@@ -28,8 +41,23 @@ class AssistantSession:
         self.path: str | None = None
         self.part_path: Path | None = None
         self.front: FrontAgent | None = None
-        self.workbench = None
+        self.workbench = None  # the shared workbench while the ANSYS agent has the chat
         self.agent = None
+        self._wb = None  # one per session: PyMechanical can start only once per process
+
+    def _shared_wb(self):
+        if self._wb is None:
+            self._wb = self.make_workbench(self.out_dir / "session")
+        return self._wb
+
+    def _new_tools(self) -> PyDiscoveryTools:
+        tools = PyDiscoveryTools(backend=self.backend)
+        backend = tools.app.backend
+        if hasattr(backend, "_engine"):  # Jack's AnsysBackend: its engine borrows the shared workbench
+            from src.sim.ansys_engine import AnsysEngine
+            backend._engine = AnsysEngine(out_dir=self.out_dir / "ansys_engine", mesh_check=backend.mesh_check,
+                                          workbench_factory=lambda _out: _Borrowed(self._shared_wb()))
+        return tools
 
     # ------------------------------------------------------------ public
 
@@ -37,7 +65,7 @@ class AssistantSession:
         """Start over on a new part: Jack's reader first, then the path rule."""
         self.close()
         self.path, self.part_path = None, Path(path)
-        self.front = FrontAgent(PyDiscoveryTools(backend=self.backend), self.client, self.out_dir / "assistant")
+        self.front = FrontAgent(self._new_tools(), self.client, self.out_dir / "assistant")
         opened = self.front.call_tool("open_part", {"path": str(path)})
         if not opened.get("ok"):
             yield from self._handoff(opened.get("message") or "the fast search cannot read this file")
@@ -68,11 +96,17 @@ class AssistantSession:
         return self.workbench.table() if self.path == "slow" and self.workbench is not None else []
 
     def close(self) -> None:
+        """End the current part's conversation; the shared workbench stays for the next part."""
         if self.front is not None:
             self.front.close()
-        if self.workbench is not None:
-            self.workbench.close()
         self.workbench = self.agent = None
+
+    def shutdown(self) -> None:
+        """At app exit: also close SpaceClaim and Mechanical."""
+        self.close()
+        if self._wb is not None:
+            self._wb.close()
+            self._wb = None
 
     # ------------------------------------------------------------ internals
 
@@ -87,16 +121,16 @@ class AssistantSession:
             self.path = "fast"  # the user confirmed it is the known bracket
 
     def _handoff(self, reason: str) -> Iterator[dict]:
-        """Close the fast path's ANSYS, start the ANSYS agent on the same file, pass on what is confirmed."""
+        """Start the ANSYS agent on the same file in the shared workbench, passing on what is confirmed."""
         front = self.front
-        front.close()  # one embedded Mechanical per process
+        front.close()  # ends the fast loop; the shared workbench stays open
         if front.handoff_reason is None:
             front.log.add("spec", f"path: slow ({reason})")
         front.log.save(self.out_dir / "assistant" / "handoff_log")
         self.path = "slow"
         yield {"type": "path", "path": "slow", "reason": reason}
         yield {"type": "text", "text": "Starting ANSYS (about a minute)…"}
-        self.workbench = self.make_workbench(self.out_dir / "session")
+        self.workbench = self._shared_wb()
         self.workbench.load_part(self.part_path)
         self.agent = self.make_agent(self.workbench, self.client)
         yield from self.agent.run(handoff_message(self.part_path.name, front.tools.part, front.inputs, reason))
