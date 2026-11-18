@@ -187,3 +187,10 @@ def test_each_handoff_log_is_kept(make, tmp_path):
     list(s.upload(_odd_part(tmp_path)))
     logs = list((tmp_path / "out" / "assistant").glob("handoff_log*.md"))
     assert len(logs) == 2
+
+
+def test_first_turn_says_the_part_is_open(make, tmp_path):
+    s, _ = make(resp(msg("ok")))
+    list(s.upload(_family_part(tmp_path)))
+    first = s.client.sent[0]["input"][0]["content"]
+    assert "already open" in first and "describe_setup" in first

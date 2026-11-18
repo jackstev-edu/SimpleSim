@@ -39,7 +39,8 @@ OWN_SPECS = [
      "description": "Move to the ANSYS search. Call when the user asks for ANSYS.",
      "parameters": {"type": "object", "properties": {"reason": {"type": "string"}}, "required": ["reason"]}},
 ]
-FUNCTIONS = [{"type": "function", "strict": False, **s} for s in TOOL_SPECS + OWN_SPECS]
+# open_part is left out: the session opens the part by its full path before the first turn.
+FUNCTIONS = [{"type": "function", "strict": False, **s} for s in TOOL_SPECS + OWN_SPECS if s["name"] != "open_part"]
 
 PROMPT = f"""\
 You help a beginner engineering student improve a bracket. You run the team's fast search for the
@@ -52,7 +53,9 @@ Rules:
 - Material: the fast search knows {' and '.join(FAST_MATERIALS)}. Recommend one for the user's goal
   (lighter or cheaper) and say the ANSYS search has more materials. The user picks. If the user wants
   another material, call switch_to_ansys.
-- A part file with no parameters: ask whether it is the L-bracket. Never decide that yourself.
+- The part is already open: start with describe_setup.
+- A part file with no parameters: ask whether it is the L-bracket. Never decide that yourself. If the
+  user says it is not the L-bracket, call switch_to_ansys.
 - Store the safety factor, objective and limits with record_study_inputs as soon as the user gives them.
 - Show the setup card with the safety factor and objective, and call confirm_setup only after the
   user says yes.

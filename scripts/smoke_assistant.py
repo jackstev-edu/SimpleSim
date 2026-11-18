@@ -67,7 +67,12 @@ def main() -> None:
         print(f"== (b) hand-off: {SADDLE.name}")
         for ev in s.upload(SADDLE):
             show(ev)
+        if s.path != "slow":  # plain geometry: the assistant asks which bracket it is first
+            print("USER: No, it is a saddle bracket, not the L-bracket.")
+            for ev in s.send("No, it is a saddle bracket, not the L-bracket."):
+                show(ev)
         checks["saddle went to ANSYS"] = s.path == "slow"
+        checks["ANSYS agent answered"] = s.agent is not None
     finally:
         s.shutdown()
         total = append_spend(LEDGER, "assistant-smoke", 2, usage)

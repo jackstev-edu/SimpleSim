@@ -138,3 +138,13 @@ def test_conversation_is_logged(make):
 
 def test_prompt_switches_for_other_materials():
     assert "another material" in PROMPT and "switch_to_ansys" in PROMPT.split("another material")[1][:200]
+
+
+def test_open_part_is_not_offered_to_the_model():
+    """The session opens the part by its full path; the model reopening it by a bare name broke the live run."""
+    assert "open_part" not in {f["name"] for f in front.FUNCTIONS}
+
+
+def test_prompt_switches_when_not_the_l_bracket():
+    tail = PROMPT.split("not the L-bracket")[1][:120]
+    assert "switch_to_ansys" in tail

@@ -78,8 +78,8 @@ class AssistantSession:
         if decision is not None:
             self.path = "fast"
             yield {"type": "path", "path": "fast", "reason": decision.reason}
-        yield from self._front_turn(f"I uploaded my part '{self.part_path.name}'. "
-                                    "Please look at it and tell me what you see.")
+        yield from self._front_turn(f"I uploaded my part '{self.part_path.name}'. It is already open; "
+                                    "use describe_setup and tell me what you see.")
 
     def send(self, text: str) -> Iterator[dict]:
         if self.path == "slow":
