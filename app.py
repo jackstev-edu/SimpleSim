@@ -12,14 +12,12 @@ from pathlib import Path
 
 import gradio as gr
 
-from src.agent.agent import MODE, MODEL, Agent
-from src.agent.tools import Workbench
-from src.llm import LEDGER, BudgetExceeded, append_spend, cost, counted_client, session_budget
+from src.assistant.session import AssistantSession
+from src.llm import LEDGER, MODE, MODEL, BudgetExceeded, append_spend, cost, counted_client, session_budget
 
 ROOT = Path(__file__).resolve().parent
-wb = Workbench(ROOT / "outputs" / "session")  # closed in the __main__ block, not atexit: by then
-# concurrent.futures has shut its pools down and wb.close fails
-_agent: Agent | None = None
+# Closed in the __main__ block, not atexit: by then concurrent.futures has shut its pools down.
+_session: AssistantSession | None = None
 USAGE: dict = {}  # tokens this GUI session spent, per model; written to the ledger when the app closes
 BUDGET_USD = session_budget()
 
@@ -28,13 +26,17 @@ TABLE_HEADERS = ["design", "material", "mass (kg)", "max stress (MPa)", "stress 
                  "mesh check"]
 
 
-def agent() -> Agent:
-    global _agent
-    if _agent is None:
+PATH_LABELS = {"fast": "Fast search (team predictor + ANSYS finalists)", "slow": "ANSYS search"}
+
+
+def session() -> AssistantSession:
+    """The one assistant session: fast path first, ANSYS agent after a hand-off."""
+    global _session
+    if _session is None:
         if not os.environ.get("OPENAI_API_KEY"):
             raise gr.Error("Set the OPENAI_API_KEY environment variable and restart the app.")
-        _agent = Agent(wb, client=counted_client(USAGE, BUDGET_USD))
-    return _agent
+        _session = AssistantSession(counted_client(USAGE, BUDGET_USD), ROOT / "outputs")
+    return _session
 
 
 def record_spend(path=LEDGER) -> float | None:
@@ -49,19 +51,26 @@ def _short(text: str, n: int = 1500) -> str:
 
 
 def _stream(history: list, user_text: str):
-    """Run one agent turn, yielding (chat history, design table) as events arrive."""
+    """Run one turn, yielding (chat history, design table) as events arrive."""
+    yield from _render(history, lambda: session().send(user_text))
+
+
+def _render(history: list, events):
+    """Turn session events into chat messages; a budget stop ends the turn with a warning."""
     try:
-        yield from _events(history, user_text)
+        yield from _events(history, events())
     except BudgetExceeded as e:
         history.append({"role": "assistant", "content": f"⚠️ **The {e}.** No further model calls this session "
                         f"(${cost(USAGE):.2f} spent). Restart the app to continue, or raise the cap with the "
                         "SIMPLESIM_SESSION_BUDGET_USD environment variable."})
-        yield history, wb.table()
+        yield history, session().table()
 
 
-def _events(history: list, user_text: str):
-    for ev in agent().run(user_text):
-        if ev["type"] == "text":
+def _events(history: list, events):
+    for ev in events:
+        if ev["type"] == "path":
+            history.append({"role": "assistant", "content": f"🛣️ **{PATH_LABELS[ev['path']]}**: {ev['reason']}"})
+        elif ev["type"] == "text":
             history.append({"role": "assistant", "content": ev["text"]})
         elif ev["type"] == "tool":
             history.append({"role": "assistant", "content": f"```json\n{json.dumps(ev['input'], indent=1)}\n```",
@@ -78,7 +87,7 @@ def _events(history: list, user_text: str):
                 history.append({"role": "assistant", "content": f"⚠️ **Mesh over the Student limit, not solved.** {text}"})
         elif ev["type"] == "error":
             history.append({"role": "assistant", "content": f"⚠️ {ev['text']}"})
-        yield history, wb.table()
+        yield history, session().table()
 
 
 # The chat log lives here, not in the browser: a turn that waits in the queue was sent with the
@@ -89,14 +98,9 @@ _chat: list[dict] = []
 def on_upload(file, history):
     if file is None:
         return
-    _chat[:] = [{"role": "assistant", "content": "Opening the part in SpaceClaim "
-                 "(the first start takes about a minute)…"}]
-    yield _chat, wb.table()
-    wb.load_part(file)
-    agent().reset()
-    user_text = f"I uploaded my part '{Path(file).name}'. Please look at it and tell me what you see."
-    _chat.append({"role": "user", "content": user_text})
-    yield from _stream(_chat, user_text)
+    _chat[:] = [{"role": "assistant", "content": f"Opening '{Path(file).name}'…"}]
+    yield _chat, []
+    yield from _render(_chat, lambda: session().upload(file))  # the session picks the path
 
 
 def on_send(user_text, history):
@@ -112,11 +116,12 @@ def take_text(user_text):
 
 
 def on_stop():
-    wb.request_stop()
+    session().stop()
 
 
 def on_open_ansys():
-    if wb.final_part is None or not wb.final_part.exists():
+    wb = session().workbench
+    if wb is None or wb.final_part is None or not wb.final_part.exists():
         raise gr.Error("No final design yet. Ask the agent to finalize a design first.")
     os.startfile(wb.final_part)  # opens with the program registered for .scdocx (SpaceClaim)
     return gr.update(value=str(wb.final_part))
@@ -132,7 +137,8 @@ def mechanical_exe() -> Path | None:
 
 def on_open_mechanical():
     """Open the finalized design's saved analysis in the Mechanical window."""
-    mechdb = wb.final_analysis
+    wb = session().workbench
+    mechdb = wb.final_analysis if wb is not None else None
     if mechdb is None or not mechdb.exists():
         raise gr.Error("No saved analysis yet. Ask the agent to finalize a design first.")
     exe = mechanical_exe()
@@ -159,8 +165,8 @@ with gr.Blocks(title="SimpleSim design optimizer") as demo:
             stop_btn = gr.Button("Stop search", variant="stop")
             pending = gr.State("")  # the message on its way from the textbox to on_send
         with gr.Column(scale=2):
-            part = gr.File(label="Part file (.scdocx, .stp, .step)", file_types=[".scdocx", ".stp", ".step"],
-                           type="filepath")
+            part = gr.File(label="Part file (.dsco, .scdocx, .scdoc, .stp, .step)",
+                           file_types=[".dsco", ".scdocx", ".scdoc", ".stp", ".step"], type="filepath")
             table = gr.Dataframe(headers=TABLE_HEADERS, label="Evaluated designs", interactive=False)
             open_btn = gr.Button("Open final design in ANSYS")
             final_path = gr.Textbox(label="Final design file", interactive=False)
@@ -181,7 +187,8 @@ if __name__ == "__main__":
     try:
         demo.launch(inbrowser=True)
     finally:
-        wb.close()
+        if _session is not None:
+            _session.close()
         total = record_spend()
         if total is not None:
             print(f"session cost ${cost(USAGE):.4f}; all runs so far (practice/spend.csv): ${total:.4f}")
