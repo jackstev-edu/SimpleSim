@@ -159,3 +159,20 @@ def test_hole_faces_groups_split_hole_halves():
     assert screen.hole_faces(faces, "c") == ["c"]
     assert screen.hole_faces(faces, "d") == ["d"]
     assert screen.hole_faces(faces, "p") == ["p"]
+
+
+def test_cylinder_kind_concave_when_outward_normal_points_to_axis():
+    # Point on a radius-5 cylinder along z; the material is outside, so the outward normal points inward.
+    assert screen.cylinder_kind([5, 0, 3], [-1, 0, 0], [0, 0, 0], [0, 0, 1]) == "concave"
+
+
+def test_cylinder_kind_convex_when_outward_normal_points_away():
+    # SimJEB lug: the rounded outer surface around the pin bore (same axis, larger radius).
+    assert screen.cylinder_kind([0, 3, 7], [0, 0, 1], [0, 0, 0], [0, 1, 0]) == "convex"
+
+
+def test_cylinder_kind_ignores_offset_along_axis_and_tilted_axis():
+    d = [0.6, 0.8, 0.0]
+    p = [10 + 0.6 * 4, 20 + 0.8 * 4, 9]  # 4 mm along the axis, radius 9 straight up in z
+    assert screen.cylinder_kind(p, [0, 0, -1], [10, 20, 0], d) == "concave"
+    assert screen.cylinder_kind(p, [0, 0, 1], [10, 20, 0], d) == "convex"

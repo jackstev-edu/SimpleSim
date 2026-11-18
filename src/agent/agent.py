@@ -122,6 +122,10 @@ Engineering rules:
   sensible one, explain why, and let the user change it), then run check_mesh. Only a converged
   stress_for_limit_MPa may be compared with the limit. If it is not converged, say so and do not
   claim the limit is met.
+- Cylinder faces carry kind "concave" (material around it: a hole or bore, or an inside fillet) or
+  "convex" (a rounded outside surface, e.g. the lug or boss around a pin bore; it often shares the
+  bore's axis with a larger radius). A hole is always concave: never call a convex face a hole or bore.
+  radius_mm is a radius, not a diameter; when the user gives a diameter, halve it and say so.
 - Holes: a round hole is often stored as two half-cylinder faces (same radius and axis). A radius
   edit on either face resizes the whole hole automatically. To give several holes one common size
   (e.g. all mounting holes as one variable), pass one face of the first hole as face_id and one face

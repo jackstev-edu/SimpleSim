@@ -166,6 +166,15 @@ def min_wall_mm(faces: list[dict]) -> float | None:
     return best
 
 
+def cylinder_kind(point: list[float], normal: list[float], axis_point: list[float], axis_dir: list[float]) -> str:
+    """'concave' when the face's outward normal points toward the axis (material outside: a hole or an
+    inside fillet), else 'convex' (a rounded outside surface, e.g. the lug around a pin bore)."""
+    w = [q - r for q, r in zip(point, axis_point)]
+    along = _dot(w, axis_dir)
+    radial = [wi - along * di for wi, di in zip(w, axis_dir)]  # from the axis out to the point
+    return "concave" if _dot(normal, radial) < 0 else "convex"
+
+
 def hole_faces(faces: list[dict], face_id: str, tol_mm: float = 0.01) -> list[str]:
     """All cylinder faces of the same hole as `face_id`: same radius and same axis line.
     CAD files often store one round hole as two half-cylinder faces; resizing only one breaks the hole."""

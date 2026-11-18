@@ -43,7 +43,8 @@ TOOLS = [
         "name": "describe_part",
         "description": (
             "List every face of the loaded part: id, type (plane/cylinder/...), area, bounding box in mm, "
-            "normal for planes, radius for cylinders, plus the part volume and mass. Also lists inside_corners: "
+            "normal for planes, radius, axis and kind for cylinders ('concave' = hole or inside fillet, 'convex' = rounded outside surface such as a boss), "
+            "plus the part volume and mass. Also lists inside_corners: "
             "sharp concave edges between two flat faces (given by their two face ids). Sharp inside corners "
             "cause stress singularities and are candidates for a fillet. Use it to work out which faces "
             "are walls, holes, mounting faces and load faces. Units: mm, kg."

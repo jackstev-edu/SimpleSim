@@ -16,6 +16,8 @@ from ansys.geometry.core.designer.design import DesignFileFormat
 from ansys.geometry.core.math import UnitVector3D
 from ansys.geometry.core.misc import UNITS, Distance
 
+from src.agent.screen import cylinder_kind
+
 SAVE_FORMATS = {".scdocx": DesignFileFormat.SCDOCX, ".pmdb": DesignFileFormat.PMDB}
 
 
@@ -130,6 +132,8 @@ class GeometrySession:
                 # The axis lets split holes (two half-cylinder faces, common in STEP files) be grouped.
                 d["axis_point_mm"] = _xyz(cyl.origin)
                 d["axis_dir"] = [round(c, 6) for c in cyl.dir_z]
+                # Concave (hole, inside fillet) or convex (boss, outside round): same type and axis, different features.
+                d["kind"] = cylinder_kind(_xyz(f.point()), list(f.normal()), d["axis_point_mm"], d["axis_dir"])
             out.append(d)
         return out
 
