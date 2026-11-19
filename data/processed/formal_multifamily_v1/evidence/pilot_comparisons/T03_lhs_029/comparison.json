@@ -1,0 +1,9 @@
+{
+  "stress_change_pct": 1.1336560903761725,
+  "displacement_change_pct": 0.09093958850740468,
+  "convergence_status": "PASS",
+  "approach": "global_medium_fine",
+  "upper_status": "PASS",
+  "upper_wall_s": 79.43647740000233,
+  "upper_error": ""
+}

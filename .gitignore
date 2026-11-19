@@ -46,3 +46,5 @@ Thumbs.db
 
 # Reference screenshots and prompts for the UI (not ours to publish)
 src/ui/reference/
+
+!data/processed/formal_multifamily_v1/

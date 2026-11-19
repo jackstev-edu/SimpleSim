@@ -1,0 +1,28 @@
+{
+  "policy": "multifamily_targeted_mesh_1",
+  "convergence_pass": 10,
+  "baseline_gate_pass": true,
+  "provisional_production_levels": {
+    "T01": "fine",
+    "T02": "fine",
+    "T03": "medium",
+    "T04": "fine",
+    "T05": "medium",
+    "T06": "medium",
+    "T07": "fine",
+    "T08": "fine",
+    "T09": "fine",
+    "T10": "fine"
+  },
+  "convergence_review": [],
+  "targeted_templates": [
+    "T08",
+    "T09",
+    "T10"
+  ],
+  "threshold_stress_pct": 3.0,
+  "threshold_displacement_pct": 1.0,
+  "representative_case_study_pending": true,
+  "formal_labels_added": 0,
+  "note": "Targeted hotspot sensitivity is not full-domain global refinement."
+}

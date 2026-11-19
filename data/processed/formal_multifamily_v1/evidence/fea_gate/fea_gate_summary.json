@@ -1,0 +1,20 @@
+{
+  "policy": "multifamily_baseline_mesh_1",
+  "medium_pass": 10,
+  "fine_pass": 10,
+  "convergence_pass": 3,
+  "failed": [],
+  "convergence_review": [
+    "T01",
+    "T02",
+    "T04",
+    "T07",
+    "T08",
+    "T09",
+    "T10"
+  ],
+  "threshold_stress_pct": 3.0,
+  "threshold_displacement_pct": 1.0,
+  "baseline_gate_pass": false,
+  "formal_labels_added": 0
+}

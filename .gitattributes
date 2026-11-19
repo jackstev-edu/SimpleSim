@@ -1,0 +1,4 @@
+
+data/processed/formal_multifamily_v1/** -text
+
+data/processed/formal_multifamily_v1/** whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

@@ -1,0 +1,45 @@
+{
+  "policy": "multifamily_batch_v1.0",
+  "planned": 800,
+  "successful_solver_cases": 800,
+  "accepted_labels": 800,
+  "pilot_passed": [
+    "T01",
+    "T02",
+    "T03",
+    "T04",
+    "T05",
+    "T06",
+    "T07",
+    "T08",
+    "T09",
+    "T10"
+  ],
+  "pilot_review": [],
+  "family_accepted": {
+    "T01": 80,
+    "T02": 80,
+    "T03": 80,
+    "T04": 80,
+    "T05": 80,
+    "T06": 80,
+    "T07": 80,
+    "T08": 80,
+    "T09": 80,
+    "T10": 80
+  },
+  "unresolved_production_failures": 0,
+  "family_mean_production_s": {
+    "T01": 124.9,
+    "T02": 99.1,
+    "T03": 19.34,
+    "T04": 101.93,
+    "T05": 37.28,
+    "T06": 15.31,
+    "T07": 240.77,
+    "T08": 529.4,
+    "T09": 672.88,
+    "T10": 156.08
+  },
+  "complete": true
+}
