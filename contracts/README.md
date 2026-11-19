@@ -24,6 +24,10 @@ Five dimensions of the MVP L-bracket in mm: `thickness_mm`, `flange_length_mm`, 
 
 Training rows use one load, one material and one mesh rule, recorded in each row. Stress scales with load and displacement with load over stiffness, so the model handles other loads and materials by scaling.
 
+## Bracket family v1 (gusseted)
+
+`l_bracket_gusset_v1` adds three dimensions to the five: `vertical_height_mm` (the leg height v0 fixes at 60 mm), `gusset_thickness_mm` and `gusset_length_mm`. `FAMILY_PARAMS` in `models.py` lists each family's set; `StudySpec.bracket_family` picks it, a spec's parameters must be exactly that set, and every design in a `Result` uses those keys. `ParamName` covers all eight names. `examples/l_bracket_gusset_v1/` holds a formula-labelled v1 example set from the fakes. The v1 `runs.csv` from Role 1 carries the three extra columns after the `Run` columns; `Run` itself is unchanged.
+
 ## How to use the fakes
 
 ```python

@@ -219,8 +219,11 @@ def fit_power_law(runs_csv: "str | Path | pd.DataFrame", inputs: tuple[str, ...]
 
 def build_prediction(spec: StudySpec, X: np.ndarray, med: dict[str, np.ndarray], band: dict[str, np.ndarray],
                      mat: dict, model_name: str, trained_on_runs: int, train_ranges: dict, id_prefix: str,
-                     warnings: list[str], names: tuple[str, ...] = tuple(PARAM_NAMES), volume=volume_mm3) -> Prediction:
-    """Judge every constraint at the pessimistic end of a multiplicative band. X holds the geometry columns in `names` order."""
+                     warnings: list[str], names: tuple[str, ...] = tuple(PARAM_NAMES), volume=volume_mm3, valid=None) -> Prediction:
+    """Judge every constraint at the pessimistic end of a multiplicative band. X holds the geometry columns in `names` order.
+
+    valid: an optional design dict -> bool; designs that fail a family's geometry rules never reach the shortlist.
+    """
     mass = volume(X) * mat["rho_kg_mm3"]
     worst = {"mass_kg": mass, "max_stress_mpa": med["max_stress_mpa"] * band["max_stress_mpa"],
              "max_disp_mm": med["max_disp_mm"] * band["max_disp_mm"]}
@@ -228,6 +231,8 @@ def build_prediction(spec: StudySpec, X: np.ndarray, med: dict[str, np.ndarray],
     ok = np.ones(len(X), dtype=bool)
     for c in spec.constraints:  # feasible only if every constraint holds at the pessimistic end
         ok &= worst[c.metric] >= c.value if c.op == ">=" else worst[c.metric] <= c.value
+    if valid is not None:
+        ok &= np.array([valid({p: float(X[i, j]) for j, p in enumerate(names)}) for i in range(len(X))], dtype=bool)
     score = mass if spec.objective.metric == "mass_kg" else (
         mat["yield_mpa"] / med["max_stress_mpa"] if spec.objective.metric == "safety_factor" else med[spec.objective.metric])
     sign = 1 if spec.objective.direction == "minimize" else -1
@@ -272,13 +277,16 @@ class PowerLawPredictor:
     """Same interface as contracts.fakes.FakePredictor: predict(spec) -> Prediction, for one family's built-in fit."""
 
     def __init__(self, e_mpa: float | None = None, yield_mpa: float | None = None, density_kg_m3: float | None = None,
-                 family: str = V0, poisson: float | None = None):
+                 family: str = V0, poisson: float | None = None, valid=None):
+        """valid: an optional design dict -> bool from the family's geometry rules (PyDiscovery passes Family.valid)."""
         self.fit = builtin_fit(family)
-        self.family, self.poisson = family, poisson
+        self.family, self.poisson, self.valid = family, poisson, valid
         self.model_name = f"power_law_{'v0' if family == V0 else 'v1'}"
         self.override = {"E_mpa": e_mpa, "yield_mpa": yield_mpa, "rho_kg_mm3": density_kg_m3 * 1e-9 if density_kg_m3 else None}
 
     def predict(self, spec: StudySpec, n: int | None = None, seed: int = 0) -> Prediction:
+        if spec.bracket_family != self.family:
+            raise ValueError(f"this predictor is fitted to {self.family}, not {spec.bracket_family}")
         mat = resolve_material(spec, self.override)
         names = self.fit.geometry
         X = sample_inside(spec, n or spec.n_candidates, seed, names)
@@ -287,13 +295,17 @@ class PowerLawPredictor:
         if self.fit.stress_correction:
             note += f"; stress lifted x{self.fit.stress_correction['ratio']:.3f} for the v0 mesh bias"
         return build_prediction(spec, X, med, band, mat, self.model_name, self.fit.trained_on_runs, self.fit.ranges, f"pl-{seed}", [note],
-                                names=names, volume=FAMILY_VOLUME[self.family])
+                                names=names, volume=FAMILY_VOLUME[self.family], valid=self.valid)
 
 
 class PowerLawBackend:
     """The surrogate as an engine: instant, but not an independent check of its own predictions."""
 
     name = "power_law_v0"
+
+    def source(self, family) -> str:
+        """What Verified.source says for a solve of this family."""
+        return "power_law_v0" if family.key == V0 else "power_law_v1"
 
     def solve(self, family, design_mm, force_n, material):
         try:

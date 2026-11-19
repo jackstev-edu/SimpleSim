@@ -101,11 +101,12 @@ class GPPredictor:
     def geometry(self) -> tuple[str, ...]:
         return tuple(n for n in self.inputs if n != "poissons_ratio")
 
-    def for_material(self, e_mpa: float, yield_mpa: float, density_kg_m3: float, poisson: float | None = None) -> "GPPredictor":
-        """A copy sharing the trained GP, set to a part's material, so training happens once."""
+    def for_material(self, e_mpa: float, yield_mpa: float, density_kg_m3: float, poisson: float | None = None, valid=None) -> "GPPredictor":
+        """A copy sharing the trained GP, set to a part's material (and geometry rules), so training happens once."""
         other = copy.copy(self)
         other.override = {"E_mpa": e_mpa, "yield_mpa": yield_mpa, "rho_kg_mm3": density_kg_m3 * 1e-9}
         other.poisson = poisson if poisson is not None else self.poisson
+        other.valid = valid if valid is not None else getattr(self, "valid", None)
         return other
 
     def predict_log(self, X: np.ndarray) -> dict[str, tuple[np.ndarray, np.ndarray]]:
@@ -136,6 +137,8 @@ class GPPredictor:
         return apply_stress_correction(med, band, log["max_stress_mpa"][1], self.stress_correction)
 
     def predict(self, spec: StudySpec, n: int | None = None, seed: int = 0) -> Prediction:
+        if spec.bracket_family != self.family:
+            raise ValueError(f"this GP is trained on {self.family}, not {spec.bracket_family}")
         mat = resolve_material(spec, self.override)
         names = self.geometry
         X = sample_inside(spec, n or spec.n_candidates, seed, names)
@@ -144,7 +147,51 @@ class GPPredictor:
         if self.stress_correction:
             note += f"; stress lifted x{self.stress_correction['ratio']:.3f} for the v0 mesh bias"
         return build_prediction(spec, X, med, band, mat, self.model_name, self.n_runs, self.ranges, f"gp-{seed}", [note],
-                                names=names, volume=FAMILY_VOLUME.get(self.family, volume_mm3))
+                                names=names, volume=FAMILY_VOLUME.get(self.family, volume_mm3), valid=getattr(self, "valid", None))
+
+
+CACHE_DIR = Path("data/processed/gp_cache")  # gitignored (*.pkl); a trained v1 GP is 4 to 6 minutes of fitting
+RESTARTS = {V0: 3, V1: 1}  # v1 keeps one restart, as in the benchmark; the band scales above match it
+
+
+def trained_gp(family: str = V0, source: str | Path | None = None, cache_dir: str | Path = CACHE_DIR, **kwargs) -> GPPredictor:
+    """A GP for a family from its model_dataset.csv (or `source`), cached on disk so training happens once per dataset.
+
+    The cache key is the data file's size and modification time, the restarts, the inputs and scikit-learn's version;
+    a changed dataset retrains. Pass cache_dir=None to skip the cache.
+    """
+    import pickle
+
+    from .datasets import FAMILY_DIRS, resolve_source
+
+    path = resolve_source(source if source is not None else family)
+    restarts = kwargs.pop("restarts", RESTARTS.get(family, 3))
+    if cache_dir is None or not path.exists():
+        return GPPredictor(path, family=family, restarts=restarts, **kwargs)
+    stat = path.stat()
+    try:
+        import sklearn
+
+        version = sklearn.__version__
+    except ImportError:  # GPPredictor raises the helpful message
+        version = "none"
+    key = f"{family}_{stat.st_size}_{int(stat.st_mtime)}_{restarts}_{kwargs.get('max_train')}_{version}".replace(".", "_")
+    cache = Path(cache_dir) / f"{key}.pkl"
+    if cache.exists():
+        try:
+            gp = pickle.loads(cache.read_bytes())
+            gp.override = {"E_mpa": kwargs.get("e_mpa"), "yield_mpa": kwargs.get("yield_mpa"),
+                           "rho_kg_mm3": kwargs["density_kg_m3"] * 1e-9 if kwargs.get("density_kg_m3") else None}
+            return gp
+        except Exception:  # noqa: BLE001  a stale or foreign pickle just means retraining
+            pass
+    gp = GPPredictor(path, family=family, restarts=restarts, **kwargs)
+    try:
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        cache.write_bytes(pickle.dumps(gp))
+    except OSError:
+        pass
+    return gp
 
 
 def cross_validate(runs_csv: str | Path = DEFAULT_RUNS, folds: int = 5, seed: int = 0, inputs: tuple[str, ...] | None = None) -> dict:
