@@ -2,6 +2,8 @@
 import json
 from pathlib import Path
 import pytest
+
+pytest.importorskip('scipy')
 from src.data.multifamily_v1 import fea_gate as g, refine_gate as r
 from src.data.multifamily_v1.templates import baseline, FAMILIES
 from tests.test_multifamily_v1_fea_gate import frozen_inputs, fake_result

@@ -3,6 +3,8 @@ import csv
 import json
 from types import SimpleNamespace
 import pytest
+
+pytest.importorskip('scipy')
 from src.data.multifamily_v1 import fea_gate as g
 from src.data.multifamily_v1.templates import FAMILIES, baseline, build_template, check_faces, sample_plan
 

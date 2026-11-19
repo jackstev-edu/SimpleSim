@@ -3,6 +3,8 @@ import json
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 import pytest
+
+pytest.importorskip('scipy')
 from src.data.multifamily_v1 import batch_v1 as b, fea_gate as g
 from src.data.multifamily_v1.templates import FAMILIES, sample_plan, build_template, check_faces
 from tests.test_multifamily_v1_fea_gate import fake_result
@@ -16,6 +18,7 @@ def plan():
     return by
 
 def prepare(row):
+    pytest.importorskip('cadquery')
     r=dict(row);c=b.new_case(r);s=build_template(c);f,l=check_faces(c,s)
     r.update(volume_mm3=s.Volume(),fixed_face_area_mm2=f,load_face_area_mm2=l);return r
 

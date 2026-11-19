@@ -1,4 +1,6 @@
 import pytest
+
+pytest.importorskip('scipy')
 from src.data.multifamily_v1 import batch_v1 as b, t02_final_gate as final
 from tests.test_multifamily_v1_batch import plan, prepare, sim
 

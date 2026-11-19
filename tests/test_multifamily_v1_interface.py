@@ -1,6 +1,8 @@
 from collections import Counter, defaultdict
 import math
 import pytest
+
+pytest.importorskip('scipy')
 from src.data.bracket_spec import make_baseline_case
 from src.data.geometry import build_bracket_geometry
 from src.data.multifamily_v1.templates import FAMILIES, baseline, sample_plan, build_template
@@ -9,6 +11,7 @@ from src.data.multifamily_v1.interface_gate import split_manifest, OLD, HOLDOUT,
 
 @pytest.mark.parametrize('key',['v0',*FAMILIES])
 def test_feature_schema(key):
+    pytest.importorskip('cadquery')
     if key=='v0':
         case=make_baseline_case(); solid=build_bracket_geometry(case)
     else:

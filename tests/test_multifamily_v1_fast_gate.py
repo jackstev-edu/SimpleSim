@@ -1,4 +1,7 @@
 from unittest.mock import MagicMock
+import pytest
+
+pytest.importorskip('scipy')
 from src.data.multifamily_v1 import fea_gate as g, refine_gate as r, fast_gate as f
 from src.data.multifamily_v1.templates import baseline
 from tests.test_multifamily_v1_fea_gate import frozen_inputs,fake_result
