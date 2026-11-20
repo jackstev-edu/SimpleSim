@@ -1,4 +1,9 @@
 """Grader checklist on hand-written run logs (no ANSYS, no API)."""
+import pytest
+
+# Role 3 packages live in src/sim/requirements.txt, not the root one, so CI skips this file.
+pytest.importorskip("yaml")
+
 import copy
 
 from src.eval.grader import CHECKS, grade

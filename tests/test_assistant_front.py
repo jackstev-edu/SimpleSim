@@ -1,7 +1,13 @@
 """FrontAgent: Jack's tools behind the input guard, with the hand-off decided in code."""
+import pytest
+
+# Role 3 packages live in src/sim/requirements.txt, not the root one, so CI skips this file.
+pytest.importorskip("ansys.geometry.core")
+pytest.importorskip("ansys.mechanical.core")
+pytest.importorskip("ansys.optislang.core")
+
 import json
 
-import pytest
 
 import src.assistant.front as front
 from src.assistant.front import PROMPT, FrontAgent

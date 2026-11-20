@@ -1,4 +1,11 @@
 """The agent's instructions carry each graded behaviour (practice-set Task 10 and the 2026-11-13/15 decisions)."""
+import pytest
+
+# Role 3 packages live in src/sim/requirements.txt, not the root one, so CI skips this file.
+pytest.importorskip("ansys.geometry.core")
+pytest.importorskip("ansys.mechanical.core")
+pytest.importorskip("ansys.optislang.core")
+
 import re
 
 from src.agent.agent import SYSTEM

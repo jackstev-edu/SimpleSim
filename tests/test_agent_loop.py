@@ -1,4 +1,11 @@
 """Agent loop (OpenAI Responses API): tools run in a helper thread and progress events stream to the GUI."""
+import pytest
+
+# Role 3 packages live in src/sim/requirements.txt, not the root one, so CI skips this file.
+pytest.importorskip("ansys.geometry.core")
+pytest.importorskip("ansys.mechanical.core")
+pytest.importorskip("ansys.optislang.core")
+
 import json
 import queue
 import time

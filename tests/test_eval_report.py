@@ -1,4 +1,9 @@
 """Results folder, summary table and before/after comparison."""
+import pytest
+
+# Role 3 packages live in src/sim/requirements.txt, not the root one, so CI skips this file.
+pytest.importorskip("yaml")
+
 import json
 
 from src.eval.grader import CHECKS

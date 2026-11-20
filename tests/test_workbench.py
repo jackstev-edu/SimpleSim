@@ -1,7 +1,13 @@
 """Workbench first_look / progress / stop, with a fake _evaluate (no ANSYS started)."""
+import pytest
+
+# Role 3 packages live in src/sim/requirements.txt, not the root one, so CI skips this file.
+pytest.importorskip("ansys.geometry.core")
+pytest.importorskip("ansys.mechanical.core")
+pytest.importorskip("ansys.optislang.core")
+
 import json
 
-import pytest
 
 from src.agent.tools import Workbench
 

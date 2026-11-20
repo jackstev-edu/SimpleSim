@@ -1,4 +1,9 @@
 """Simulated user: hidden facts and rules in the system prompt, its own alternating history."""
+import pytest
+
+# Role 3 packages live in src/sim/requirements.txt, not the root one, so CI skips this file.
+pytest.importorskip("yaml")
+
 from types import SimpleNamespace as NS
 
 from src.eval.problems import Problem

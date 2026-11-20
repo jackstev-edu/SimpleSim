@@ -1,4 +1,12 @@
 """app._stream turns session events into chat messages (progress lines, path lines, warnings)."""
+import pytest
+
+# Role 3 packages live in src/sim/requirements.txt, not the root one, so CI skips this file.
+pytest.importorskip("ansys.geometry.core")
+pytest.importorskip("ansys.mechanical.core")
+pytest.importorskip("ansys.optislang.core")
+pytest.importorskip("gradio")
+
 import app
 
 

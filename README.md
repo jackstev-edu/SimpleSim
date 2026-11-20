@@ -58,9 +58,10 @@ pip install -r requirements.txt
 python -m pytest tests -q          # contract checks, should pass on a fresh clone
 ```
 
-The `src/sim` tools need a local ANSYS 2026 R1 install (Mechanical and SpaceClaim; the Student version works) and Python 3.12+. Check the whole chain with:
+The `src/sim` tools, the ANSYS agent, the assistant front layer, the practice set and `app.py` need their own packages and a local ANSYS 2026 R1 install (Mechanical and SpaceClaim; the Student version works), with Python 3.12+. Without them their tests skip. Install the packages and check the whole chain with:
 
 ```bash
+pip install -r src/sim/requirements.txt
 python -m scripts.smoke_loop     # geometry edit -> solve -> plausibility checks
 python -m scripts.smoke_tools    # the agent's tools, scripted, no LLM (no API cost)
 ```

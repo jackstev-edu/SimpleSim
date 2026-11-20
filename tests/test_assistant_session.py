@@ -1,7 +1,13 @@
 """AssistantSession: one conversation over the fast path and the ANSYS agent."""
+import pytest
+
+# Role 3 packages live in src/sim/requirements.txt, not the root one, so CI skips this file.
+pytest.importorskip("ansys.geometry.core")
+pytest.importorskip("ansys.mechanical.core")
+pytest.importorskip("ansys.optislang.core")
+
 from dataclasses import replace
 
-import pytest
 
 from src.assistant.session import AssistantSession
 from src.pydiscovery.demo_part import write_demo_part

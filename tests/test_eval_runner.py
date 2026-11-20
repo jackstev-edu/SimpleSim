@@ -1,4 +1,12 @@
 """Practice runner: intercepts the search, stops at the proposal or the turn cap, logs errors."""
+import pytest
+
+# Role 3 packages live in src/sim/requirements.txt, not the root one, so CI skips this file.
+pytest.importorskip("ansys.geometry.core")
+pytest.importorskip("ansys.mechanical.core")
+pytest.importorskip("ansys.optislang.core")
+pytest.importorskip("yaml")
+
 import json
 import queue
 import threading

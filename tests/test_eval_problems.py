@@ -1,5 +1,9 @@
 """Practice-set problem files: schema validation, part paths, effects sidecars."""
 import pytest
+
+# Role 3 packages live in src/sim/requirements.txt, not the root one, so CI skips this file.
+pytest.importorskip("yaml")
+
 import yaml
 
 from src.eval.problems import (REPO, Problem, load_effects, load_problem, load_problems, resolve_part)

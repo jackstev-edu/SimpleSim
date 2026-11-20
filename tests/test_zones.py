@@ -1,6 +1,10 @@
 """Exclusion zone around supports and loads, on a synthetic 1-D bar of nodes."""
-import numpy as np
 import pytest
+
+# Role 3 packages live in src/sim/requirements.txt, not the root one, so CI skips this file.
+pytest.importorskip("scipy")
+
+import numpy as np
 
 from src.sim.zones import exclusion_zone, step_for
 
