@@ -27,7 +27,8 @@ from .tools import TOOL_SPECS, PyDiscoveryTools
 PREFIX = "/api/pydiscovery"
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 UPLOAD_SUFFIXES = (".dsco", ".scdocx", ".scdoc", ".step", ".stp")
-RUNS_CSV = Path("data/processed/formal_v0/runs.csv")  # Role 1's runs, relative to the repo root
+RUNS_CSV = Path("data/processed/formal_v0/runs.csv")  # Role 1's v0 runs, relative to the repo root
+MODEL_DATASET_CSV = Path("data/processed/formal_v0/model_dataset.csv")  # preferred: carries Poisson's ratio
 
 
 class PyDiscoveryAPI:
@@ -49,7 +50,11 @@ class PyDiscoveryAPI:
         if engine not in BACKENDS:
             raise ValueError(f"Unknown engine {engine!r}. Choose from {sorted(BACKENDS)}.")
         picked, note = self._pick_predictor(predictor)
-        self.tools = PyDiscoveryTools(engine, picked, runs=self.root / RUNS_CSV if picked == "gp" else None)
+        runs = None
+        if picked == "gp":  # the v0 GP trains from the model dataset when it is there; other families use their own
+            v0 = self.root / MODEL_DATASET_CSV if (self.root / MODEL_DATASET_CSV).exists() else self.root / RUNS_CSV
+            runs = {"l_bracket_v0": v0}
+        self.tools = PyDiscoveryTools(engine, picked, runs=runs)
         self.engine, self.predictor, self.predictor_note = engine, picked, note
 
     def _pick_predictor(self, predictor: str) -> tuple[str, str]:

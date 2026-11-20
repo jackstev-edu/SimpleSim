@@ -11,7 +11,7 @@ without changing the agent, the UI or the contracts.
 """
 
 from .backends import BACKENDS, Backend, BackendUnavailable, get_backend
-from .families import FAMILIES, L_BRACKET_V0, Family, match_family
+from .families import FAMILIES, L_BRACKET_GUSSET_V1, L_BRACKET_V0, Family, match_family
 from .part_file import (
     Force,
     Goal,
@@ -30,7 +30,7 @@ from .tools import TOOL_SPECS, PyDiscoveryTools
 __all__ = [
     "App", "Part", "SetupError", "PyDiscoveryTools", "TOOL_SPECS",
     "BACKENDS", "Backend", "BackendUnavailable", "get_backend",
-    "FAMILIES", "L_BRACKET_V0", "Family", "match_family",
+    "FAMILIES", "L_BRACKET_V0", "L_BRACKET_GUSSET_V1", "Family", "match_family",
     "Force", "Goal", "Material", "Parameter", "PartSetup", "Support", "UnsupportedPartError", "Variant",
     "open_part", "save_with_parameters",
 ]

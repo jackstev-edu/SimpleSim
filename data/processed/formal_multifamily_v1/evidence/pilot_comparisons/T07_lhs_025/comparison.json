@@ -1,0 +1,10 @@
+{
+  "stress_change_pct": 0.33704452061415874,
+  "displacement_change_pct": 0.001512834762648533,
+  "convergence_status": "PASS",
+  "approach": "targeted_fine",
+  "peak_in_refined_core": true,
+  "upper_status": "PASS",
+  "upper_wall_s": 872.1181574000002,
+  "upper_error": ""
+}

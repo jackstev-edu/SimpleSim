@@ -18,6 +18,13 @@ HERE = Path(__file__).parent / "examples"
 BASELINE = {"thickness_mm": 5.0, "flange_length_mm": 90.0, "arm_width_mm": 25.0, "hole_diameter_mm": 8.5, "fillet_radius_mm": 4.0}
 RANGES = {"thickness_mm": (2.5, 10.0), "flange_length_mm": (72.0, 108.0), "arm_width_mm": (18.75, 31.25), "hole_diameter_mm": (5.95, 11.05), "fillet_radius_mm": (1.0, 12.5)}
 
+# The gusseted bracket v1: Role 1's baseline and sampled ranges (docs/bracket_family_v1_l_bracket_gusset_v1.md).
+V1 = "l_bracket_gusset_v1"
+BASELINE_V1 = {"thickness_mm": 6.0, "flange_length_mm": 80.0, "arm_width_mm": 40.0, "hole_diameter_mm": 8.0, "fillet_radius_mm": 4.0,
+               "vertical_height_mm": 60.0, "gusset_thickness_mm": 6.0, "gusset_length_mm": 20.0}
+RANGES_V1 = {"thickness_mm": (4.0, 10.0), "flange_length_mm": (75.0, 120.0), "arm_width_mm": (32.0, 60.0), "hole_diameter_mm": (6.0, 12.0),
+             "fillet_radius_mm": (2.5, 8.0), "vertical_height_mm": (50.0, 90.0), "gusset_thickness_mm": (3.0, 10.0), "gusset_length_mm": (12.0, 35.0)}
+
 
 def example_spec() -> StudySpec:
     return StudySpec(
@@ -25,7 +32,19 @@ def example_spec() -> StudySpec:
         constraints=[Constraint(metric="safety_factor", op=">=", value=2.0), Constraint(metric="max_disp_mm", op="<=", value=0.3)],
         parameters=[ParameterRange(name=k, low_mm=lo, high_mm=hi) for k, (lo, hi) in RANGES.items()],
         load=Load(force_n=500.0),
-        assumptions=["Load acts straight down at the hole", "Mounting face fully fixed"],
+        assumptions=["Load acts straight down at the hole", "Mounting face fully fixed"],  # kept word for word: the v0 fixtures show it
+    )
+
+
+def example_spec_v1() -> StudySpec:
+    """The same study on the gusseted bracket: eight dimensions, the v1 ranges."""
+    return StudySpec(
+        bracket_family=V1,
+        objective=Objective(metric="mass_kg", direction="minimize"),
+        constraints=[Constraint(metric="safety_factor", op=">=", value=2.0), Constraint(metric="max_disp_mm", op="<=", value=0.3)],
+        parameters=[ParameterRange(name=k, low_mm=lo, high_mm=hi) for k, (lo, hi) in RANGES_V1.items()],
+        load=Load(force_n=500.0),
+        assumptions=["Load acts straight down on the free-end face", "Mounting face fully fixed", "Gusset junction fillet fixed at 2 mm"],
     )
 
 
@@ -51,7 +70,14 @@ def main() -> None:
             w.writerow(r.model_dump())
     (HERE / "prediction.json").write_text(FakePredictor().predict(spec, n=200).model_dump_json(indent=2) + "\n")
     (HERE / "result.json").write_text(run_pipeline(spec, BASELINE).model_dump_json(indent=2) + "\n")
-    print("wrote", sorted(p.name for p in HERE.iterdir()))
+    # The v1 set: the fakes label it with the v0 beam formula (the gusset is ignored), and say so in warnings.
+    v1 = HERE / V1
+    v1.mkdir(exist_ok=True)
+    spec_v1 = example_spec_v1()
+    (v1 / "study_spec.json").write_text(spec_v1.model_dump_json(indent=2) + "\n")
+    (v1 / "prediction.json").write_text(FakePredictor().predict(spec_v1, n=200).model_dump_json(indent=2) + "\n")
+    (v1 / "result.json").write_text(run_pipeline(spec_v1, BASELINE_V1).model_dump_json(indent=2) + "\n")
+    print("wrote", sorted(p.name for p in HERE.iterdir()), "and", sorted(p.name for p in v1.iterdir()))
 
 
 if __name__ == "__main__":

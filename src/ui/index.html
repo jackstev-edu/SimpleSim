@@ -390,10 +390,15 @@
 
 <script>
 "use strict";
-// Names mirror contracts/models.py: PARAM_NAMES and MetricName.
-const PARAMS = ["thickness_mm", "flange_length_mm", "arm_width_mm", "hole_diameter_mm", "fillet_radius_mm"];
+// Names mirror contracts/models.py: FAMILY_PARAMS, PARAM_NAMES and MetricName.
+const FAMILY_PARAMS = {
+  l_bracket_v0: ["thickness_mm", "flange_length_mm", "arm_width_mm", "hole_diameter_mm", "fillet_radius_mm"],
+  l_bracket_gusset_v1: ["thickness_mm", "flange_length_mm", "arm_width_mm", "hole_diameter_mm", "fillet_radius_mm", "vertical_height_mm", "gusset_thickness_mm", "gusset_length_mm"],
+};
+let PARAMS = FAMILY_PARAMS.l_bracket_v0; // the loaded spec's family picks the list (accept)
 const METRICS = ["mass_kg", "max_stress_mpa", "max_disp_mm", "safety_factor"];
-const PARAM_LABEL = { thickness_mm: "Thickness", flange_length_mm: "Flange length", arm_width_mm: "Arm width", hole_diameter_mm: "Hole diameter", fillet_radius_mm: "Fillet radius" };
+const PARAM_LABEL = { thickness_mm: "Thickness", flange_length_mm: "Flange length", arm_width_mm: "Arm width", hole_diameter_mm: "Hole diameter", fillet_radius_mm: "Fillet radius",
+  vertical_height_mm: "Vertical height", gusset_thickness_mm: "Gusset thickness", gusset_length_mm: "Gusset length" };
 const METRIC_LABEL = { mass_kg: "Mass", max_stress_mpa: "Max. Von Mises Stress", max_disp_mm: "Max. Displacement", safety_factor: "Factor of Safety" };
 const GOAL_WORD = { mass_kg: "mass", max_stress_mpa: "max stress", max_disp_mm: "max displacement", safety_factor: "safety factor" };
 const GOAL_UNIT = { mass_kg: " kg", max_stress_mpa: " MPa", max_disp_mm: " mm", safety_factor: "" };
@@ -558,7 +563,7 @@ function field(errs, obj, name, test, what, where) {
   return true;
 }
 function checkDesign(errs, d, where) {
-  if (!isObj(d)) { errs.push(`${where}: expected an object of the five dimensions`); return; }
+  if (!isObj(d)) { errs.push(`${where}: expected an object of the family's ${PARAMS.length} dimensions`); return; }
   for (const p of PARAMS) field(errs, d, p, isNum, "a number", where);
 }
 function checkSpec(errs, s, where) {
@@ -668,6 +673,11 @@ async function loadPicked(fileList) {
 }
 function accept(spec, pred, res, names) {
   const errs = [];
+  // The spec's family sets the dimension list the checks and every table use; v0 files keep the five.
+  if (isObj(spec) && isStr(spec.bracket_family)) {
+    if (spec.bracket_family in FAMILY_PARAMS) PARAMS = FAMILY_PARAMS[spec.bracket_family];
+    else errs.push(`${names[0]}.bracket_family: unknown family "${spec.bracket_family}" (known: ${Object.keys(FAMILY_PARAMS).join(", ")})`);
+  }
   checkSpec(errs, spec, names[0]);
   checkPrediction(errs, pred, names[1]);
   checkResult(errs, res, names[2]);
@@ -1177,7 +1187,9 @@ function mechanics(spec, bindMetric) {
   if (sl) where.push([im(slim), `stress limit, ${U.mpa(sl.value)}`]);
   if (dl) where.push([im(dlim), `deflection limit, ${U.mm(dl.value)}`]);
   if (th) where.push([im(tlow), `lower bound of the thickness range, ${U.mm(th.low_mm)}`]);
-  where.push([im(mi("H")), `mounting leg height, fixed at ${U.mm(MOUNT_HEIGHT_MM)} in this bracket family`]);
+  const vh = spec.parameters.find((p) => p.name === "vertical_height_mm");
+  where.push([im(mi("H")), vh ? `vertical leg height, a design variable of this family (${U.mm(vh.low_mm)} to ${U.mm(vh.high_mm)})` : `mounting leg height, fixed at ${U.mm(MOUNT_HEIGHT_MM)} in this bracket family`]);
+  if (vh) where.push([im(row(mi("g"), mo(","), sub(mi("t"), mi("g")))), "gusset length and thickness: a 45 degree rib at the inside corner that these beam equations do not include"]);
   where.push([im(row(sy, mo(","), E, mo(","), mi("ρ"))), `yield strength, Young's modulus and density of ${spec.material_key}`]);
   return { eqs, derived, where };
 }
@@ -1284,7 +1296,10 @@ function renderScene() {
   const { rot, pt } = camera();
   const d = (r.ver || r.cand).design, load = S.res.spec.load;
   const t = d.thickness_mm, L = d.flange_length_mm, w = d.arm_width_mm, hole = d.hole_diameter_mm;
-  const H = MOUNT_HEIGHT_MM, rad = Math.max(0, Math.min(d.fillet_radius_mm, H - w, L - w)); // clamp so the arc always fits
+  const H = isNum(d.vertical_height_mm) ? d.vertical_height_mm : MOUNT_HEIGHT_MM; // v1 varies the leg height, v0 fixes it
+  const rad = Math.max(0, Math.min(d.fillet_radius_mm, H - w, L - w)); // clamp so the arc always fits
+  // v1 only: the gusset rib at the inside corner, a right triangle of leg gl drawn on the front face.
+  const gl = isNum(d.gusset_length_mm) ? Math.max(0, Math.min(d.gusset_length_mm, H - w - 2, L - w - 2)) : 0;
   // Profile in mm, counter-clockwise with y up; the fillet arc runs from the arm to the leg.
   const prof = [[0, 0], [L, 0], [L, w]];
   for (let i = 0; i <= 12; i++) { const a = Math.PI * (1.5 - 0.5 * i / 12); prof.push([w + rad + rad * Math.cos(a), w + rad + rad * Math.sin(a)]); }
@@ -1334,6 +1349,7 @@ function renderScene() {
     <polygon points="${poly(prof.map((p) => pt(p[0], p[1], -t)))}" fill="#3f454c"/>
     ${sides.map((s) => `<polygon points="${poly(s.quad)}" fill="${s.col}" stroke="${s.col}" stroke-width=".25"/>`).join("")}
     <polygon points="${poly(front)}" fill="url(#steel)" stroke="#d5dce4" stroke-width=".35" stroke-linejoin="round"/>
+    ${gl > 0 ? `<polygon points="${poly([pt(w, w, 0), pt(w + gl, w, 0), pt(w, w + gl, 0)])}" fill="#98a3ae" stroke="#d5dce4" stroke-width=".3" stroke-linejoin="round"/>` : ""}
     ${hot ? `<circle cx="${f[0]}" cy="${f[1]}" r="${Math.max(rad, 5) * 1.9}" fill="url(#hotspot)" clip-path="url(#face)"/>` : ""}
     <polygon points="${poly(ring(0))}" fill="#555d67"/>
     <polygon points="${poly(ring(-t))}" fill="#222" clip-path="url(#bore)"/>
@@ -1449,7 +1465,8 @@ async function runDemo() {
 const PYD_API = "api/pydiscovery", PYD_LIVE = "pydiscovery_live";
 const PYD_NAMES = ["PyDiscovery study_spec", "PyDiscovery prediction", "PyDiscovery result"];
 const PYD = { on: false, engine: "", predictor: "", note: "", card: null, busy: "", error: "", last: null, saved: "",
-  form: { force_n: 500, material: "structural_steel", min_sf: 1.5, max_disp_mm: 0.5 } };
+  form: { force_n: 500, material: "structural_steel", min_sf: 1.5, max_disp_mm: 0.5, family: "l_bracket_v0" } };
+const PYD_FAMILY_LABEL = { l_bracket_v0: "L-bracket v0", l_bracket_gusset_v1: "Gusseted L-bracket v1" };
 async function pydFetch(path, opts) {
   let resp;
   try { resp = await fetch(PYD_API + path, Object.assign({ cache: "no-store" }, opts || {})); }
@@ -1514,7 +1531,7 @@ function renderPyd() {
   if (st) {
     setup = `<pre class="card">${esc(PYD.card.message)}</pre>`;
     const fill = [];
-    if (needs("use_family")) fill.push(`<label>Which bracket? ${btn("family", "It's the L-bracket", true)}</label>`);
+    if (needs("use_family")) fill.push(`<label>Which bracket? <select data-form="family"${dis}>${Object.keys(FAMILY_PARAMS).map((k) => `<option value="${k}"${f.family === k ? " selected" : ""}>${PYD_FAMILY_LABEL[k] || k}</option>`).join("")}</select> ${btn("family", "Use this bracket", true)}</label>`);
     if (needs("supports")) fill.push(`<label>Supports ${btn("support", "Fix the back face", true)}</label>`);
     if (needs("load")) fill.push(`<label>Load <input type="number" data-form="force_n" value="${esc(f.force_n)}" min="0" step="10"${dis}> N ${btn("load", "Set load", true)}</label>`);
     if (needs("material")) fill.push(`<label>Material <select data-form="material"${dis}>${["structural_steel", "aluminum_6061"].map((m) => `<option value="${m}"${f.material === m ? " selected" : ""}>${m}</option>`).join("")}</select> ${btn("material", "Set material", true)}</label>`);
@@ -1546,7 +1563,7 @@ $("pyd").addEventListener("click", async (e) => {
   if (!b || b.disabled) return;
   const act = b.dataset.pyd;
   if (act === "demo") await pydRun("Opening the demo part", () => pydFetch("/demo-part", { method: "POST" }));
-  else if (act === "family") await pydRun("Using the L-bracket", () => pydTool("use_family", { family: "l_bracket_v0" }));
+  else if (act === "family") await pydRun("Using the " + (PYD_FAMILY_LABEL[PYD.form.family] || PYD.form.family), () => pydTool("use_family", { family: PYD.form.family }));
   else if (act === "support") await pydRun("Setting the support", () => pydTool("set_support", {}));
   else if (act === "load") await pydRun("Setting the load", () => pydTool("set_load", { force_n: Number(PYD.form.force_n) }));
   else if (act === "material") await pydRun("Setting the material", () => pydTool("set_material", { material: PYD.form.material }));

@@ -176,3 +176,26 @@ def test_launch_gui_without_the_api_still_serves_static_files():
     finally:
         server.shutdown()
         server.server_close()
+
+
+def test_gusset_part_runs_through_the_same_routes(api, tmp_path):
+    from src.pydiscovery import L_BRACKET_GUSSET_V1
+
+    raw = write_demo_part(tmp_path / "src.dsco", family=L_BRACKET_GUSSET_V1).read_bytes()
+    status, out = post(api, "/api/pydiscovery/upload", raw, query={"name": ["gusset.dsco"]})
+    assert status == 200 and out["ok"] is True and out["state"]["family"] == "l_bracket_gusset_v1"
+    assert [d["contract_name"] for d in out["state"]["dimensions"]][-3:] == ["vertical_height_mm", "gusset_thickness_mm", "gusset_length_mm"]
+    assert tool(api, "confirm_setup")[1]["ok"] is True
+    status, out = tool(api, "optimize_design", {"constraints": LIMITS})
+    assert status == 200 and out["ok"] is True
+    spec, res = StudySpec.model_validate(out["study_spec"]), Result.model_validate(out["result"])
+    assert spec.bracket_family == "l_bracket_gusset_v1" and res.recommended is not None and len(res.recommended.design) == 8
+    status, out = tool(api, "save_design")
+    assert out["ok"] is True and Path(out["path"]).name == "gusset_optimized.dsco"
+
+
+def test_spaceclaim_upload_can_pick_the_gusset_family(api, tmp_path):
+    raw = write_demo_part(tmp_path / "src.scdocx").read_bytes()
+    post(api, "/api/pydiscovery/upload", raw, query={"name": ["shape.scdocx"]})
+    status, out = tool(api, "use_family", {"family": "l_bracket_gusset_v1"})
+    assert out["ok"] is True and out["state"]["family"] == "l_bracket_gusset_v1" and len(out["state"]["dimensions"]) == 8

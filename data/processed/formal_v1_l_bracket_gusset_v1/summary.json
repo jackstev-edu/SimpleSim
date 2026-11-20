@@ -1,0 +1,126 @@
+{
+  "schema_version": "0.1.0",
+  "model_dataset_schema_version": "role1_model_1.0.0",
+  "dataset_name": "l_bracket_gusset_v1_formal_2048",
+  "bracket_family": "l_bracket_gusset_v1",
+  "dataset_stage": "formal_training_data",
+  "planned_cases": 2048,
+  "successful_cases": 2048,
+  "remaining_cases": 0,
+  "unresolved_failures": 0,
+  "failure_attempts": 10,
+  "unresolved_failures_by_stage": {},
+  "sampling": {
+    "method": "scipy.stats.qmc.Sobol, scrambled",
+    "seed": 20261116,
+    "count": 2048,
+    "design_id_format": "v1_20261116_<0000>"
+  },
+  "model_inputs": [
+    "thickness_mm",
+    "flange_length_mm",
+    "arm_width_mm",
+    "hole_diameter_mm",
+    "fillet_radius_mm",
+    "vertical_height_mm",
+    "gusset_thickness_mm",
+    "gusset_length_mm",
+    "poissons_ratio"
+  ],
+  "ranges": {
+    "thickness_mm": {
+      "low": 4.0,
+      "high": 10.0
+    },
+    "flange_length_mm": {
+      "low": 75.0,
+      "high": 120.0
+    },
+    "arm_width_mm": {
+      "low": 32.0,
+      "high": 60.0
+    },
+    "hole_diameter_mm": {
+      "low": 6.0,
+      "high": 12.0
+    },
+    "fillet_radius_mm": {
+      "low": 2.5,
+      "high": 8.0
+    },
+    "vertical_height_mm": {
+      "low": 50.0,
+      "high": 90.0
+    },
+    "gusset_thickness_mm": {
+      "low": 3.0,
+      "high": 10.0
+    },
+    "gusset_length_mm": {
+      "low": 12.0,
+      "high": 35.0
+    },
+    "poissons_ratio": {
+      "low": 0.25,
+      "high": 0.35
+    }
+  },
+  "reference_conditions": {
+    "load_force_n": 500.0,
+    "load_direction": "-Y",
+    "youngs_modulus_mpa": 200000.0,
+    "yield_strength_mpa": 250.0,
+    "density_kg_m3": 7850.0
+  },
+  "production_mesh_strategy": "tet2; maximum_size_mm = 1 * min(3, thickness_mm/2, gusset_thickness_mm); minimum_size_mm = maximum_size_mm/4; Mesh.MeshSizeFromCurvature = 16; Mesh.Algorithm3D = 10 (HXT); Mesh.HighOrderOptimize = 2 (level medium)",
+  "mesh_level": "medium",
+  "retry_policy": "one retry at 0.75 times the production sizes after a nonpositive Jacobian",
+  "output_ranges": {
+    "max_stress_mpa": {
+      "min": 66.64694917249776,
+      "max": 1032.1304366923719,
+      "mean": 272.14538027621677
+    },
+    "max_disp_mm": {
+      "min": 0.029454176390833673,
+      "max": 4.613658434307814,
+      "mean": 0.5153158396711529
+    },
+    "mass_kg": {
+      "min": 0.14926675006681414,
+      "max": 0.8643602669931252,
+      "mean": 0.41879074325746524
+    }
+  },
+  "elapsed": {
+    "cases": 2048,
+    "mean_s": 120.47483247163109,
+    "max_s": 33025.697595100035,
+    "total_s": 246732.45690190047
+  },
+  "platform": "Windows-11-10.0.26200-SP0",
+  "ccx_version": "2.23",
+  "workers": 3,
+  "shard": {
+    "index": 0,
+    "count": 1
+  },
+  "successful_case_file_policy": "keep logs; remove reproducible large solver files",
+  "all_quality_checks_passed": true,
+  "numerical_checks_passed": true,
+  "role1_dataset_complete": true,
+  "contract_status": {
+    "shared_contract_modified": false,
+    "runs_csv_columns": "Run contract columns followed by vertical_height_mm, gusset_thickness_mm, gusset_length_mm",
+    "proposed_changes_documented_in": "docs/bracket_family_v1_l_bracket_gusset_v1.md"
+  },
+  "artifacts": {
+    "sample_plan": "data\\processed\\formal_v1_l_bracket_gusset_v1\\sample_plan.csv",
+    "runs": "data\\processed\\formal_v1_l_bracket_gusset_v1\\runs.csv",
+    "model_dataset": "data\\processed\\formal_v1_l_bracket_gusset_v1\\model_dataset.csv",
+    "run_diagnostics": "data\\processed\\formal_v1_l_bracket_gusset_v1\\run_diagnostics.csv",
+    "failure_attempts": "data\\processed\\formal_v1_l_bracket_gusset_v1\\failure_attempts.csv",
+    "failures": "data\\processed\\formal_v1_l_bracket_gusset_v1\\failures.csv",
+    "quality_checks": "data\\processed\\formal_v1_l_bracket_gusset_v1\\quality_checks.csv"
+  }
+}

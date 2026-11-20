@@ -1,0 +1,52 @@
+{
+  "schema_version": "role1_multifamily_1.0.0",
+  "feature_columns": [
+    "bbox_x_mm",
+    "bbox_y_mm",
+    "bbox_z_mm",
+    "plate_thickness_mm",
+    "poissons_ratio",
+    "cad_volume_mm3",
+    "surface_area_mm2",
+    "center_x_mm",
+    "center_y_mm",
+    "center_z_mm",
+    "inertia_xx_mm5",
+    "inertia_yy_mm5",
+    "inertia_zz_mm5",
+    "inertia_xy_mm5",
+    "inertia_xz_mm5",
+    "inertia_yz_mm5",
+    "fixed_face_area_mm2",
+    "load_face_area_mm2",
+    "load_center_y_mm",
+    "load_center_z_mm"
+  ],
+  "label_columns": [
+    "reference_max_stress_mpa",
+    "reference_max_disp_mm"
+  ],
+  "deterministic_outputs": [
+    "volume_mm3",
+    "reference_mass_kg"
+  ],
+  "mass_formula": "cad_volume_mm3 * density_kg_m3 * 1e-9",
+  "metadata_excluded_from_model": [
+    "design_id",
+    "bracket_family",
+    "anchor_id",
+    "sampling_method",
+    "changed_parameter",
+    "params_json",
+    "label_source",
+    "split",
+    "source",
+    "mesh_rule"
+  ],
+  "coordinate_frame": "X fixed to free end, Y up, Z across width; 500 N in -Y",
+  "feature_notes": "CAD only. Inertia is centroidal, unit-density volume integrals (mm^5).",
+  "limitations": "Finite descriptors do not uniquely encode arbitrary shapes. Volume/mass are deterministic CAD values, not independent ML targets. No FEA diagnostics as features.",
+  "shared_contract_changed": false,
+  "heldout_family": "t07_stepped_v1",
+  "split_seed": 20261117
+}

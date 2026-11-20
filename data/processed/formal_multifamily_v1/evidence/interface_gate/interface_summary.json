@@ -1,0 +1,30 @@
+{
+  "schema_version": "role1_multifamily_1.0.0",
+  "designs": 1000,
+  "legacy_labels": 200,
+  "pending_fea": 800,
+  "feature_count": 20,
+  "family_counts": {
+    "l_bracket_v0": 200,
+    "t01_double_hole_v1": 80,
+    "t02_single_slot_v1": 80,
+    "t03_twin_slot_v1": 80,
+    "t04_rounded_window_v1": 80,
+    "t05_side_notches_v1": 80,
+    "t06_tapered_v1": 80,
+    "t07_stepped_v1": 80,
+    "t08_twin_gusset_v1": 80,
+    "t09_perforated_gusset_v1": 80,
+    "t10_offset_planform_v1": 80
+  },
+  "split_counts": {
+    "train": 736,
+    "validation": 184,
+    "heldout_test": 80
+  },
+  "inputs_sha256": {
+    "legacy_model_dataset": "15c3383ac565a806d05e12d4989a053284100b78ac1832342df65f8eefa29cc3",
+    "cad_checks": "71094ab6dd498a388ad8c4b137f1a9f144c8355ed8c74feee1e45d644734c1e1"
+  },
+  "status": "CAD features ready; new FEA labels pending"
+}

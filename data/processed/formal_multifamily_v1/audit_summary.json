@@ -1,0 +1,46 @@
+{
+  "status": "PASS",
+  "rows": 1000,
+  "legacy_rows": 200,
+  "new_rows": 800,
+  "feature_count": 20,
+  "split_counts": {
+    "validation": 184,
+    "train": 736,
+    "heldout_test": 80
+  },
+  "family_counts": {
+    "t01_double_hole_v1": 80,
+    "t02_single_slot_v1": 80,
+    "t03_twin_slot_v1": 80,
+    "t04_rounded_window_v1": 80,
+    "t05_side_notches_v1": 80,
+    "t06_tapered_v1": 80,
+    "t07_stepped_v1": 80,
+    "t08_twin_gusset_v1": 80,
+    "t09_perforated_gusset_v1": 80,
+    "t10_offset_planform_v1": 80,
+    "l_bracket_v0": 200
+  },
+  "pair_count": 200,
+  "max_reaction_imbalance": 6.301320287351548e-07,
+  "min_element_quality": 0.12646520253584476,
+  "input_sha256": {
+    "model_dataset.csv": "15c3383ac565a806d05e12d4989a053284100b78ac1832342df65f8eefa29cc3",
+    "run_diagnostics.csv": "661de8d690b6cf053a403f7aaa58a3a0ed925f0600e407c6360d3288fcbcf01b",
+    "quality_checks.csv": "00cc1455f9e5855e45ac701c3187f6c43fd43584a7eb95f02d9f4254d5e1f63c",
+    "design_manifest.csv": "dc06475b549b00a9d06b318a9fa2d7839fcb4e333e7514f21585ccb407bc2e7c",
+    "geometry_features.csv": "ef3d38207093616630905ca535be2ad5b9a7ab017171ff45a201d9c9727a495d",
+    "split_manifest.csv": "c4a5a5e06d093adc764fba93a1df732d744ae06b92a0e5acff79f0d63a978b6a",
+    "feature_schema.json": "b76561ef8c0f7f38e06f14988d9215f90b9ac3b1ddcec3ac4a8da3aa7d8dfb8e",
+    "new_fea_labels.csv": "77502df744a7f1698edad66b3df702624f5f9232c970c3506309c7e8bbcad1d8",
+    "batch_config.json": "3358e1c21bf211408a4899fb0b714206d8c51ffefd77174345e43af35e80cb27",
+    "batch_summary.json": "fcfe26e63c14d0f012c4da8011f907b8bf54bbf0f9d8e69010a788562aedb741",
+    "pilot_validation.csv": "2a7dd0d4c3f2ff3b426619ee8310a6df72a7b1b6a0756830b8be14ab9fbea8f0"
+  },
+  "limitations": [
+    "Linear elastic reference results; stresses above yield are not proof of elastic physical behavior.",
+    "Mesh comparisons are baseline/representative checks, not individual convergence proofs for all 800 cases.",
+    "Holdout is one entire family (T07), not proof of generalization to arbitrary geometry."
+  ]
+}

@@ -17,7 +17,7 @@ from contracts.models import Constraint, Load, Objective, ParameterRange, Result
 from src.models.power_law import PowerLawPredictor
 
 from .backends import Backend, get_backend
-from .families import FAMILIES, Family, match_family
+from .families import FAMILIES, L_BRACKET_V0, Family, match_family
 from .part_file import Material, PartSetup, open_part, save_with_parameters
 
 POISSON = {"structural_steel": 0.30, "aluminum_6061": 0.33}  # the contracts' table has no Poisson's ratio
@@ -51,26 +51,34 @@ PREDICTORS = ("power_law", "gp")
 
 
 class App:
-    """Entry point. App(backend="fitted" | "calculix" | ..., predictor="power_law" | "gp", runs=path to runs.csv)."""
+    """Entry point. App(backend="fitted" | "calculix" | ..., predictor="power_law" | "gp", runs=training data for the GP).
 
-    def __init__(self, backend: str | Backend = "fitted", predictor: str = "power_law", runs: str | Path | None = None):
+    runs: a path (the v0 GP trains from it, as before) or {family key: path}. Families without an entry train from
+    Role 1's model_dataset.csv under data/processed, cached on disk after the first fit (src/models/gp.py).
+    """
+
+    def __init__(self, backend: str | Backend = "fitted", predictor: str = "power_law", runs: str | Path | dict | None = None):
         if predictor not in PREDICTORS:
             raise ValueError(f"Unknown predictor {predictor!r}. Choose from {PREDICTORS}.")
         self.backend = get_backend(backend) if isinstance(backend, str) else backend
-        self.predictor, self.runs = predictor, runs
-        self._gp = None  # trained once per App, about a second for 200 runs
+        self.predictor = predictor
+        self.runs = runs if isinstance(runs, dict) or runs is None else {"l_bracket_v0": runs}
+        self._gp: dict[str, object] = {}  # trained once per App and family: a second for v0, minutes for v1 (then cached)
 
     def open(self, path: str | Path) -> "Part":
         return Part(open_part(path), self.backend, self._predictor_for)
 
-    def _predictor_for(self, m: Material):
-        """The shortlisting model for a part's material."""
+    def _predictor_for(self, m: Material, family: Family = L_BRACKET_V0):
+        """The shortlisting model for a part's material and family."""
         if self.predictor == "gp":
-            if self._gp is None:
-                from src.models.gp import DEFAULT_RUNS, GPPredictor  # needs scikit-learn and Role 1's runs.csv
-                self._gp = GPPredictor(self.runs or DEFAULT_RUNS)
-            return self._gp.for_material(m.youngs_mpa, m.yield_mpa, m.density_kg_m3)
-        return PowerLawPredictor(e_mpa=m.youngs_mpa, yield_mpa=m.yield_mpa, density_kg_m3=m.density_kg_m3)
+            if family.key not in self._gp:
+                from src.models.gp import GPPredictor, trained_gp  # needs scikit-learn and Role 1's data
+
+                source = self.runs.get(family.key) if self.runs else None
+                self._gp[family.key] = GPPredictor(source, family=family.key) if source else trained_gp(family.key)
+            return self._gp[family.key].for_material(m.youngs_mpa, m.yield_mpa, m.density_kg_m3, poisson=m.poisson, valid=family.valid)
+        return PowerLawPredictor(e_mpa=m.youngs_mpa, yield_mpa=m.yield_mpa, density_kg_m3=m.density_kg_m3, family=family.key,
+                                 poisson=m.poisson, valid=family.valid)
 
 
 class Part:
@@ -79,7 +87,8 @@ class Part:
     def __init__(self, setup: PartSetup, backend: Backend, predictor_for=None):
         self.setup = setup
         self.backend = backend
-        self._predictor_for = predictor_for or (lambda m: PowerLawPredictor(e_mpa=m.youngs_mpa, yield_mpa=m.yield_mpa, density_kg_m3=m.density_kg_m3))
+        self._predictor_for = predictor_for or (lambda m, fam=L_BRACKET_V0: PowerLawPredictor(
+            e_mpa=m.youngs_mpa, yield_mpa=m.yield_mpa, density_kg_m3=m.density_kg_m3, family=fam.key, poisson=m.poisson, valid=fam.valid))
         self.last_prediction = None  # the shortlist behind last_result, for the GUI
         self.family: Family | None = None
         self.file_names: dict[str, str] = {}  # contract name -> parameter name inside the file
@@ -147,6 +156,8 @@ class Part:
                 lo, hi = self.family.ranges_mm[contract]
                 if not lo <= value <= hi:
                     out.append(f"{self.family.labels[contract]} is {value:g} mm, outside {lo:g} to {hi:g} mm.")
+            if len(self.values_mm) == len(self.family.labels):
+                out += [f"The dimensions break {r}" for r in self.family.failed_rules(self.values_mm)]
         return out
 
     def describe(self) -> str:
@@ -258,8 +269,8 @@ class Part:
         """The team workflow: predictor shortlists, this engine verifies finalists, contract Result out."""
         self._ready()
         fam, m = self.family, self.material
-        if predictor is None and fam.key == "l_bracket_v0":  # Role 2's model, using the part's own material
-            predictor = self._predictor_for(m)
+        if predictor is None:  # Role 2's model for this family, using the part's own material
+            predictor = self._predictor_for(m, fam)
         key = material_key(m)
         if key is None and predictor is None:
             raise SetupError(f"The stand-in predictor knows {sorted(MATERIALS)} only; {m.name} needs a trained model.")
@@ -286,6 +297,8 @@ class Part:
             result.warnings.append("Formula engine: stress and deflection come from beam theory for a different bracket, not FEA. Use the fitted or CalculiX engine.")
         if self.backend.name == "power_law_v0":
             result.warnings.append("Finalists were checked with the fitted power law, not a real solver. Use the CalculiX engine (Role 1) for a real check.")
+        if fam.key != "l_bracket_v0":
+            result.warnings.append(f"{fam.title}: the GUI's beam equations describe the v0 L-bracket; the numbers above come from the {fam.key} models and engine.")
         self.last_result, self.last_prediction = result, capture.prediction
         return result
 
@@ -329,14 +342,22 @@ class Part:
             if not lo <= value <= hi:
                 raise ValueError(f"{fam.labels[contract]} {value:g} mm is outside {lo:g} to {hi:g} mm.")  # never clamp
             new[contract] = float(value)
+        broken = fam.failed_rules(new)
+        if broken:
+            raise ValueError(f"These dimensions can't be built: {' '.join(broken)}")
         return new
+
+    def _source(self) -> str:
+        """Verified.source: engines that serve several families name the one they solved."""
+        source = getattr(self.backend, "source", None)
+        return source(self.family) if callable(source) else self.backend.name
 
     def _verify(self, design_id: str, design: dict[str, float], constraints: list[Constraint]) -> Verified:
         out = self.backend.solve(self.family, design, self.force_n, self.material)
         metrics = {**out, "safety_factor": self.material.yield_mpa / out["max_stress_mpa"]}
         violated = [f"{c.metric} {c.op} {c.value:g}" for c in constraints
                     if not (metrics[c.metric] >= c.value if c.op == ">=" else metrics[c.metric] <= c.value)]
-        return Verified(design_id=design_id, design=design, source=self.backend.name, feasible=not violated, violated=violated, **metrics)
+        return Verified(design_id=design_id, design=design, source=self._source(), feasible=not violated, violated=violated, **metrics)
 
     def _assumptions(self) -> list[str]:
         fam, out = self.family, []
@@ -368,7 +389,7 @@ class _PipelineSolver:
 
     def __init__(self, part: Part):
         self.part = part
-        self.source = part.backend.name
+        self.source = part._source()
 
     def solve(self, spec: StudySpec, design_id: str, design: dict[str, float]) -> Verified:
         return self.part._verify(design_id, dict(design), list(spec.constraints))
