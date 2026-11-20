@@ -18,15 +18,18 @@ from pathlib import Path
 
 from .backends import BACKENDS
 from .demo_part import write_demo_part
+from .families import FAMILIES
 from .gui import prepare_site, serve, write_run
 from .session import PREDICTORS, App, SetupError
 
 DEFAULT_PART = Path("data/raw/l_bracket_demo.dsco")
+DEMO_PARTS = {"l_bracket_v0": DEFAULT_PART, "l_bracket_gusset_v1": Path("data/raw/l_bracket_gusset_demo.dsco")}
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--part", type=Path, default=DEFAULT_PART)
+    ap.add_argument("--part", type=Path, default=None, help="a part file; default: the synthetic demo part of --family")
+    ap.add_argument("--family", default="l_bracket_v0", choices=sorted(FAMILIES), help="which synthetic demo part to write and open")
     ap.add_argument("--engine", default="fitted", choices=sorted(BACKENDS))
     ap.add_argument("--predictor", default="power_law", choices=PREDICTORS, help="gp needs scikit-learn and Role 1's runs.csv")
     ap.add_argument("--runs", type=Path, default=None, help="runs.csv for the GP (default data/processed/formal_v0/runs.csv)")
@@ -38,9 +41,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--no-browser", action="store_true", help="with --gui: print the address instead of opening it")
     args = ap.parse_args(argv)
 
-    if args.part == DEFAULT_PART and not args.part.exists():
-        write_demo_part(args.part)  # synthetic until a real l_bracket.dsco is saved from Discovery
-        print(f"Wrote a synthetic demo part to {args.part}")
+    if args.part is None:
+        args.part = DEMO_PARTS[args.family]
+        if not args.part.exists():
+            write_demo_part(args.part, family=FAMILIES[args.family])  # synthetic until a real part is saved from Discovery
+            print(f"Wrote a synthetic demo part to {args.part}")
 
     try:
         part = App(args.engine, args.predictor, args.runs).open(args.part)
@@ -60,7 +65,7 @@ def main(argv: list[str] | None = None) -> int:
             print("Run with --yes to fill these with the L-bracket defaults.")
             return 0
         if part.family is None:
-            part.use_family("l_bracket_v0")
+            part.use_family(args.family)
         if part.support is None:
             part.set_support()
         if part.force_n is None:

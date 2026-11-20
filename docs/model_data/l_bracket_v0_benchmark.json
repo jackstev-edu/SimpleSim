@@ -1,0 +1,894 @@
+{
+  "family": "l_bracket_v0",
+  "source": "data\\processed\\formal_v0\\model_dataset.csv",
+  "rows": 200,
+  "inputs": [
+    "thickness_mm",
+    "flange_length_mm",
+    "arm_width_mm",
+    "hole_diameter_mm",
+    "fillet_radius_mm",
+    "poissons_ratio"
+  ],
+  "seed": 0,
+  "split": {
+    "train": 144,
+    "calibration": 16,
+    "test": 40
+  },
+  "volume_check": {
+    "rows": 200,
+    "max_abs_pct": 6.661338147750939e-14,
+    "mean_pct": 7.882583474838611e-15
+  },
+  "models": [
+    {
+      "model": "median_baseline",
+      "inputs": [
+        "thickness_mm",
+        "flange_length_mm",
+        "arm_width_mm",
+        "hole_diameter_mm",
+        "fillet_radius_mm",
+        "poissons_ratio"
+      ],
+      "fit_seconds": 0.0,
+      "raw": {
+        "max_stress_mpa": {
+          "median_pct": 36.87938302957967,
+          "p95_pct": 100.11021760168046
+        },
+        "max_disp_mm": {
+          "median_pct": 58.144027176107286,
+          "p95_pct": 284.8499985732224
+        }
+      },
+      "calibrated": {
+        "max_stress_mpa": {
+          "median_pct": 36.87938302957967,
+          "p95_pct": 100.11021760168046
+        },
+        "max_disp_mm": {
+          "median_pct": 58.144027176107286,
+          "p95_pct": 284.8499985732224
+        }
+      },
+      "band_scale": {},
+      "calibrated_on": "none"
+    },
+    {
+      "model": "power_law",
+      "inputs": [
+        "thickness_mm",
+        "flange_length_mm",
+        "arm_width_mm",
+        "hole_diameter_mm",
+        "fillet_radius_mm",
+        "poissons_ratio"
+      ],
+      "fit_seconds": 0.0,
+      "raw": {
+        "max_stress_mpa": {
+          "median_pct": 1.0131057209555094,
+          "p95_pct": 4.153997978700814,
+          "coverage_90": 0.875
+        },
+        "max_disp_mm": {
+          "median_pct": 0.5968703631419103,
+          "p95_pct": 1.57058797001809,
+          "coverage_90": 0.95
+        }
+      },
+      "calibrated": {
+        "max_stress_mpa": {
+          "median_pct": 1.0131057209555094,
+          "p95_pct": 4.153997978700814,
+          "coverage_90": 0.875
+        },
+        "max_disp_mm": {
+          "median_pct": 0.5968703631419103,
+          "p95_pct": 1.57058797001809,
+          "coverage_90": 0.95
+        }
+      },
+      "band_scale": {
+        "max_stress_mpa": 0.9077,
+        "max_disp_mm": 1.0003
+      },
+      "calibrated_on": "5-fold out-of-fold on 160 rows"
+    },
+    {
+      "model": "gp",
+      "inputs": [
+        "thickness_mm",
+        "flange_length_mm",
+        "arm_width_mm",
+        "hole_diameter_mm",
+        "fillet_radius_mm",
+        "poissons_ratio"
+      ],
+      "fit_seconds": 7.7,
+      "raw": {
+        "max_stress_mpa": {
+          "median_pct": 1.0064720130177673,
+          "p95_pct": 3.079640617359367,
+          "coverage_90": 0.8
+        },
+        "max_disp_mm": {
+          "median_pct": 0.022947381372095954,
+          "p95_pct": 0.07769086514504521,
+          "coverage_90": 0.975
+        }
+      },
+      "calibrated": {
+        "max_stress_mpa": {
+          "median_pct": 1.0064720130177673,
+          "p95_pct": 3.079640617359367,
+          "coverage_90": 0.825
+        },
+        "max_disp_mm": {
+          "median_pct": 0.022947381372095954,
+          "p95_pct": 0.07769086514504521,
+          "coverage_90": 0.8
+        }
+      },
+      "band_scale": {
+        "max_stress_mpa": 1.118,
+        "max_disp_mm": 0.7399
+      },
+      "calibrated_on": "5-fold out-of-fold on 160 rows"
+    },
+    {
+      "model": "autogluon",
+      "inputs": [
+        "thickness_mm",
+        "flange_length_mm",
+        "arm_width_mm",
+        "hole_diameter_mm",
+        "fillet_radius_mm",
+        "poissons_ratio"
+      ],
+      "fit_seconds": 119.2,
+      "raw": {
+        "max_stress_mpa": {
+          "median_pct": 2.071144209493614,
+          "p95_pct": 9.012843844906381,
+          "coverage_90": 0.9
+        },
+        "max_disp_mm": {
+          "median_pct": 5.23985661505969,
+          "p95_pct": 14.428506186442599,
+          "coverage_90": 0.775
+        }
+      },
+      "calibrated": {
+        "max_stress_mpa": {
+          "median_pct": 2.071144209493614,
+          "p95_pct": 9.012843844906381,
+          "coverage_90": 0.775
+        },
+        "max_disp_mm": {
+          "median_pct": 5.23985661505969,
+          "p95_pct": 14.428506186442599,
+          "coverage_90": 0.75
+        }
+      },
+      "band_scale": {
+        "max_stress_mpa": 0.8466,
+        "max_disp_mm": 0.9543
+      },
+      "calibrated_on": "5-fold out-of-fold on 160 rows"
+    }
+  ],
+  "poisson_check": [
+    {
+      "model": "power_law",
+      "inputs": [
+        "thickness_mm",
+        "flange_length_mm",
+        "arm_width_mm",
+        "hole_diameter_mm",
+        "fillet_radius_mm"
+      ],
+      "fit_seconds": 0.0,
+      "raw": {
+        "max_stress_mpa": {
+          "median_pct": 0.9889452311538593,
+          "p95_pct": 4.159728862636032,
+          "coverage_90": 0.875
+        },
+        "max_disp_mm": {
+          "median_pct": 0.8143513897889698,
+          "p95_pct": 2.7999513492995693,
+          "coverage_90": 0.925
+        }
+      },
+      "calibrated": {
+        "max_stress_mpa": {
+          "median_pct": 0.9889452311538593,
+          "p95_pct": 4.159728862636032,
+          "coverage_90": 0.875
+        },
+        "max_disp_mm": {
+          "median_pct": 0.8143513897889698,
+          "p95_pct": 2.7999513492995693,
+          "coverage_90": 0.925
+        }
+      },
+      "band_scale": {
+        "max_stress_mpa": 0.9176,
+        "max_disp_mm": 1.0542
+      },
+      "calibrated_on": "5-fold out-of-fold on 160 rows"
+    },
+    {
+      "model": "gp",
+      "inputs": [
+        "thickness_mm",
+        "flange_length_mm",
+        "arm_width_mm",
+        "hole_diameter_mm",
+        "fillet_radius_mm"
+      ],
+      "fit_seconds": 3.4,
+      "raw": {
+        "max_stress_mpa": {
+          "median_pct": 1.046022391719903,
+          "p95_pct": 3.129074580124896,
+          "coverage_90": 0.8
+        },
+        "max_disp_mm": {
+          "median_pct": 0.5503466298563298,
+          "p95_pct": 1.5735483934377836,
+          "coverage_90": 0.85
+        }
+      },
+      "calibrated": {
+        "max_stress_mpa": {
+          "median_pct": 1.046022391719903,
+          "p95_pct": 3.129074580124896,
+          "coverage_90": 0.825
+        },
+        "max_disp_mm": {
+          "median_pct": 0.5503466298563298,
+          "p95_pct": 1.5735483934377836,
+          "coverage_90": 0.85
+        }
+      },
+      "band_scale": {
+        "max_stress_mpa": 1.1063,
+        "max_disp_mm": 1.0041
+      },
+      "calibrated_on": "5-fold out-of-fold on 160 rows"
+    }
+  ],
+  "skipped": {},
+  "power_law_constants": {
+    "inputs": [
+      "thickness_mm",
+      "flange_length_mm",
+      "arm_width_mm",
+      "hole_diameter_mm",
+      "fillet_radius_mm",
+      "poissons_ratio"
+    ],
+    "coef": {
+      "max_stress_mpa": [
+        7.385403,
+        -1.892947,
+        1.170641,
+        -0.992035,
+        -0.007421,
+        -0.203982,
+        -0.005763
+      ],
+      "max_disp_mm": [
+        -5.643764,
+        -3.070595,
+        3.252062,
+        -1.048749,
+        0.028563,
+        -0.087362,
+        -0.064536
+      ]
+    },
+    "sigma": {
+      "max_stress_mpa": 0.018461,
+      "max_disp_mm": 0.009947
+    },
+    "band_scale": {
+      "max_stress_mpa": 0.9077,
+      "max_disp_mm": 1.0003
+    },
+    "trained_on_runs": 144,
+    "ranges": {
+      "poissons_ratio": [
+        0.25,
+        0.35
+      ],
+      "thickness_mm": [
+        4.0148,
+        9.9836
+      ],
+      "flange_length_mm": [
+        75.1936,
+        119.8222
+      ],
+      "arm_width_mm": [
+        32.0938,
+        59.9825
+      ],
+      "hole_diameter_mm": [
+        6.011,
+        11.9798
+      ],
+      "fillet_radius_mm": [
+        2.0207,
+        7.9904
+      ]
+    }
+  },
+  "learning_curve": {
+    "test_size": 40,
+    "n_train": [
+      25,
+      50,
+      100,
+      144
+    ],
+    "repeats": 3,
+    "seed": 0,
+    "models": [
+      "power_law",
+      "gp"
+    ],
+    "records": [
+      {
+        "model": "power_law",
+        "n_train": 25,
+        "repeat": 0,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 0.01,
+        "median_pct": 1.814074610387556,
+        "p95_pct": 4.249522754617441,
+        "coverage_90": 0.725
+      },
+      {
+        "model": "power_law",
+        "n_train": 25,
+        "repeat": 0,
+        "metric": "max_disp_mm",
+        "fit_seconds": 0.01,
+        "median_pct": 0.8064558416765399,
+        "p95_pct": 1.9785663220539726,
+        "coverage_90": 0.825
+      },
+      {
+        "model": "gp",
+        "n_train": 25,
+        "repeat": 0,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 0.56,
+        "median_pct": 1.878424391768302,
+        "p95_pct": 3.9858792082215544,
+        "coverage_90": 0.475
+      },
+      {
+        "model": "gp",
+        "n_train": 25,
+        "repeat": 0,
+        "metric": "max_disp_mm",
+        "fit_seconds": 0.56,
+        "median_pct": 0.6738448063592029,
+        "p95_pct": 1.7572177375271831,
+        "coverage_90": 0.55
+      },
+      {
+        "model": "power_law",
+        "n_train": 25,
+        "repeat": 1,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 0.01,
+        "median_pct": 1.5090853090877987,
+        "p95_pct": 3.76815667804491,
+        "coverage_90": 0.95
+      },
+      {
+        "model": "power_law",
+        "n_train": 25,
+        "repeat": 1,
+        "metric": "max_disp_mm",
+        "fit_seconds": 0.01,
+        "median_pct": 0.6273152649180158,
+        "p95_pct": 1.4781470422915635,
+        "coverage_90": 0.975
+      },
+      {
+        "model": "gp",
+        "n_train": 25,
+        "repeat": 1,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 0.61,
+        "median_pct": 0.9330739118738218,
+        "p95_pct": 3.597990507980608,
+        "coverage_90": 0.775
+      },
+      {
+        "model": "gp",
+        "n_train": 25,
+        "repeat": 1,
+        "metric": "max_disp_mm",
+        "fit_seconds": 0.61,
+        "median_pct": 0.5009624157650272,
+        "p95_pct": 1.227751197372413,
+        "coverage_90": 0.65
+      },
+      {
+        "model": "power_law",
+        "n_train": 25,
+        "repeat": 2,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 0.01,
+        "median_pct": 1.564313017564023,
+        "p95_pct": 4.421378040064326,
+        "coverage_90": 0.925
+      },
+      {
+        "model": "power_law",
+        "n_train": 25,
+        "repeat": 2,
+        "metric": "max_disp_mm",
+        "fit_seconds": 0.01,
+        "median_pct": 0.7084253767088766,
+        "p95_pct": 1.7111313850192351,
+        "coverage_90": 0.875
+      },
+      {
+        "model": "gp",
+        "n_train": 25,
+        "repeat": 2,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 0.55,
+        "median_pct": 1.5675098134709131,
+        "p95_pct": 4.187901448903718,
+        "coverage_90": 0.725
+      },
+      {
+        "model": "gp",
+        "n_train": 25,
+        "repeat": 2,
+        "metric": "max_disp_mm",
+        "fit_seconds": 0.55,
+        "median_pct": 0.5669648430163821,
+        "p95_pct": 1.8899344779676774,
+        "coverage_90": 0.625
+      },
+      {
+        "model": "power_law",
+        "n_train": 50,
+        "repeat": 0,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 0.0,
+        "median_pct": 1.2707811382453305,
+        "p95_pct": 4.0809593207428465,
+        "coverage_90": 0.8
+      },
+      {
+        "model": "power_law",
+        "n_train": 50,
+        "repeat": 0,
+        "metric": "max_disp_mm",
+        "fit_seconds": 0.0,
+        "median_pct": 0.5646595456770209,
+        "p95_pct": 2.0472774303412264,
+        "coverage_90": 1.0
+      },
+      {
+        "model": "gp",
+        "n_train": 50,
+        "repeat": 0,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 1.45,
+        "median_pct": 1.4068745720053344,
+        "p95_pct": 4.164551855529246,
+        "coverage_90": 0.575
+      },
+      {
+        "model": "gp",
+        "n_train": 50,
+        "repeat": 0,
+        "metric": "max_disp_mm",
+        "fit_seconds": 1.45,
+        "median_pct": 0.07314285904372331,
+        "p95_pct": 0.30460379315151087,
+        "coverage_90": 0.975
+      },
+      {
+        "model": "power_law",
+        "n_train": 50,
+        "repeat": 1,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 0.01,
+        "median_pct": 1.0006881217426766,
+        "p95_pct": 4.912996275758923,
+        "coverage_90": 0.85
+      },
+      {
+        "model": "power_law",
+        "n_train": 50,
+        "repeat": 1,
+        "metric": "max_disp_mm",
+        "fit_seconds": 0.01,
+        "median_pct": 0.5816259383367606,
+        "p95_pct": 2.491636371311065,
+        "coverage_90": 0.875
+      },
+      {
+        "model": "gp",
+        "n_train": 50,
+        "repeat": 1,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 1.54,
+        "median_pct": 0.7790871978720526,
+        "p95_pct": 3.4379795161259863,
+        "coverage_90": 0.775
+      },
+      {
+        "model": "gp",
+        "n_train": 50,
+        "repeat": 1,
+        "metric": "max_disp_mm",
+        "fit_seconds": 1.54,
+        "median_pct": 0.09483514789249692,
+        "p95_pct": 0.36885994731463356,
+        "coverage_90": 0.975
+      },
+      {
+        "model": "power_law",
+        "n_train": 50,
+        "repeat": 2,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 0.0,
+        "median_pct": 0.9960453373793698,
+        "p95_pct": 4.359218599518358,
+        "coverage_90": 0.85
+      },
+      {
+        "model": "power_law",
+        "n_train": 50,
+        "repeat": 2,
+        "metric": "max_disp_mm",
+        "fit_seconds": 0.0,
+        "median_pct": 0.661374209464971,
+        "p95_pct": 1.5255508605717536,
+        "coverage_90": 0.975
+      },
+      {
+        "model": "gp",
+        "n_train": 50,
+        "repeat": 2,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 0.83,
+        "median_pct": 0.9062452290953427,
+        "p95_pct": 3.499663656224316,
+        "coverage_90": 0.6
+      },
+      {
+        "model": "gp",
+        "n_train": 50,
+        "repeat": 2,
+        "metric": "max_disp_mm",
+        "fit_seconds": 0.83,
+        "median_pct": 0.25514453415342864,
+        "p95_pct": 0.8028303586939529,
+        "coverage_90": 0.7
+      },
+      {
+        "model": "power_law",
+        "n_train": 100,
+        "repeat": 0,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 0.0,
+        "median_pct": 0.9109337659974792,
+        "p95_pct": 3.7209573022109033,
+        "coverage_90": 0.875
+      },
+      {
+        "model": "power_law",
+        "n_train": 100,
+        "repeat": 0,
+        "metric": "max_disp_mm",
+        "fit_seconds": 0.0,
+        "median_pct": 0.5904377257991478,
+        "p95_pct": 1.672979688517536,
+        "coverage_90": 0.975
+      },
+      {
+        "model": "gp",
+        "n_train": 100,
+        "repeat": 0,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 1.86,
+        "median_pct": 1.0822142487914577,
+        "p95_pct": 2.9930318019182627,
+        "coverage_90": 0.725
+      },
+      {
+        "model": "gp",
+        "n_train": 100,
+        "repeat": 0,
+        "metric": "max_disp_mm",
+        "fit_seconds": 1.86,
+        "median_pct": 0.03993604241045445,
+        "p95_pct": 0.11348782217346583,
+        "coverage_90": 0.925
+      },
+      {
+        "model": "power_law",
+        "n_train": 100,
+        "repeat": 1,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 0.0,
+        "median_pct": 1.048993096837747,
+        "p95_pct": 4.13263236088386,
+        "coverage_90": 0.85
+      },
+      {
+        "model": "power_law",
+        "n_train": 100,
+        "repeat": 1,
+        "metric": "max_disp_mm",
+        "fit_seconds": 0.0,
+        "median_pct": 0.5773998414789427,
+        "p95_pct": 1.4098334352943964,
+        "coverage_90": 0.975
+      },
+      {
+        "model": "gp",
+        "n_train": 100,
+        "repeat": 1,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 1.63,
+        "median_pct": 1.2212630666531221,
+        "p95_pct": 3.5871787782574684,
+        "coverage_90": 0.725
+      },
+      {
+        "model": "gp",
+        "n_train": 100,
+        "repeat": 1,
+        "metric": "max_disp_mm",
+        "fit_seconds": 1.63,
+        "median_pct": 0.030827179539366645,
+        "p95_pct": 0.13511934550890164,
+        "coverage_90": 1.0
+      },
+      {
+        "model": "power_law",
+        "n_train": 100,
+        "repeat": 2,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 0.0,
+        "median_pct": 1.229125964688249,
+        "p95_pct": 4.2802112981924685,
+        "coverage_90": 0.9
+      },
+      {
+        "model": "power_law",
+        "n_train": 100,
+        "repeat": 2,
+        "metric": "max_disp_mm",
+        "fit_seconds": 0.0,
+        "median_pct": 0.6387391743134241,
+        "p95_pct": 1.7066313804466902,
+        "coverage_90": 0.95
+      },
+      {
+        "model": "gp",
+        "n_train": 100,
+        "repeat": 2,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 1.73,
+        "median_pct": 0.9101236245199484,
+        "p95_pct": 3.611689855761016,
+        "coverage_90": 0.725
+      },
+      {
+        "model": "gp",
+        "n_train": 100,
+        "repeat": 2,
+        "metric": "max_disp_mm",
+        "fit_seconds": 1.73,
+        "median_pct": 0.03228995256612244,
+        "p95_pct": 0.12378581806170239,
+        "coverage_90": 0.975
+      },
+      {
+        "model": "power_law",
+        "n_train": 144,
+        "repeat": 0,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 0.0,
+        "median_pct": 1.0131057209555094,
+        "p95_pct": 4.153997978700814,
+        "coverage_90": 0.875
+      },
+      {
+        "model": "power_law",
+        "n_train": 144,
+        "repeat": 0,
+        "metric": "max_disp_mm",
+        "fit_seconds": 0.0,
+        "median_pct": 0.5968703631419103,
+        "p95_pct": 1.57058797001809,
+        "coverage_90": 0.95
+      },
+      {
+        "model": "gp",
+        "n_train": 144,
+        "repeat": 0,
+        "metric": "max_stress_mpa",
+        "fit_seconds": 4.0,
+        "median_pct": 1.0064720130177673,
+        "p95_pct": 3.079640617359367,
+        "coverage_90": 0.8
+      },
+      {
+        "model": "gp",
+        "n_train": 144,
+        "repeat": 0,
+        "metric": "max_disp_mm",
+        "fit_seconds": 4.0,
+        "median_pct": 0.022947381372095954,
+        "p95_pct": 0.07769086514504521,
+        "coverage_90": 0.975
+      }
+    ],
+    "summary": [
+      {
+        "model": "power_law",
+        "n_train": 25,
+        "metric": "max_stress_mpa",
+        "median_pct": 1.629,
+        "p95_pct": 4.146,
+        "coverage_90": 0.867,
+        "fit_seconds": 0.01
+      },
+      {
+        "model": "power_law",
+        "n_train": 25,
+        "metric": "max_disp_mm",
+        "median_pct": 0.714,
+        "p95_pct": 1.723,
+        "coverage_90": 0.892,
+        "fit_seconds": 0.01
+      },
+      {
+        "model": "gp",
+        "n_train": 25,
+        "metric": "max_stress_mpa",
+        "median_pct": 1.46,
+        "p95_pct": 3.924,
+        "coverage_90": 0.658,
+        "fit_seconds": 0.573
+      },
+      {
+        "model": "gp",
+        "n_train": 25,
+        "metric": "max_disp_mm",
+        "median_pct": 0.581,
+        "p95_pct": 1.625,
+        "coverage_90": 0.608,
+        "fit_seconds": 0.573
+      },
+      {
+        "model": "power_law",
+        "n_train": 50,
+        "metric": "max_stress_mpa",
+        "median_pct": 1.089,
+        "p95_pct": 4.451,
+        "coverage_90": 0.833,
+        "fit_seconds": 0.003
+      },
+      {
+        "model": "power_law",
+        "n_train": 50,
+        "metric": "max_disp_mm",
+        "median_pct": 0.603,
+        "p95_pct": 2.021,
+        "coverage_90": 0.95,
+        "fit_seconds": 0.003
+      },
+      {
+        "model": "gp",
+        "n_train": 50,
+        "metric": "max_stress_mpa",
+        "median_pct": 1.031,
+        "p95_pct": 3.701,
+        "coverage_90": 0.65,
+        "fit_seconds": 1.273
+      },
+      {
+        "model": "gp",
+        "n_train": 50,
+        "metric": "max_disp_mm",
+        "median_pct": 0.141,
+        "p95_pct": 0.492,
+        "coverage_90": 0.883,
+        "fit_seconds": 1.273
+      },
+      {
+        "model": "power_law",
+        "n_train": 100,
+        "metric": "max_stress_mpa",
+        "median_pct": 1.063,
+        "p95_pct": 4.045,
+        "coverage_90": 0.875,
+        "fit_seconds": 0.0
+      },
+      {
+        "model": "power_law",
+        "n_train": 100,
+        "metric": "max_disp_mm",
+        "median_pct": 0.602,
+        "p95_pct": 1.596,
+        "coverage_90": 0.967,
+        "fit_seconds": 0.0
+      },
+      {
+        "model": "gp",
+        "n_train": 100,
+        "metric": "max_stress_mpa",
+        "median_pct": 1.071,
+        "p95_pct": 3.397,
+        "coverage_90": 0.725,
+        "fit_seconds": 1.74
+      },
+      {
+        "model": "gp",
+        "n_train": 100,
+        "metric": "max_disp_mm",
+        "median_pct": 0.034,
+        "p95_pct": 0.124,
+        "coverage_90": 0.967,
+        "fit_seconds": 1.74
+      },
+      {
+        "model": "power_law",
+        "n_train": 144,
+        "metric": "max_stress_mpa",
+        "median_pct": 1.013,
+        "p95_pct": 4.154,
+        "coverage_90": 0.875,
+        "fit_seconds": 0.0
+      },
+      {
+        "model": "power_law",
+        "n_train": 144,
+        "metric": "max_disp_mm",
+        "median_pct": 0.597,
+        "p95_pct": 1.571,
+        "coverage_90": 0.95,
+        "fit_seconds": 0.0
+      },
+      {
+        "model": "gp",
+        "n_train": 144,
+        "metric": "max_stress_mpa",
+        "median_pct": 1.006,
+        "p95_pct": 3.08,
+        "coverage_90": 0.8,
+        "fit_seconds": 4.0
+      },
+      {
+        "model": "gp",
+        "n_train": 144,
+        "metric": "max_disp_mm",
+        "median_pct": 0.023,
+        "p95_pct": 0.078,
+        "coverage_90": 0.975,
+        "fit_seconds": 4.0
+      }
+    ]
+  }
+}

@@ -10,6 +10,7 @@ call confirm_setup only after the user says yes, then optimize_design and save_d
 from __future__ import annotations
 
 from .backends import BackendUnavailable
+from .families import FAMILIES
 from .part_file import UnsupportedPartError
 from .session import App, Part, SetupError
 
@@ -29,7 +30,7 @@ TOOL_SPECS = [
           {"path": {"type": "string"}}, ["path"]),
     _spec("describe_setup", "Show the current setup card: supports, load, material, dimensions, what is missing."),
     _spec("use_family", "For files with no parameters: after the user confirms which known bracket it is.",
-          {"family": {"type": "string", "enum": ["l_bracket_v0"]}}, ["family"]),
+          {"family": {"type": "string", "enum": list(FAMILIES)}}, ["family"]),
     _spec("set_support", "Fix the part at a face. Only after the user says where it is held.", {"face": {"type": "string"}}),
     _spec("set_load", "Set the load in newtons, and optionally a direction vector. Only values the user gave.",
           {"force_n": {"type": "number"}, "direction": {"type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}},

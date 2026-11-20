@@ -5,10 +5,10 @@
   "bracket_family": "l_bracket_gusset_v1",
   "dataset_stage": "formal_training_data",
   "planned_cases": 2048,
-  "successful_cases": 512,
-  "remaining_cases": 1536,
+  "successful_cases": 2048,
+  "remaining_cases": 0,
   "unresolved_failures": 0,
-  "failure_attempts": 0,
+  "failure_attempts": 10,
   "unresolved_failures_by_stage": {},
   "sampling": {
     "method": "scipy.stats.qmc.Sobol, scrambled",
@@ -77,26 +77,26 @@
   "retry_policy": "one retry at 0.75 times the production sizes after a nonpositive Jacobian",
   "output_ranges": {
     "max_stress_mpa": {
-      "min": 78.07577246645593,
+      "min": 66.64694917249776,
       "max": 1032.1304366923719,
-      "mean": 272.20659927695687
+      "mean": 272.14538027621677
     },
     "max_disp_mm": {
-      "min": 0.03711581657077322,
-      "max": 4.2018066545298565,
-      "mean": 0.5150436514958722
+      "min": 0.029454176390833673,
+      "max": 4.613658434307814,
+      "mean": 0.5153158396711529
     },
     "mass_kg": {
-      "min": 0.1686314097496703,
-      "max": 0.8380853895113726,
-      "mean": 0.4187893948548825
+      "min": 0.14926675006681414,
+      "max": 0.8643602669931252,
+      "mean": 0.41879074325746524
     }
   },
   "elapsed": {
-    "cases": 512,
-    "mean_s": 77.60926487324366,
-    "max_s": 220.64338369999314,
-    "total_s": 39735.943615100754
+    "cases": 2048,
+    "mean_s": 120.47483247163109,
+    "max_s": 33025.697595100035,
+    "total_s": 246732.45690190047
   },
   "platform": "Windows-11-10.0.26200-SP0",
   "ccx_version": "2.23",
@@ -106,9 +106,9 @@
     "count": 1
   },
   "successful_case_file_policy": "keep logs; remove reproducible large solver files",
-  "all_quality_checks_passed": false,
+  "all_quality_checks_passed": true,
   "numerical_checks_passed": true,
-  "role1_dataset_complete": false,
+  "role1_dataset_complete": true,
   "contract_status": {
     "shared_contract_modified": false,
     "runs_csv_columns": "Run contract columns followed by vertical_height_mm, gusset_thickness_mm, gusset_length_mm",

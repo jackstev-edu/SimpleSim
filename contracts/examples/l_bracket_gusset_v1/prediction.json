@@ -1,0 +1,630 @@
+{
+  "schema_version": "0.2.0",
+  "model_name": "fake_formula",
+  "trained_on_runs": 0,
+  "shortlist": [
+    {
+      "design_id": "fake-0-00130",
+      "design": {
+        "thickness_mm": 4.244573963851686,
+        "flange_length_mm": 83.46695266842465,
+        "arm_width_mm": 34.538262535898845,
+        "hole_diameter_mm": 8.00006048417867,
+        "fillet_radius_mm": 6.264071619390185,
+        "vertical_height_mm": 73.62858927619479,
+        "gusset_thickness_mm": 7.634893129707685,
+        "gusset_length_mm": 22.455688011170558
+      },
+      "mass_kg": 0.12368153893232109,
+      "max_stress_mpa": {
+        "value": 70.3768760969832,
+        "p05": 63.33918848728488,
+        "p95": 77.41456370668152
+      },
+      "max_disp_mm": {
+        "value": 0.011051956009037894,
+        "p05": 0.009946760408134105,
+        "p95": 0.012157151609941684
+      },
+      "safety_factor": {
+        "value": 3.5523031692325513,
+        "p05": 3.2293665174841375,
+        "p95": 3.9470035213695014
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00165",
+      "design": {
+        "thickness_mm": 4.312727954877095,
+        "flange_length_mm": 85.02164050404608,
+        "arm_width_mm": 34.33293998321523,
+        "hole_diameter_mm": 6.903787471293219,
+        "fillet_radius_mm": 3.1870593702032766,
+        "vertical_height_mm": 64.93195520939075,
+        "gusset_thickness_mm": 4.66721695706249,
+        "gusset_length_mm": 12.101403925416191
+      },
+      "mass_kg": 0.1273904449289419,
+      "max_stress_mpa": {
+        "value": 97.02674266133269,
+        "p05": 87.32406839519942,
+        "p95": 106.72941692746596
+      },
+      "max_disp_mm": {
+        "value": 0.01231210668711668,
+        "p05": 0.011080896018405012,
+        "p95": 0.013543317355828349
+      },
+      "safety_factor": {
+        "value": 2.5766092228058537,
+        "p05": 2.3423720207325944,
+        "p95": 2.862899136450949
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00126",
+      "design": {
+        "thickness_mm": 4.29696524627297,
+        "flange_length_mm": 86.98795921799808,
+        "arm_width_mm": 33.85393174973336,
+        "hole_diameter_mm": 6.249350923043324,
+        "fillet_radius_mm": 5.540018092157019,
+        "vertical_height_mm": 57.353395496142184,
+        "gusset_thickness_mm": 3.5198040544579494,
+        "gusset_length_mm": 33.08443905250682
+      },
+      "mass_kg": 0.12815683139640455,
+      "max_stress_mpa": {
+        "value": 81.89773485344534,
+        "p05": 73.70796136810081,
+        "p95": 90.08750833878989
+      },
+      "max_disp_mm": {
+        "value": 0.014846120044985492,
+        "p05": 0.013361508040486943,
+        "p95": 0.016330732049484042
+      },
+      "safety_factor": {
+        "value": 3.052587479340801,
+        "p05": 2.7750795266734554,
+        "p95": 3.3917638659342235
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00156",
+      "design": {
+        "thickness_mm": 4.451183730918191,
+        "flange_length_mm": 76.14597404222435,
+        "arm_width_mm": 38.02848170416957,
+        "hole_diameter_mm": 6.8171174800046614,
+        "fillet_radius_mm": 6.869380604172246,
+        "vertical_height_mm": 56.06518657842618,
+        "gusset_thickness_mm": 5.379650468799972,
+        "gusset_length_mm": 12.30471276262082
+      },
+      "mass_kg": 0.12910151488327526,
+      "max_stress_mpa": {
+        "value": 43.194297320179075,
+        "p05": 38.874867588161166,
+        "p95": 47.513727052196984
+      },
+      "max_disp_mm": {
+        "value": 0.0037329693912510746,
+        "p05": 0.003359672452125967,
+        "p95": 0.004106266330376182
+      },
+      "safety_factor": {
+        "value": 5.787801064267054,
+        "p05": 5.261637331151867,
+        "p95": 6.430890071407838
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00079",
+      "design": {
+        "thickness_mm": 4.151396536627807,
+        "flange_length_mm": 83.31708065152792,
+        "arm_width_mm": 38.77328319211978,
+        "hole_diameter_mm": 10.392480500219307,
+        "fillet_radius_mm": 5.393924167758918,
+        "vertical_height_mm": 68.57501631576265,
+        "gusset_thickness_mm": 4.557733371405284,
+        "gusset_length_mm": 29.39874353827106
+      },
+      "mass_kg": 0.12933319349265093,
+      "max_stress_mpa": {
+        "value": 57.97192892488713,
+        "p05": 52.17473603239842,
+        "p95": 63.76912181737585
+      },
+      "max_disp_mm": {
+        "value": 0.006026341111988612,
+        "p05": 0.005423707000789751,
+        "p95": 0.006628975223187474
+      },
+      "safety_factor": {
+        "value": 4.312431975895078,
+        "p05": 3.920392705359161,
+        "p95": 4.791591084327863
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00082",
+      "design": {
+        "thickness_mm": 4.453114213366586,
+        "flange_length_mm": 75.4225666329532,
+        "arm_width_mm": 40.19708323894699,
+        "hole_diameter_mm": 8.404468606569386,
+        "fillet_radius_mm": 7.837471737116789,
+        "vertical_height_mm": 52.85634388213931,
+        "gusset_thickness_mm": 8.469136856598109,
+        "gusset_length_mm": 22.93477393251776
+      },
+      "mass_kg": 0.13186843950078955,
+      "max_stress_mpa": {
+        "value": 34.65429982891786,
+        "p05": 31.188869846026073,
+        "p95": 38.11972981180965
+      },
+      "max_disp_mm": {
+        "value": 0.0024934885104783778,
+        "p05": 0.00224413965943054,
+        "p95": 0.002742837361526216
+      },
+      "safety_factor": {
+        "value": 7.21411199286108,
+        "p05": 6.558283629873708,
+        "p95": 8.015679992067867
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00076",
+      "design": {
+        "thickness_mm": 4.039591142684229,
+        "flange_length_mm": 83.22792955296153,
+        "arm_width_mm": 43.784595345469754,
+        "hole_diameter_mm": 8.270216282451928,
+        "fillet_radius_mm": 3.154308393279847,
+        "vertical_height_mm": 67.0783041615955,
+        "gusset_thickness_mm": 7.365320705363397,
+        "gusset_length_mm": 20.681658925245983
+      },
+      "mass_kg": 0.13636805845676742,
+      "max_stress_mpa": {
+        "value": 55.9599503513896,
+        "p05": 50.36395531625064,
+        "p95": 61.55594538652856
+      },
+      "max_disp_mm": {
+        "value": 0.002986093280156106,
+        "p05": 0.002687483952140496,
+        "p95": 0.003284702608171717
+      },
+      "safety_factor": {
+        "value": 4.4674807327414285,
+        "p05": 4.061346120674026,
+        "p95": 4.963867480823811
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00063",
+      "design": {
+        "thickness_mm": 4.072608494033156,
+        "flange_length_mm": 96.73537860452097,
+        "arm_width_mm": 37.11594321454378,
+        "hole_diameter_mm": 11.829787525711607,
+        "fillet_radius_mm": 7.437341393146516,
+        "vertical_height_mm": 88.42659543721086,
+        "gusset_thickness_mm": 7.227087604185269,
+        "gusset_length_mm": 23.848688438760767
+      },
+      "mass_kg": 0.138426051061056,
+      "max_stress_mpa": {
+        "value": 74.42974188053394,
+        "p05": 66.98676769248054,
+        "p95": 81.87271606858734
+      },
+      "max_disp_mm": {
+        "value": 0.016791649221318147,
+        "p05": 0.015112484299186333,
+        "p95": 0.018470814143449962
+      },
+      "safety_factor": {
+        "value": 3.358872322858129,
+        "p05": 3.0535202935073897,
+        "p95": 3.7320803587312548
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00168",
+      "design": {
+        "thickness_mm": 4.088620029516701,
+        "flange_length_mm": 81.22778614542649,
+        "arm_width_mm": 54.627027398376335,
+        "hole_diameter_mm": 7.992871749838596,
+        "fillet_radius_mm": 5.575357528242264,
+        "vertical_height_mm": 52.21974741887419,
+        "gusset_thickness_mm": 6.855414570234631,
+        "gusset_length_mm": 12.63797614725402
+      },
+      "mass_kg": 0.15022589118841573,
+      "max_stress_mpa": {
+        "value": 20.30570146278179,
+        "p05": 18.27513131650361,
+        "p95": 22.33627160905997
+      },
+      "max_disp_mm": {
+        "value": 0.00046597923090847365,
+        "p05": 0.0004193813078176263,
+        "p95": 0.0005125771539993211
+      },
+      "safety_factor": {
+        "value": 12.311813037250825,
+        "p05": 11.19255730659166,
+        "p95": 13.679792263612029
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00104",
+      "design": {
+        "thickness_mm": 5.357998286765705,
+        "flange_length_mm": 76.46575574165749,
+        "arm_width_mm": 37.04941042327912,
+        "hole_diameter_mm": 10.637872233966636,
+        "fillet_radius_mm": 2.584772468666391,
+        "vertical_height_mm": 72.56528240071441,
+        "gusset_thickness_mm": 4.338867359116327,
+        "gusset_length_mm": 29.63319569474539
+      },
+      "mass_kg": 0.1511830891973906,
+      "max_stress_mpa": {
+        "value": 59.82136104028753,
+        "p05": 53.83922493625877,
+        "p95": 65.80349714431628
+      },
+      "max_disp_mm": {
+        "value": 0.003708228880422047,
+        "p05": 0.0033374059923798422,
+        "p95": 0.004079051768464252
+      },
+      "safety_factor": {
+        "value": 4.1791091953196124,
+        "p05": 3.7991901775632835,
+        "p95": 4.643454661466236
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00151",
+      "design": {
+        "thickness_mm": 4.338096634362664,
+        "flange_length_mm": 85.66734345933934,
+        "arm_width_mm": 47.28651535987362,
+        "hole_diameter_mm": 11.26606354658566,
+        "fillet_radius_mm": 6.1164967790460985,
+        "vertical_height_mm": 74.29115241874484,
+        "gusset_thickness_mm": 3.222406975478742,
+        "gusset_length_mm": 23.454846841508342
+      },
+      "mass_kg": 0.15502771381715164,
+      "max_stress_mpa": {
+        "value": 33.159402829019164,
+        "p05": 29.843462546117248,
+        "p95": 36.475343111921084
+      },
+      "max_disp_mm": {
+        "value": 0.0020338354416749656,
+        "p05": 0.001830451897507469,
+        "p95": 0.0022372189858424624
+      },
+      "safety_factor": {
+        "value": 7.539339634343917,
+        "p05": 6.853945122130833,
+        "p95": 8.377044038159909
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00163",
+      "design": {
+        "thickness_mm": 4.833075049086825,
+        "flange_length_mm": 78.66392579195997,
+        "arm_width_mm": 44.84038548366041,
+        "hole_diameter_mm": 7.862042018571336,
+        "fillet_radius_mm": 2.520541015145102,
+        "vertical_height_mm": 70.67454070756976,
+        "gusset_thickness_mm": 5.610844434954604,
+        "gusset_length_mm": 32.312094519865695
+      },
+      "mass_kg": 0.15777338990565684,
+      "max_stress_mpa": {
+        "value": 43.31066673077298,
+        "p05": 38.979600057695684,
+        "p95": 47.64173340385028
+      },
+      "max_disp_mm": {
+        "value": 0.0014652427542224476,
+        "p05": 0.0013187184788002028,
+        "p95": 0.0016117670296446926
+      },
+      "safety_factor": {
+        "value": 5.7722500915085355,
+        "p05": 5.247500083189577,
+        "p95": 6.413611212787261
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00047",
+      "design": {
+        "thickness_mm": 4.496851455378968,
+        "flange_length_mm": 90.87345370633822,
+        "arm_width_mm": 46.55532608135849,
+        "hole_diameter_mm": 8.560326862381446,
+        "fillet_radius_mm": 2.7233965903000987,
+        "vertical_height_mm": 57.761098196031725,
+        "gusset_thickness_mm": 9.615172538132386,
+        "gusset_length_mm": 15.739103669326319
+      },
+      "mass_kg": 0.169406454452551,
+      "max_stress_mpa": {
+        "value": 55.44088498393513,
+        "p05": 49.896796485541614,
+        "p95": 60.98497348232865
+      },
+      "max_disp_mm": {
+        "value": 0.003165275347533036,
+        "p05": 0.0028487478127797324,
+        "p95": 0.00348180288228634
+      },
+      "safety_factor": {
+        "value": 4.509307527692631,
+        "p05": 4.099370479720573,
+        "p95": 5.010341697436257
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00131",
+      "design": {
+        "thickness_mm": 4.658683221706642,
+        "flange_length_mm": 88.33151797677043,
+        "arm_width_mm": 46.30689340980061,
+        "hole_diameter_mm": 8.982989790435923,
+        "fillet_radius_mm": 3.840137633356166,
+        "vertical_height_mm": 83.01206232667434,
+        "gusset_thickness_mm": 6.03319335190928,
+        "gusset_length_mm": 31.445490878695647
+      },
+      "mass_kg": 0.17045829035237017,
+      "max_stress_mpa": {
+        "value": 43.17549018011691,
+        "p05": 38.85794116210522,
+        "p95": 47.493039198128606
+      },
+      "max_disp_mm": {
+        "value": 0.002647252402752423,
+        "p05": 0.0023825271624771808,
+        "p95": 0.0029119776430276655
+      },
+      "safety_factor": {
+        "value": 5.790322216541493,
+        "p05": 5.263929287764992,
+        "p95": 6.43369135171277
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00019",
+      "design": {
+        "thickness_mm": 4.471780222993839,
+        "flange_length_mm": 104.36765593514873,
+        "arm_width_mm": 39.6677747607876,
+        "hole_diameter_mm": 10.215912423958718,
+        "fillet_radius_mm": 7.690907848181499,
+        "vertical_height_mm": 55.07268409044991,
+        "gusset_thickness_mm": 9.05344806780542,
+        "gusset_length_mm": 13.367675486807785
+      },
+      "mass_kg": 0.17076432200814806,
+      "max_stress_mpa": {
+        "value": 65.23052052497185,
+        "p05": 58.707468472474666,
+        "p95": 71.75357257746904
+      },
+      "max_disp_mm": {
+        "value": 0.016010335278652296,
+        "p05": 0.014409301750787067,
+        "p95": 0.01761136880651753
+      },
+      "safety_factor": {
+        "value": 3.8325617822456874,
+        "p05": 3.4841470747688064,
+        "p95": 4.2584019802729856
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00083",
+      "design": {
+        "thickness_mm": 4.779241148638808,
+        "flange_length_mm": 91.47361389017964,
+        "arm_width_mm": 42.6652393982655,
+        "hole_diameter_mm": 7.461435001812875,
+        "fillet_radius_mm": 4.119000666381339,
+        "vertical_height_mm": 66.796753248103,
+        "gusset_thickness_mm": 9.735829764403281,
+        "gusset_length_mm": 22.55379308657641
+      },
+      "mass_kg": 0.17252624410899173,
+      "max_stress_mpa": {
+        "value": 53.60664928037948,
+        "p05": 48.24598435234153,
+        "p95": 58.967314208417434
+      },
+      "max_disp_mm": {
+        "value": 0.005168749344578971,
+        "p05": 0.004651874410121074,
+        "p95": 0.0056856242790368685
+      },
+      "safety_factor": {
+        "value": 4.663600567392715,
+        "p05": 4.239636879447922,
+        "p95": 5.181778408214128
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00016",
+      "design": {
+        "thickness_mm": 4.747328235011701,
+        "flange_length_mm": 87.97488406534099,
+        "arm_width_mm": 48.41144581475652,
+        "hole_diameter_mm": 9.324543013039607,
+        "fillet_radius_mm": 6.953409267520278,
+        "vertical_height_mm": 72.41903808024743,
+        "gusset_thickness_mm": 5.018948501018473,
+        "gusset_length_mm": 21.49661588166053
+      },
+      "mass_kg": 0.1770801708496282,
+      "max_stress_mpa": {
+        "value": 28.494076086168803,
+        "p05": 25.644668477551924,
+        "p95": 31.343483694785686
+      },
+      "max_disp_mm": {
+        "value": 0.0018970230377014998,
+        "p05": 0.0017073207339313497,
+        "p95": 0.0020867253414716498
+      },
+      "safety_factor": {
+        "value": 8.773753507359782,
+        "p05": 7.976139552145255,
+        "p95": 9.748615008177534
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00127",
+      "design": {
+        "thickness_mm": 4.89240335482374,
+        "flange_length_mm": 79.26738558257856,
+        "arm_width_mm": 59.17898563316167,
+        "hole_diameter_mm": 10.001801783409817,
+        "fillet_radius_mm": 6.491647229184071,
+        "vertical_height_mm": 72.52815983280783,
+        "gusset_thickness_mm": 3.4927279988412545,
+        "gusset_length_mm": 31.363176529488523
+      },
+      "mass_kg": 0.17900672690543704,
+      "max_stress_mpa": {
+        "value": 10.567801681077329,
+        "p05": 9.511021512969597,
+        "p95": 11.624581849185063
+      },
+      "max_disp_mm": {
+        "value": 0.00013191530247575592,
+        "p05": 0.00011872377222818034,
+        "p95": 0.00014510683272333152
+      },
+      "safety_factor": {
+        "value": 23.65676491144314,
+        "p05": 21.50614991949376,
+        "p95": 26.285294346047934
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00166",
+      "design": {
+        "thickness_mm": 4.197472706316018,
+        "flange_length_mm": 119.55241269097984,
+        "arm_width_mm": 38.864045539263444,
+        "hole_diameter_mm": 6.2449656083571785,
+        "fillet_radius_mm": 5.9430538439446225,
+        "vertical_height_mm": 72.06564189562044,
+        "gusset_thickness_mm": 5.721960634517712,
+        "gusset_length_mm": 28.86663217453726
+      },
+      "mass_kg": 0.17915295314497223,
+      "max_stress_mpa": {
+        "value": 99.34199406613214,
+        "p05": 89.40779465951893,
+        "p95": 109.27619347274536
+      },
+      "max_disp_mm": {
+        "value": 0.035179108153411,
+        "p05": 0.0316611973380699,
+        "p95": 0.038697018968752106
+      },
+      "safety_factor": {
+        "value": 2.516559108261654,
+        "p05": 2.287781007510594,
+        "p95": 2.796176786957393
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    },
+    {
+      "design_id": "fake-0-00090",
+      "design": {
+        "thickness_mm": 4.746571589406097,
+        "flange_length_mm": 102.7308787633673,
+        "arm_width_mm": 39.59378711733505,
+        "hole_diameter_mm": 8.310913945357635,
+        "fillet_radius_mm": 3.4560549714299507,
+        "vertical_height_mm": 80.48686652241551,
+        "gusset_thickness_mm": 8.98148392551883,
+        "gusset_length_mm": 15.054506422478628
+      },
+      "mass_kg": 0.17964131306652664,
+      "max_stress_mpa": {
+        "value": 84.98894720491944,
+        "p05": 76.4900524844275,
+        "p95": 93.48784192541139
+      },
+      "max_disp_mm": {
+        "value": 0.014095370489994876,
+        "p05": 0.012685833440995388,
+        "p95": 0.015504907538994365
+      },
+      "safety_factor": {
+        "value": 2.941558969982501,
+        "p05": 2.6741445181659103,
+        "p95": 3.2683988555361125
+      },
+      "feasible_p95": true,
+      "in_training_range": true
+    }
+  ],
+  "warnings": [
+    "fake predictor: beam formula with a fixed 10% band, not a trained model"
+  ]
+}

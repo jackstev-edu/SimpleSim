@@ -1,14 +1,15 @@
 """Model comparison (Role 2): learning curves for the power law, the GP and AutoGluon on Role 1's runs.
 
-    python -m src.models.compare                   # every model; writes results.json and docs/figures/learning_curve.png
+    python -m src.models.compare                   # v0 runs.csv, every model; writes results.json and docs/figures/learning_curve.png
     python -m src.models.compare --no-autogluon    # power law, GP and the tree stand-in only
     python -m src.models.compare --quick           # one repeat and short AutoGluon fits, as a smoke run
 
-Protocol: 50 held-out runs (seeded), then train on n = 25, 50, 100 and 150 of the other 150, with
+Protocol (v0): 50 held-out runs (seeded), then train on n = 25, 50, 100 and 150 of the other 150, with
 3 random draws per n. Error is the absolute percent error on the original scale over the held-out
-runs; a model with a 90% band also reports the share of held-out runs inside it. Needs scikit-learn
-and matplotlib (src/models/requirements.txt). autogluon.tabular is optional: when it is missing the
-run says so and scikit-learn's HistGradientBoostingRegressor stands in as the tree model.
+runs; a model with a 90% band also reports the share of held-out runs inside it. The model classes
+here take any family's inputs (benchmark.py runs them on the v1 dataset with calibration). Needs
+scikit-learn and matplotlib (src/models/requirements.txt). autogluon.tabular is optional: when it is
+missing the run says so and scikit-learn's HistGradientBoostingRegressor stands in as the tree model.
 """
 
 from __future__ import annotations
@@ -25,28 +26,71 @@ import pandas as pd
 
 from contracts.models import PARAM_NAMES
 
-from .power_law import REF_FORCE_N, Z90, fit_power_law
+from .datasets import METRICS, REF_FORCE_N, load_model_dataset
+from .power_law import Z90, PowerLawFit
 
 DEFAULT_RUNS = Path("data/processed/formal_v0/runs.csv")
 OUT_DIR = Path("data/processed/model_comparison")  # gitignored: results.json and AutoGluon's folders
 FIGURE = Path("docs/figures/learning_curve.png")
-METRICS = ("max_stress_mpa", "max_disp_mm")
 LABELS = {"max_stress_mpa": "Peak stress", "max_disp_mm": "Deflection"}
 N_TRAIN = (25, 50, 100, 150)
 TEST_SIZE, REPEATS, SEED = 50, 3, 0
 QUANTILES = (0.05, 0.5, 0.95)  # a 90% band and its centre
-LOG_COLUMNS = [f"log_{p}" for p in PARAM_NAMES]
+INPUTS = tuple(PARAM_NAMES)
 
 
-def log_xy(runs: pd.DataFrame) -> tuple[np.ndarray, dict[str, np.ndarray]]:
+def log_xy(runs: pd.DataFrame, inputs: tuple[str, ...] = INPUTS) -> tuple[np.ndarray, dict[str, np.ndarray]]:
     """Inputs and targets in log space, targets normalised to the reference load as gp.py does."""
-    X = np.log(runs[list(PARAM_NAMES)].values)
-    y = {m: np.log(runs[m].values * REF_FORCE_N / runs["load_force_n"].values) for m in METRICS}
+    f = runs.rename(columns={"reference_max_stress_mpa": "max_stress_mpa", "reference_max_disp_mm": "max_disp_mm",
+                             "reference_load_force_n": "load_force_n"})
+    load = f["load_force_n"].values if "load_force_n" in f else REF_FORCE_N
+    X = np.log(f[list(inputs)].values)
+    y = {m: np.log(f[m].values * REF_FORCE_N / load) for m in METRICS}
     return X, y
 
 
 # Every model: fit(runs) then predict_log(runs) -> {metric: (median, lower, upper)} in log space.
-# lower and upper are None for a model without a band.
+# lower and upper are None for a model without a band. calibrate(runs) rescales the band so 90% of
+# those rows fall inside it; predict_log applies the scale afterwards.
+
+
+class _Banded:
+    """Calibration shared by the models with a band: one scale per target on the half-widths."""
+
+    def __init__(self, inputs: tuple[str, ...] = INPUTS):
+        self.inputs = tuple(inputs)
+        self.band_scale = {m: 1.0 for m in METRICS}
+
+    def raw_log(self, runs: pd.DataFrame) -> dict:
+        raise NotImplementedError
+
+    def predict_log(self, runs: pd.DataFrame) -> dict:
+        return {m: scale_band(pred, self.band_scale[m]) for m, pred in self.raw_log(runs).items()}
+
+    def calibrate(self, runs: pd.DataFrame, target: float = 0.90) -> dict[str, float]:
+        self.band_scale = {m: 1.0 for m in METRICS}
+        _, y = log_xy(runs, self.inputs)
+        raw = self.raw_log(runs)
+        self.band_scale = {m: calibration_scale(raw[m], y[m], target) for m in METRICS}
+        return self.band_scale
+
+
+def scale_band(pred: tuple, s: float) -> tuple:
+    """Stretch a (median, lower, upper) band about its median by s."""
+    mean, lo, hi = pred
+    if lo is None:
+        return pred
+    return mean, mean - s * (mean - lo), mean + s * (hi - mean)
+
+
+def calibration_scale(pred: tuple, y_true: np.ndarray, target: float = 0.90) -> float:
+    """The factor on the half-width that puts `target` of the rows inside the band."""
+    mean, lo, hi = pred
+    if lo is None:
+        return 1.0
+    half = np.where(y_true >= mean, hi - mean, mean - lo)
+    z = np.abs(y_true - mean) / np.maximum(half, 1e-12)
+    return round(float(np.quantile(z, target)), 4)
 
 
 class MedianBaseline:
@@ -54,24 +98,28 @@ class MedianBaseline:
 
     name = "median_baseline"
 
+    def __init__(self, inputs: tuple[str, ...] = INPUTS):
+        self.inputs = tuple(inputs)
+
     def fit(self, runs: pd.DataFrame) -> None:
-        _, y = log_xy(runs)
+        _, y = log_xy(runs, self.inputs)
         self.median = {m: float(np.median(v)) for m, v in y.items()}
 
     def predict_log(self, runs: pd.DataFrame) -> dict:
         return {m: (np.full(len(runs), self.median[m]), None, None) for m in METRICS}
 
 
-class PowerLawModel:
-    """power_law.fit_power_law on the training rows: a log-linear mean with one band width everywhere."""
+class PowerLawModel(_Banded):
+    """power_law.PowerLawFit on the training rows: a log-linear mean with one band width everywhere."""
 
     name = "power_law"
 
     def fit(self, runs: pd.DataFrame) -> None:
-        self.coef, self.sigma = fit_power_law(runs)
+        self.fit_ = PowerLawFit.fit(load_model_dataset("frame", frame=runs, inputs=self.inputs))
+        self.coef, self.sigma = self.fit_.coef, self.fit_.sigma
 
-    def predict_log(self, runs: pd.DataFrame) -> dict:
-        X, _ = log_xy(runs)
+    def raw_log(self, runs: pd.DataFrame) -> dict:
+        X, _ = log_xy(runs, self.inputs)
         A = np.column_stack([np.ones(len(X)), X])
         out = {}
         for m in METRICS:
@@ -80,25 +128,26 @@ class PowerLawModel:
         return out
 
 
-class GPModel:
+class GPModel(_Banded):
     """gp.GPPredictor: the power law as the mean plus a GP on the leftover; its band widens off the data."""
 
     name = "gp"
 
-    def __init__(self, restarts: int = 3):
-        self.restarts = restarts
+    def __init__(self, restarts: int = 3, inputs: tuple[str, ...] = INPUTS, max_train: int | None = None):
+        super().__init__(inputs)
+        self.restarts, self.max_train = restarts, max_train
 
     def fit(self, runs: pd.DataFrame) -> None:
         from .gp import GPPredictor  # needs scikit-learn
 
-        self.gp = GPPredictor(runs, restarts=self.restarts)
+        self.gp = GPPredictor(runs, restarts=self.restarts, inputs=self.inputs, max_train=self.max_train)
 
-    def predict_log(self, runs: pd.DataFrame) -> dict:
-        log = self.gp.predict_log(runs[list(PARAM_NAMES)].values)
+    def raw_log(self, runs: pd.DataFrame) -> dict:
+        log = self.gp.predict_log(runs[list(self.inputs)].values)
         return {m: (mean, mean - Z90 * sd, mean + Z90 * sd) for m, (mean, sd) in log.items()}
 
 
-class TreeQuantileModel:
+class TreeQuantileModel(_Banded):
     """scikit-learn HistGradientBoostingRegressor with quantile loss: the stand-in when AutoGluon is missing."""
 
     name = "hgb_quantile"
@@ -106,30 +155,36 @@ class TreeQuantileModel:
     def fit(self, runs: pd.DataFrame) -> None:
         from sklearn.ensemble import HistGradientBoostingRegressor
 
-        X, y = log_xy(runs)
+        X, y = log_xy(runs, self.inputs)
         self.models = {}
         for m in METRICS:  # one booster per quantile, small leaves because n is small
             self.models[m] = {q: HistGradientBoostingRegressor(loss="quantile", quantile=q, max_iter=300, learning_rate=0.05,
                                                                min_samples_leaf=5, random_state=0).fit(X, y[m]) for q in QUANTILES}
 
-    def predict_log(self, runs: pd.DataFrame) -> dict:
-        X, _ = log_xy(runs)
+    def raw_log(self, runs: pd.DataFrame) -> dict:
+        X, _ = log_xy(runs, self.inputs)
         return {m: tuple(self.models[m][q].predict(X) for q in (0.5, 0.05, 0.95)) for m in METRICS}
 
 
-class AutoGluonModel:
+class AutoGluonModel(_Banded):
     """AutoGluon TabularPredictor in quantile mode, one predictor per target. Its folders stay under data/."""
 
     name = "autogluon"
 
-    def __init__(self, path: str | Path = OUT_DIR / "autogluon", time_limit: float = 60, presets: str = "medium_quality", min_n: int = 0):
+    def __init__(self, path: str | Path = OUT_DIR / "autogluon", time_limit: float = 60, presets: str = "medium_quality", min_n: int = 0,
+                 inputs: tuple[str, ...] = INPUTS):
+        super().__init__(inputs)
         self.path, self.time_limit, self.presets, self.min_n = Path(path), time_limit, presets, min_n
+
+    @property
+    def log_columns(self) -> list[str]:
+        return [f"log_{p}" for p in self.inputs]
 
     def fit(self, runs: pd.DataFrame) -> None:
         from autogluon.tabular import TabularPredictor
 
-        X, y = log_xy(runs)
-        frame = pd.DataFrame(X, columns=LOG_COLUMNS)
+        X, y = log_xy(runs, self.inputs)
+        frame = pd.DataFrame(X, columns=self.log_columns)
         self.predictors = {}
         for m in METRICS:
             folder = self.path / m
@@ -140,9 +195,9 @@ class AutoGluonModel:
                                                       path=str(folder), verbosity=0).fit(
                     frame.assign(target=y[m]), presets=self.presets, time_limit=self.time_limit)
 
-    def predict_log(self, runs: pd.DataFrame) -> dict:
-        X, _ = log_xy(runs)
-        frame = pd.DataFrame(X, columns=LOG_COLUMNS)
+    def raw_log(self, runs: pd.DataFrame) -> dict:
+        X, _ = log_xy(runs, self.inputs)
+        frame = pd.DataFrame(X, columns=self.log_columns)
         out = {}
         for m, predictor in self.predictors.items():
             q = predictor.predict(frame)  # one column per quantile level, in QUANTILES order
@@ -158,25 +213,26 @@ def autogluon_available() -> bool:
     return True
 
 
-def build_models(names: list[str], time_limit: float = 60, restarts: int = 3, autogluon_min_n: int = 0) -> tuple[list, dict[str, str]]:
+def build_models(names: list[str], time_limit: float = 60, restarts: int = 3, autogluon_min_n: int = 0,
+                 inputs: tuple[str, ...] = INPUTS, gp_max_train: int | None = None) -> tuple[list, dict[str, str]]:
     """Models by name, plus a reason for each one that had to be skipped."""
     models, skipped = [], {}
     for name in names:
         if name == "autogluon":
             if autogluon_available():
-                models.append(AutoGluonModel(time_limit=time_limit, min_n=autogluon_min_n))
+                models.append(AutoGluonModel(time_limit=time_limit, min_n=autogluon_min_n, inputs=inputs))
             else:
                 skipped[name] = "autogluon.tabular is not installed (pip install autogluon.tabular); hgb_quantile stands in"
                 if not any(m.name == "hgb_quantile" for m in models) and "hgb_quantile" not in names:
-                    models.append(TreeQuantileModel())
+                    models.append(TreeQuantileModel(inputs))
         elif name == "gp":
-            models.append(GPModel(restarts=restarts))
+            models.append(GPModel(restarts=restarts, inputs=inputs, max_train=gp_max_train))
         elif name == "hgb_quantile":
-            models.append(TreeQuantileModel())
+            models.append(TreeQuantileModel(inputs))
         elif name == "power_law":
-            models.append(PowerLawModel())
+            models.append(PowerLawModel(inputs))
         elif name == "median_baseline":
-            models.append(MedianBaseline())
+            models.append(MedianBaseline(inputs))
         else:
             raise ValueError(f"Unknown model {name!r}")
     return models, skipped
@@ -199,15 +255,21 @@ def score(pred: tuple, y_true: np.ndarray) -> dict:
 
 
 def learning_curve(runs: pd.DataFrame, models: list, n_train=N_TRAIN, repeats: int = REPEATS, seed: int = SEED,
-                   test_size: int = TEST_SIZE, log=lambda s: None) -> dict:
-    """Fit every model on random subsets of each size, score on the same held-out runs, return all records."""
-    pool, test = split(runs, seed, test_size)
-    _, y_test = log_xy(test)
+                   test_size: int = TEST_SIZE, log=lambda s: None, pool: pd.DataFrame | None = None,
+                   test: pd.DataFrame | None = None) -> dict:
+    """Fit every model on random subsets of each size, score on the same held-out runs, return all records.
+
+    Pass pool and test to use a split made elsewhere (benchmark.py); otherwise split() makes one.
+    """
+    if pool is None or test is None:
+        pool, test = split(runs, seed, test_size)
+    inputs = models[0].inputs if models else INPUTS
+    _, y_test = log_xy(test, inputs)
     records = []
     for n in n_train:
         if n > len(pool):
-            raise ValueError(f"n_train {n} exceeds the {len(pool)} runs left after holding out {test_size}")
-        for rep in range(repeats):
+            raise ValueError(f"n_train {n} exceeds the {len(pool)} runs left after holding out {len(test)}")
+        for rep in range(1 if n == len(pool) else repeats):  # every draw of the whole pool is the same rows
             rows = np.random.default_rng([seed, n, rep]).choice(len(pool), n, replace=False)  # a fresh draw per repeat
             train = pool.iloc[np.sort(rows)].reset_index(drop=True)
             for model in models:
@@ -221,7 +283,7 @@ def learning_curve(runs: pd.DataFrame, models: list, n_train=N_TRAIN, repeats: i
                     records.append({"model": model.name, "n_train": n, "repeat": rep, "metric": m,
                                     "fit_seconds": round(secs, 2), **score(pred[m], y_test[m])})
                 r = records[-2]
-                log(f"n={n:>3} rep={rep} {model.name:>15}: stress median {r['median_pct']:.2f}%, "
+                log(f"n={n:>4} rep={rep} {model.name:>15}: stress median {r['median_pct']:.2f}%, "
                     f"deflection median {records[-1]['median_pct']:.2f}%, fit {secs:.1f} s")
     return {"test_size": len(test), "n_train": list(n_train), "repeats": repeats, "seed": seed,
             "models": [m.name for m in models], "records": records, "summary": summarise(records)}
@@ -250,7 +312,8 @@ def markdown_table(summary: list[dict], n: int | None = None) -> str:
     return "\n".join(lines)
 
 
-def plot_learning_curve(summary: list[dict], path: str | Path = FIGURE, skip: tuple[str, ...] = ("median_baseline",)) -> Path:
+def plot_learning_curve(summary: list[dict], path: str | Path = FIGURE, skip: tuple[str, ...] = ("median_baseline",),
+                        title: str | None = None) -> Path:
     """Two panels, error against training runs: median solid, p95 dashed, one colour per model."""
     import matplotlib
 
@@ -268,10 +331,16 @@ def plot_learning_curve(summary: list[dict], path: str | Path = FIGURE, skip: tu
         ax.set_title(LABELS[m], fontsize=10)
         ax.set_xlabel("training runs")
         ax.set_xticks(sorted(df.n_train.unique()))
+        if df.n_train.max() / max(df.n_train.min(), 1) > 5:
+            ax.set_xscale("log")  # v1 spans 100 to 1,474 rows
+            ax.set_xticks(sorted(df.n_train.unique()), [str(n) for n in sorted(df.n_train.unique())], fontsize=7, rotation=45)
+            ax.minorticks_off()
         ax.set_yscale("log")  # the models sit an order of magnitude apart
         ax.grid(True, which="both", lw=0.4, alpha=0.5)
-    axes[0].set_ylabel(f"error on held-out runs (%)\nsolid median, dashed p95")
+    axes[0].set_ylabel("error on held-out runs (%)\nsolid median, dashed p95")
     axes[0].legend(fontsize=8, frameon=False)
+    if title:
+        fig.suptitle(title, fontsize=10)
     fig.tight_layout()
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
