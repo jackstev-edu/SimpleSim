@@ -121,6 +121,12 @@ class AnsysEngine:
 
     def solve(self, family, design_mm: dict[str, float], force_n: float, material) -> dict[str, float]:
         """max_stress_mpa (zone stress), max_disp_mm and mass_kg for one design."""
+        if family.key != "l_bracket_v0":  # PART is the v0 L-bracket; any other family would be solved as v0
+            from src.pydiscovery.backends import BackendUnavailable
+
+            raise BackendUnavailable(
+                f"The Ansys engine edits the v0 L-bracket (l_bracket.scdocx) only, not {family.key}. "
+                "Use the fitted or CalculiX engine for this family.")
         for field in ("youngs_mpa", "density_kg_m3"):
             if getattr(material, field, None) is None:
                 raise ValueError(f"The Ansys engine needs the material's {field.replace('_', ' ')}; set the material first.")

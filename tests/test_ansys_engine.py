@@ -8,10 +8,16 @@ from src.pydiscovery.part_file import Material
 from src.sim import materials
 from src.sim.ansys_engine import BASELINE_MM, AnsysEngine, edits_for, find_faces, library_material
 
-STEEL_E = materials.catalog()["Structural Steel"]["youngs_modulus_GPa"] * 1000
+# ANSYS's material library ships with the install; CI has none, so tests that read it skip there.
+needs_library = pytest.mark.skipif(not (materials.library_dir() / materials.LIBRARIES[0]).exists(),
+                                   reason="needs the ANSYS 2026 R1 material library")
 DESIGN = {"thickness_mm": 7.0, "flange_length_mm": 90.0, "arm_width_mm": 45.0,
           "hole_diameter_mm": 10.0, "fillet_radius_mm": 3.0}
 STEEL = Material(name="Structural Steel", youngs_mpa=200000, density_kg_m3=7850)
+
+
+def steel_e():
+    return materials.catalog()["Structural Steel"]["youngs_modulus_GPa"] * 1000
 
 
 def plane(fid, lo, hi, normal):
@@ -96,11 +102,13 @@ def test_edits_for_baseline_is_only_the_fillet():
     assert [x["action"] for x in edits_for({**BASELINE_MM, "fillet_radius_mm": 4.0}, find_faces(FACES))] == ["fillet"]
 
 
+@needs_library
 def test_library_material_matches_loosely():
     assert library_material("structural_steel") == "Structural Steel"
     assert library_material("unobtainium") is None
 
 
+@needs_library
 def test_solve_library_material_returns_zone_stress_and_part_density():
     eng = AnsysEngine(workbench_factory=FakeWorkbench)
     out = eng.solve(FAMILY, DESIGN, 500.0, STEEL)
@@ -108,11 +116,12 @@ def test_solve_library_material_returns_zone_stress_and_part_density():
     assert eng.last_details["raw_peak_mpa"] == 400.0 and eng.last_details["material_used"] == "Structural Steel"
 
 
+@needs_library
 def test_solve_unknown_material_scales_deflection_by_E():
     eng = AnsysEngine(workbench_factory=FakeWorkbench)
     out = eng.solve(FAMILY, DESIGN, 500.0, Material(name="Custom", youngs_mpa=100000, density_kg_m3=2000))
     assert out["max_stress_mpa"] == 120.0
-    assert out["max_disp_mm"] == pytest.approx(0.5 * STEEL_E / 100000)
+    assert out["max_disp_mm"] == pytest.approx(0.5 * steel_e() / 100000)
     assert out["mass_kg"] == pytest.approx(30000 * 2000e-9)
     assert "rescaled" in eng.last_details["material_note"]
 
@@ -122,6 +131,7 @@ def test_solve_rejects_material_without_density():
         AnsysEngine(workbench_factory=FakeWorkbench).solve(FAMILY, DESIGN, 500.0, Material(name="X", youngs_mpa=1e5))
 
 
+@needs_library
 def test_force_follows_family_direction_and_load_case_is_reused():
     eng = AnsysEngine(workbench_factory=FakeWorkbench)
     eng.solve(FAMILY, DESIGN, 500.0, STEEL)
@@ -133,6 +143,7 @@ def test_force_follows_family_direction_and_load_case_is_reused():
     assert len(wb.load_cases) == 2
 
 
+@needs_library
 def test_failed_solve_leaves_engine_usable():
     eng = AnsysEngine(workbench_factory=FakeWorkbench)
     FakeWorkbench.fail_next = True
@@ -141,6 +152,7 @@ def test_failed_solve_leaves_engine_usable():
     assert eng.solve(FAMILY, DESIGN, 500.0, STEEL)["max_stress_mpa"] == 120.0
 
 
+@needs_library
 def test_mesh_check_is_opt_in():
     eng = AnsysEngine(mesh_check=True, workbench_factory=FakeWorkbench)
     eng.solve(FAMILY, DESIGN, 500.0, STEEL)
@@ -150,16 +162,19 @@ def test_mesh_check_is_opt_in():
     assert "check_mesh" not in [c[0] for c in plain._wb.calls]
 
 
+@needs_library
 def test_library_material_matches_the_contract_aluminium_by_tokens():
     assert library_material("Aluminum alloy 6061-T6") == "Aluminum alloy, wrought, 6061, T6"
 
 
+@needs_library
 def test_library_match_still_uses_the_parts_own_E():
     eng = AnsysEngine(workbench_factory=FakeWorkbench)
-    out = eng.solve(FAMILY, DESIGN, 500.0, Material(name="Structural Steel", youngs_mpa=STEEL_E / 2, density_kg_m3=7850))
+    out = eng.solve(FAMILY, DESIGN, 500.0, Material(name="Structural Steel", youngs_mpa=steel_e() / 2, density_kg_m3=7850))
     assert out["max_disp_mm"] == pytest.approx(1.0)
 
 
+@needs_library
 def test_engine_closes_itself_at_exit(monkeypatch):
     hooks = []
     monkeypatch.setattr("src.sim.ansys_engine.atexit.register", hooks.append)
@@ -181,3 +196,15 @@ def test_failed_first_setup_closes_the_workbench():
     with pytest.raises(ValueError):
         AnsysEngine(workbench_factory=Broken).solve(FAMILY, DESIGN, 500.0, STEEL)
     assert closed == [1]
+
+
+def test_solve_refuses_other_families_before_starting_ansys():
+    from src.pydiscovery.backends import BackendUnavailable
+    from src.pydiscovery.families import L_BRACKET_GUSSET_V1
+
+    started = []
+    eng = AnsysEngine(workbench_factory=lambda out: started.append(out) or FakeWorkbench(out))
+    gusset = {**DESIGN, "vertical_height_mm": 80.0, "gusset_thickness_mm": 5.0, "gusset_length_mm": 30.0}
+    with pytest.raises(BackendUnavailable, match="l_bracket_gusset_v1"):
+        eng.solve(L_BRACKET_GUSSET_V1, gusset, 500.0, STEEL)
+    assert started == []  # refused before SpaceClaim or Mechanical start
