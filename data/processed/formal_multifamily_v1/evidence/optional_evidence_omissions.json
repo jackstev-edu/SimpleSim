@@ -1,0 +1,7 @@
+{
+  "omitted": [
+    "fea_gate/refined_mesh_convergence.csv",
+    "fea_gate/refined_gate_summary.json"
+  ],
+  "reason": "Superseded Step 5B reports not present; completed Step 5C reports are included."
+}

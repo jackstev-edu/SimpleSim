@@ -1,0 +1,48 @@
+{
+  "policy": "multifamily_batch_v1.0",
+  "levels": {
+    "T01": "fine",
+    "T02": "fine",
+    "T03": "medium",
+    "T04": "fine",
+    "T05": "medium",
+    "T06": "medium",
+    "T07": "fine",
+    "T08": "fine",
+    "T09": "fine",
+    "T10": "fine"
+  },
+  "input_hashes": {
+    "cad_checks.csv": "71094ab6dd498a388ad8c4b137f1a9f144c8355ed8c74feee1e45d644734c1e1",
+    "interface_summary.json": "3f2f859b9c4902e3dec90cdd8602dac8fa75f6806b1ee8c5f20b859f4ab43195",
+    "fast_gate_summary.json": "fb969d2bc5954c7048a8be6b86306b66559ebd60988b699336b1f9066c1a1fbc",
+    "design_manifest.csv": "dc06475b549b00a9d06b318a9fa2d7839fcb4e333e7514f21585ccb407bc2e7c",
+    "geometry_features.csv": "ef3d38207093616630905ca535be2ad5b9a7ab017171ff45a201d9c9727a495d",
+    "split_manifest.csv": "c4a5a5e06d093adc764fba93a1df732d744ae06b92a0e5acff79f0d63a978b6a",
+    "feature_schema.json": "b76561ef8c0f7f38e06f14988d9215f90b9ac3b1ddcec3ac4a8da3aa7d8dfb8e"
+  },
+  "risk": {
+    "T01": "T01_lhs_028",
+    "T02": "T02_lhs_058",
+    "T03": "T03_lhs_029",
+    "T04": "T04_lhs_032",
+    "T05": "T05_lhs_004_thin",
+    "T06": "T06_lhs_005_thin",
+    "T07": "T07_lhs_025",
+    "T08": "T08_lhs_008_thin",
+    "T09": "T09_lhs_003_thin",
+    "T10": "T10_lhs_040"
+  },
+  "typical": {
+    "T01": "T01_lhs_042",
+    "T02": "T02_lhs_057",
+    "T03": "T03_lhs_001",
+    "T04": "T04_lhs_033",
+    "T05": "T05_lhs_056",
+    "T06": "T06_lhs_040",
+    "T07": "T07_lhs_048",
+    "T08": "T08_lhs_041",
+    "T09": "T09_lhs_026",
+    "T10": "T10_lhs_007"
+  }
+}

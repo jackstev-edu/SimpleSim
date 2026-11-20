@@ -1,0 +1,70 @@
+[
+  {
+    "tasks": 20,
+    "elapsed_s": 2674.063000000002,
+    "min_free_gb": 6.663738250732422,
+    "workers": 3,
+    "phase": "pilot",
+    "threads": 2,
+    "heavy_workers": 1,
+    "utc": "2026-11-17T21:23:19Z"
+  },
+  {
+    "tasks": 40,
+    "elapsed_s": 4832.389999999999,
+    "min_free_gb": 1.0795021057128906,
+    "workers": 4,
+    "phase": "full",
+    "threads": 2,
+    "heavy_workers": 1,
+    "utc": "2026-11-17T23:02:34Z"
+  },
+  {
+    "tasks": 599,
+    "elapsed_s": 341.15699999999924,
+    "min_free_gb": 0.6758346557617188,
+    "workers": 4,
+    "paused_reason": "C:\\: 7.8 GiB free, reserve 8 GiB",
+    "completed_tasks": 4,
+    "phase": "full",
+    "threads": 2,
+    "heavy_workers": 2,
+    "utc": "2026-11-18T03:20:12Z"
+  },
+  {
+    "tasks": 595,
+    "elapsed_s": 578.234000000004,
+    "min_free_gb": 5.472686767578125,
+    "workers": 4,
+    "paused_reason": "C:\\: 7.8 GiB free, reserve 8 GiB",
+    "completed_tasks": 4,
+    "phase": "full",
+    "threads": 2,
+    "heavy_workers": 2,
+    "utc": "2026-11-18T03:32:43Z"
+  },
+  {
+    "tasks": 591,
+    "elapsed_s": 43001.59299999999,
+    "min_free_gb": 0.29688262939453125,
+    "workers": 4,
+    "paused_reason": null,
+    "completed_tasks": 591,
+    "phase": "full",
+    "threads": 2,
+    "heavy_workers": 2,
+    "utc": "2026-11-18T15:40:40Z"
+  },
+  {
+    "tasks": 78,
+    "elapsed_s": 2037.8280000000086,
+    "min_free_gb": 10.754505157470703,
+    "workers": 4,
+    "paused_reason": null,
+    "completed_tasks": 78,
+    "phase": "full",
+    "threads": 2,
+    "heavy_workers": 2,
+    "utc": "2026-11-19T00:16:37Z"
+  }
+]

@@ -1,0 +1,24 @@
+{
+  "stress_change_pct": 0.3275165386908214,
+  "displacement_change_pct": 0.0011261670627220985,
+  "convergence_status": "PASS",
+  "approach": "targeted_second_peak",
+  "peak_in_refined_core": true,
+  "upper_status": "PASS",
+  "upper_wall_s": 723.3612983999992,
+  "upper_error": "",
+  "evidence_kind": "targeted_second_peak",
+  "centers_mm": [
+    [
+      56.3530668381,
+      0.12672645942,
+      6.4766659506
+    ],
+    [
+      56.3554250631,
+      4.13030478591,
+      6.4774588989
+    ]
+  ],
+  "radius_mm": 3.0
+}

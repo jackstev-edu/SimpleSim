@@ -1,0 +1,16 @@
+{
+  "stress_change_pct": 2.43497083323546,
+  "displacement_change_pct": 0.035247127029107476,
+  "convergence_status": "PASS",
+  "approach": "global_fine_extra_fine",
+  "evidence_kind": "t02_global_reference_v1",
+  "upper_status": "PASS",
+  "upper_wall_s": 422.9266534000053,
+  "upper_error": "",
+  "lower_stress_mpa": 407.98028297639036,
+  "upper_stress_mpa": 418.1624158375884,
+  "lower_nodes": 112332,
+  "upper_nodes": 328491,
+  "lower_elements": 66140,
+  "upper_elements": 207259
+}
