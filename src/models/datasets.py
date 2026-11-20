@@ -17,12 +17,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from contracts.models import PARAM_NAMES
+from contracts.models import FAMILY_PARAMS, PARAM_NAMES
 
 V0, V1 = "l_bracket_v0", "l_bracket_gusset_v1"
 FAMILY_DIRS = {V0: Path("data/processed/formal_v0"), V1: Path("data/processed/formal_v1_l_bracket_gusset_v1")}
-# Geometry columns per family, in model order. PR B moves this table into contracts.FAMILY_PARAMS.
-FAMILY_GEOMETRY = {V0: tuple(PARAM_NAMES), V1: (*PARAM_NAMES, "vertical_height_mm", "gusset_thickness_mm", "gusset_length_mm")}
+FAMILY_GEOMETRY = {k: tuple(v) for k, v in FAMILY_PARAMS.items()}  # geometry columns per family, in model order (the contracts' table)
 METRICS = ("max_stress_mpa", "max_disp_mm")
 REF_FORCE_N, REF_E_MPA = 500.0, 200_000.0
 DEFAULT_POISSON = 0.30  # when a spec or part gives no Poisson's ratio
