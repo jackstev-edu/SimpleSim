@@ -56,7 +56,7 @@ A part file is matched to the largest family whose every dimension it names, so 
 | `fitted` (default) | Power laws fitted to Role 1's CalculiX runs (`src/models/power_law.py`): v0 about 1% median error, v1 about 3.5% | ready for both families; checking its own shortlist is circular, so the result says so |
 | `calculix` | Role 1's CadQuery, gmsh and CalculiX pipeline through its family registry: 10 to 40 s per v0 solve, 1 to 3 min per v1 solve | needs `src/data/requirements.txt` |
 | `formula` | the contracts' beam formula | v0 only (a clear error otherwise); parity with the fakes, far off for this bracket |
-| `ansys` | Role 3's SpaceClaim edits and Mechanical solve on `l_bracket.scdocx` (`src/sim/ansys_engine.py`); stress is the peak outside the support and load zones; `backend.last_details` keeps the raw peak and zone data | v0 only (a clear error for v1); needs a local licensed ANSYS 2026 R1 and `src/sim/requirements.txt` |
+| `ansys` | Role 3's SpaceClaim and Mechanical solve (`src/sim/ansys_engine.py`); stress is the peak outside the support and load zones; `backend.last_details` keeps the raw peak and zone data | v0 (face edits on `l_bracket.scdocx`) and v1 (each design built as STEP by Role 1's CadQuery builder, finer mesh on the gusset junction fillets); needs a local licensed ANSYS 2026 R1 and `src/sim/requirements.txt` |
 | `discovery` | the real PyDiscovery | placeholder until Ansys releases it |
 
 An engine is any class with `name` and `solve(family, design_mm, force_n, material) -> {max_stress_mpa, max_disp_mm, mass_kg}`; see `backends.py`.

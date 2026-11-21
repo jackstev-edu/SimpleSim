@@ -198,13 +198,127 @@ def test_failed_first_setup_closes_the_workbench():
     assert closed == [1]
 
 
-def test_solve_refuses_other_families_before_starting_ansys():
+
+def test_solve_refuses_unknown_families_before_starting_ansys():
+    from dataclasses import replace
+
     from src.pydiscovery.backends import BackendUnavailable
-    from src.pydiscovery.families import L_BRACKET_GUSSET_V1
 
     started = []
     eng = AnsysEngine(workbench_factory=lambda out: started.append(out) or FakeWorkbench(out))
-    gusset = {**DESIGN, "vertical_height_mm": 80.0, "gusset_thickness_mm": 5.0, "gusset_length_mm": 30.0}
-    with pytest.raises(BackendUnavailable, match="l_bracket_gusset_v1"):
-        eng.solve(L_BRACKET_GUSSET_V1, gusset, 500.0, STEEL)
+    with pytest.raises(BackendUnavailable, match="t07_stepped"):
+        eng.solve(replace(FAMILY, key="t07_stepped"), DESIGN, 500.0, STEEL)
     assert started == []  # refused before SpaceClaim or Mechanical start
+
+
+# Gusseted L-bracket (v1): built per design from Role 1's CadQuery STEP, so the faces are re-found each time.
+GUSSET = {**DESIGN, "flange_length_mm": 90.0, "vertical_height_mm": 70.0, "gusset_thickness_mm": 5.0,
+          "gusset_length_mm": 25.0}
+GUSSET_FACES = [
+    plane("gb", [0, 0, 0], [0, 70, 45], [-1, 0, 0]),  # back face, fixed
+    plane("ge", [90, 0, 0], [90, 7, 45], [1, 0, 0]),  # free end, loaded
+    plane("gt", [0, 0, 45], [90, 70, 45], [0, 0, 1]),
+    {"id": "gh1", "type": "cylinder", "radius_mm": 5.0, "axis_point_mm": [60, 0, 22.5], "axis_dir": [0, 1, 0]},
+    {"id": "gh2", "type": "cylinder", "radius_mm": 5.0, "axis_point_mm": [60, 0, 22.5], "axis_dir": [0, -1, 0]},
+    # main inside fillet: runs the full width (z 0..45), so it is outside the gusset band
+    {"id": "gf", "type": "cylinder", "radius_mm": 3.0, "axis_point_mm": [10, 10, 0], "axis_dir": [0, 0, 1],
+     "bbox_min_mm": [7, 7, 0], "bbox_max_mm": [10, 10, 45]},
+    # junction fillets: inside the band z 22.5 +/- (2.5 + 2)
+    {"id": "gj1", "type": "cylinder", "radius_mm": 2.0, "axis_point_mm": [7, 20, 20], "axis_dir": [0, 1, 0],
+     "bbox_min_mm": [7, 10, 18.0], "bbox_max_mm": [9, 30, 20.5]},
+    {"id": "gj2", "type": "torus", "bbox_min_mm": [7, 7, 20], "bbox_max_mm": [9, 9, 22]},
+]
+
+
+class GussetWorkbench(FakeWorkbench):
+    def __init__(self, out_dir):
+        super().__init__(out_dir)
+        self.loaded = []
+
+    def load_part(self, path):
+        self.loads += 1
+        self.loaded.append(path)
+        return {"faces": GUSSET_FACES}
+
+
+def gusset_engine(**kw):
+    from src.pydiscovery.families import L_BRACKET_GUSSET_V1
+
+    written = []
+    eng = AnsysEngine(workbench_factory=GussetWorkbench,
+                      step_writer=lambda family, design, path: written.append((family.key, design, path)) or path, **kw)
+    return eng, written, L_BRACKET_GUSSET_V1
+
+
+@needs_library
+def test_gusset_fine_mesh_goes_on_the_junction_faces_only():
+    from src.sim.ansys_engine import gusset_faces
+
+    roles = gusset_faces(GUSSET_FACES, GUSSET)
+    assert roles["round"] == ["gj1", "gj2"] and roles["local_mm"] == 0.5
+
+
+def test_gusset_without_junction_faces_says_so():
+    from src.sim.ansys_engine import gusset_faces
+
+    faces = [f for f in GUSSET_FACES if not f["id"].startswith("gj")]
+    with pytest.raises(ValueError, match="junction"):
+        gusset_faces(faces, GUSSET)
+
+
+class MeshTooLarge(ValueError):  # stands in for src.sim.mechanical.MeshTooLarge (needs ANSYS to import)
+    pass
+
+
+class TooBigToCheckWorkbench(GussetWorkbench):
+    def call(self, name, args):
+        if name == "check_mesh":
+            raise MeshTooLarge("Mesh check not possible: the halved mesh is over the Student limit.")
+        return super().call(name, args)
+
+
+@needs_library
+def test_gusset_mesh_check_over_the_node_limit_keeps_the_result_as_unverified():
+    from src.pydiscovery.families import L_BRACKET_GUSSET_V1
+
+    eng = AnsysEngine(workbench_factory=TooBigToCheckWorkbench, step_writer=lambda f, d, p: p, mesh_check=True)
+    out = eng.solve(L_BRACKET_GUSSET_V1, GUSSET, 500.0, STEEL)
+    assert out["max_stress_mpa"] == 120.0
+    chk = eng.last_details["mesh_check"]
+    assert chk["converged"] is False and chk["verified"] is False and "Student limit" in chk["note"]
+
+
+@needs_library
+def test_gusset_design_is_solved_from_its_step_with_fine_mesh_on_the_round_faces():
+    eng, written, v1 = gusset_engine()
+    out = eng.solve(v1, GUSSET, 500.0, STEEL)
+    wb = eng._wb
+    assert [w[:2] for w in written] == [("l_bracket_gusset_v1", GUSSET)] and wb.loaded == [written[0][2]]
+    assert str(written[0][2]).endswith(".step")
+    assert wb.load_cases == [{"fixed_face_ids": ["gb"], "load_face_ids": ["ge"], "force_N": [0.0, -500.0, 0.0]}]
+    edits = [a for n, a in wb.calls if n == "evaluate_design"][0]["edits"]
+    assert edits == [{"face_id": "gj1", "action": "refine", "also_face_ids": ["gj2"], "value_mm": 0.5}]
+    assert out == {"max_stress_mpa": 120.0, "max_disp_mm": 0.5, "mass_kg": pytest.approx(30000 * 7850e-9)}
+    assert eng.last_details["step"] == str(written[0][2])
+
+
+@needs_library
+def test_each_gusset_design_reloads_and_sets_material_and_load_again():
+    eng, written, v1 = gusset_engine()
+    eng.solve(v1, GUSSET, 500.0, STEEL)
+    eng.solve(v1, {**GUSSET, "gusset_length_mm": 30.0}, 500.0, STEEL)
+    wb = eng._wb
+    assert wb.loads == 2 and len(written) == 2 and written[0][2] != written[1][2]
+    assert wb.materials == ["Structural Steel"] * 2 and len(wb.load_cases) == 2  # load_part resets both
+
+
+def test_gusset_without_ansys_step_builder_says_what_is_missing():
+    from src.pydiscovery.backends import BackendUnavailable
+    from src.pydiscovery.families import L_BRACKET_GUSSET_V1
+
+    def no_cadquery(family, design, path):
+        raise BackendUnavailable("needs CadQuery")
+
+    eng = AnsysEngine(workbench_factory=GussetWorkbench, step_writer=no_cadquery)
+    with pytest.raises(BackendUnavailable, match="CadQuery"):
+        eng.solve(L_BRACKET_GUSSET_V1, GUSSET, 500.0, STEEL)

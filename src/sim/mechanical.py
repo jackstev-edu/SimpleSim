@@ -265,6 +265,8 @@ def refinement_check(pmdb: str | Path, fixed: str, load: str, force_N, element_s
                      guard: str | None = None, min_wall_mm: float | None = None) -> dict:
     """Re-solve with half the element size (global and local). A max stress change above
     `tolerance` means the peak is mesh-dependent, typically a singularity at a sharp corner.
+    If the fully halved mesh is over the Student limit and a local size is set, the check retries
+    with only the local size halved (global size kept) and says so (`fine_global_kept`, `note`).
     The comparison uses stress_for_limit_MPa (outside the exclusion zone); the fine solve reuses the
     coarse zone_mm. `on_solve("coarse" | "fine", result)` is called after each solve."""
     coarse = solve(pmdb, fixed, load, force_N, element_size_mm, local_size, material,
@@ -272,23 +274,37 @@ def refinement_check(pmdb: str | Path, fixed: str, load: str, force_N, element_s
     if on_solve:
         on_solve("coarse", coarse)
     fine_local = (local_size[0], local_size[1] / 2) if local_size else None
-    try:
-        fine = solve(pmdb, fixed, load, force_N, element_size_mm / 2, fine_local, material,
-                     guard=guard, min_wall_mm=min_wall_mm, zone_mm=coarse["zone_mm"])
-    except MeshTooLarge as e:
-        raise MeshTooLarge(
-            f"Mesh check not possible: the halved mesh is over the Student limit. {e} The coarse result "
-            f"stands but is NOT mesh-verified: {coarse['stress_for_limit_MPa']:.1f} MPa used for the limit "
-            f"({coarse['max_stress_MPa']:.1f} MPa raw peak), "
-            f"{coarse['nodes']:,} nodes at {element_size_mm} mm.") from e
+    fine_size, global_kept = element_size_mm / 2, False
+    while True:
+        try:
+            fine = solve(pmdb, fixed, load, force_N, fine_size, fine_local, material,
+                         guard=guard, min_wall_mm=min_wall_mm, zone_mm=coarse["zone_mm"])
+            break
+        except MeshTooLarge as e:
+            if fine_local and not global_kept:
+                # Peak sits on the locally sized faces: refining only those still tests convergence there.
+                fine_size, global_kept = element_size_mm, True
+                continue
+            raise MeshTooLarge(
+                f"Mesh check not possible: the halved mesh is over the Student limit. {e} The coarse result "
+                f"stands but is NOT mesh-verified: {coarse['stress_for_limit_MPa']:.1f} MPa used for the limit "
+                f"({coarse['max_stress_MPa']:.1f} MPa raw peak), "
+                f"{coarse['nodes']:,} nodes at {element_size_mm} mm.") from e
     if on_solve:
         on_solve("fine", fine)
-    out = {"coarse": coarse, "fine": fine, "basis": "stress_for_limit_MPa"}
+    out = {"coarse": coarse, "fine": fine, "basis": "stress_for_limit_MPa", "fine_global_kept": global_kept}
+    notes = []
+    if global_kept:
+        notes.append(f"Halving both mesh sizes was over the Student node limit, so the fine solve kept the "
+                     f"global size at {element_size_mm} mm and halved only the local size to {fine_local[1]} mm. "
+                     f"This verifies the stress on the locally refined faces, not elsewhere on the part.")
     if coarse["zone_mm"] is None or fine["zone_mm"] is None:
         # One solve had no zone (PlotData unreadable): compare like with like on the raw peaks.
         out["basis"] = "max_stress_MPa"
-        out["note"] = ("The exclusion zone was missing on one of the two solves, so the mesh check "
-                       "compares the raw peak stresses instead.")
+        notes.append("The exclusion zone was missing on one of the two solves, so the mesh check "
+                     "compares the raw peak stresses instead.")
+    if notes:
+        out["note"] = " ".join(notes)
     a, b = coarse[out["basis"]], fine[out["basis"]]
     if a == 0:
         out["note"] = "The coarse stress is zero, so the change cannot be measured; treat the check as failed."

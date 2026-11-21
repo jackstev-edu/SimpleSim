@@ -3,7 +3,7 @@
 fitted     default; Role 2's power law fitted to Role 1's CalculiX runs (v0 and the gusseted v1), instant
 formula    the contracts' beam formula; v0 only, a different bracket's theory, far off for this one
 calculix   Role 1's CalculiX solver through its family registry (v0 and v1); needs src/data's packages
-ansys      Role 3's SpaceClaim + Mechanical pipeline (src/sim/ansys_engine.py); v0 only, needs a local licensed ANSYS
+ansys      Role 3's SpaceClaim + Mechanical pipeline (src/sim/ansys_engine.py); v0 and v1, needs a local licensed ANSYS
 discovery  the real PyDiscovery, once Ansys releases it
 """
 

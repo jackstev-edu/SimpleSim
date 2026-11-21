@@ -170,6 +170,23 @@ def test_guard_includes_new_fillet_faces(gwb):
     assert ("NS_GUARD", ["0:99"]) in gwb.geo.named
 
 
+def test_refine_meshes_existing_faces_finely_and_guards_them(gwb):
+    from src.agent import tools
+    _, local = gwb._build([{"face_id": "0:39", "action": "refine", "also_face_ids": ["0:40"], "value_mm": 0.5}])
+    assert local == (tools.FILLETS, 0.5)
+    assert ("NS_FILLETS", ["0:39", "0:40"]) in gwb.geo.named and ("NS_GUARD", ["0:39", "0:40"]) in gwb.geo.named
+
+
+def test_refine_with_a_fillet_takes_the_finer_size(gwb):
+    _, local = gwb._build([{"face_id": "0:39", "action": "fillet", "other_face_id": "0:40", "value_mm": 3.0},
+                           {"face_id": "0:27", "action": "refine", "value_mm": 0.5}])
+    assert local[1] == 0.5 and ("NS_FILLETS", ["0:99", "0:27"]) in gwb.geo.named
+
+
+def test_refine_rejects_unknown_faces(gwb):
+    with pytest.raises(KeyError):
+        gwb._build([{"face_id": "0:39", "action": "refine", "also_face_ids": ["nope"], "value_mm": 0.5}])
+
 def test_no_guard_when_set_empty(gwb):
     gwb._build([{"face_id": "0:36", "action": "offset", "value_mm": 1.0}])
     assert not any(n == "NS_GUARD" for n, _ in gwb.geo.named)

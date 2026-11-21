@@ -442,11 +442,23 @@ class Workbench:
         geo.name_faces(LOAD, self.load_case["load_face_ids"])
         faces = {f["id"]: f for f in geo.describe_faces()}
         radii, edited = [], []  # edited = faces whose stress must never be excluded
+        refined, sizes = [], []  # engine-only "refine": existing faces that get the local mesh
         # Fillets last: they add new faces and must round the edges of the already-edited walls.
         for e in sorted(edits, key=lambda e: e["action"] == "fillet"):
             face = faces.get(e["face_id"])
             if face is None:
                 raise KeyError(f"Unknown face id {e['face_id']}")
+            if e["action"] == "refine":  # not in the agent's schema; the Ansys engine uses it on imported parts
+                ids = [e["face_id"], *e.get("also_face_ids", [])]
+                missing = [i for i in ids if i not in faces]
+                if missing:
+                    raise KeyError(f"Unknown face id {missing[0]}")
+                if e["value_mm"] <= 0:
+                    raise ValueError("refine size must be positive")
+                refined += ids
+                edited += ids
+                sizes.append(e["value_mm"])
+                continue
             if e["action"] == "fillet":
                 other = faces.get(e.get("other_face_id", ""))
                 if other is None:
@@ -479,10 +491,11 @@ class Workbench:
         guard = [i for i in dict.fromkeys(edited + new) if i not in skip]
         if guard:
             geo.name_faces(GUARD, guard)
-        if not radii:
+        if not radii and not refined:
             return geo, None
-        geo.name_faces(FILLETS, new)
-        return geo, (FILLETS, round(min(radii) / FILLET_ELEMENTS_PER_RADIUS, 4))
+        geo.name_faces(FILLETS, new + refined)
+        size = min([r / FILLET_ELEMENTS_PER_RADIUS for r in radii] + sizes)
+        return geo, (FILLETS, round(size, 4))
 
     def _evaluate(self, name: str, edits: list[dict], element_size_mm: float) -> dict:
         t0 = time.time()
@@ -656,6 +669,7 @@ class Workbench:
             change = chk["stress_change"]
             out = {"name": args["name"], "stress_change": round(change, 4) if math.isfinite(change) else None,
                    "converged": chk["converged"], "basis": chk.get("basis", "stress_for_limit_MPa"),
+                   "fine_global_kept": chk.get("fine_global_kept", False),
                    **({"note": chk["note"]} if chk.get("note") else {}),
                    "coarse": {k: chk["coarse"][k] for k in CHECK_FIELDS},
                    "fine": {k: chk["fine"][k] for k in CHECK_FIELDS}}

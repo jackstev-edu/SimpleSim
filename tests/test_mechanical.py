@@ -114,6 +114,50 @@ def test_mesh_too_large_on_fine_solve_quotes_the_limit_stress(monkeypatch):
         mechanical.refinement_check("p.pmdb", "F", "L", (0, 0, 1))
 
 
+def test_mesh_too_large_with_local_size_retries_halving_only_the_local_size(monkeypatch):
+    from src.sim import mechanical
+    sizes = []
+
+    def fake_solve(pmdb, fixed, load, force, size, local, *a, **k):
+        sizes.append((size, local))
+        if size == 1.0:
+            raise mechanical.MeshTooLarge("too many nodes.")
+        return {"max_stress_MPa": 280.0 if len(sizes) == 1 else 285.0,
+                "stress_for_limit_MPa": 280.0 if len(sizes) == 1 else 285.0, "zone_mm": 3.0, "nodes": 1}
+
+    monkeypatch.setattr(mechanical, "solve", fake_solve)
+    out = mechanical.refinement_check("p.pmdb", "F", "L", (0, 0, 1), element_size_mm=2.0,
+                                      local_size=("NS_FILLETS", 0.5))
+    # coarse, full halving (refused), local-only halving
+    assert sizes == [(2.0, ("NS_FILLETS", 0.5)), (1.0, ("NS_FILLETS", 0.25)), (2.0, ("NS_FILLETS", 0.25))]
+    assert out["fine_global_kept"] is True
+    assert out["converged"] is True and out["stress_change"] == pytest.approx(5 / 280)
+    assert "2.0 mm" in out["note"] and "0.25 mm" in out["note"]
+
+
+def test_mesh_too_large_on_local_only_retry_still_raises_with_limit_stress(monkeypatch):
+    from src.sim import mechanical
+    calls = iter([{"max_stress_MPa": 400.0, "stress_for_limit_MPa": 120.0, "zone_mm": 3.0, "nodes": 1000}])
+
+    def fake_solve(*a, **k):
+        try:
+            return next(calls)
+        except StopIteration:
+            raise mechanical.MeshTooLarge("too many nodes.")
+
+    monkeypatch.setattr(mechanical, "solve", fake_solve)
+    with pytest.raises(mechanical.MeshTooLarge, match="120.0 MPa"):
+        mechanical.refinement_check("p.pmdb", "F", "L", (0, 0, 1), local_size=("NS_FILLETS", 0.5))
+
+
+def test_full_halving_reports_global_not_kept(monkeypatch):
+    from src.sim import mechanical
+    monkeypatch.setattr(mechanical, "solve", lambda *a, **k: {
+        "max_stress_MPa": 100.0, "stress_for_limit_MPa": 100.0, "zone_mm": 3.0, "nodes": 1})
+    out = mechanical.refinement_check("p.pmdb", "F", "L", (0, 0, 1), local_size=("NS_FILLETS", 0.5))
+    assert out["fine_global_kept"] is False
+
+
 def test_zone_fallback_message_does_not_repeat_the_plotdata_message():
     from src.sim.mechanical import _zone_from_mesh
     fields, msg = _zone_from_mesh(None, [None, None, None], [], [], 3.0, None, 50.0)
