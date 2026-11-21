@@ -1,0 +1,78 @@
+"""Simulated user: hidden facts and rules in the system prompt, its own alternating history."""
+import pytest
+
+# Role 3 packages live in src/sim/requirements.txt, not the root one, so CI skips this file.
+pytest.importorskip("yaml")
+
+from types import SimpleNamespace as NS
+
+from src.eval.problems import Problem
+from src.eval.sim_user import SIM_MODEL, SimUser
+
+
+class FakeClient:
+    def __init__(self):
+        self.calls = []
+        self.responses = self
+
+    def create(self, **kwargs):
+        self.calls.append({**kwargs, "input": [dict(m) for m in kwargs["input"]]})
+        return NS(output_text=f"reply {len(self.calls)}", status="completed")
+
+
+def problem(named=(), kind="clean_auto"):
+    return Problem(id="p", part="x", kind=kind, request="Make it lighter.",
+                   hidden_facts="The back face is bolted. 500 N down on the end.",
+                   user_named_features=list(named),
+                   key={"features": [{"id": "wall", "label": "base thickness"}]})
+
+
+def test_system_prompt_holds_hidden_facts_and_rules():
+    fake = FakeClient()
+    SimUser(problem(), fake).reply("Which face is fixed?")
+    s = fake.calls[0]["instructions"]
+    assert "The back face is bolted. 500 N down on the end." in s
+    assert "Never volunteer" in s and "face ids" in s and "OK, go ahead." in s
+
+
+def test_named_features_approval_phrase():
+    fake = FakeClient()
+    SimUser(problem(named=["wall"]), fake).reply("Shall I run this?")
+    s = fake.calls[0]["instructions"]
+    assert "OK, go ahead with the features I asked for." in s and "base thickness" in s
+
+
+def test_history_alternates_and_grows():
+    fake = FakeClient()
+    u = SimUser(problem(), fake)
+    assert u.reply("first?") == "reply 1"
+    u.reply("second?")
+    msgs = fake.calls[1]["input"]
+    assert [m["role"] for m in msgs] == ["user", "assistant", "user"]
+    assert msgs[0]["content"] == "first?" and msgs[1]["content"] == "reply 1"
+
+
+def test_uses_gpt_6_luna():
+    fake = FakeClient()
+    SimUser(problem(), fake).reply("x")
+    assert fake.calls[0]["model"] == SIM_MODEL == "gpt-6-luna"
+
+
+def test_complex_part_user_does_not_claim_it_named_features():
+    # On a complex part the features are named only if the agent asks, so the approval must not say
+    # "the features I asked for" (seen 2026-11-11: the agent never asked and got that reply).
+    fake = FakeClient()
+    p = problem(named=["wall"])
+    p.kind = "complex"
+    SimUser(p, fake).reply("Shall I run this?")
+    s = fake.calls[0]["instructions"]
+    assert 'reply exactly: "OK, go ahead."' in s and "If the assistant asks which features" in s
+
+
+def test_empty_reply_raises():
+    class Empty(FakeClient):
+        def create(self, **kwargs):
+            return NS(output_text="", status="incomplete")
+    import pytest
+    with pytest.raises(RuntimeError, match="no text"):
+        SimUser(problem(), Empty()).reply("x")

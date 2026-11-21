@@ -37,12 +37,15 @@ data/generated/
 *.dsdb
 *.err
 *.log
+outputs/
 
 # OS and editor
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
+practice/parts/external/
+practice/results/*/*/ws/
 
 # Reference screenshots and prompts for the UI (not ours to publish)
 src/ui/reference/

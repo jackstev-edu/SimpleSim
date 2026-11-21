@@ -1,0 +1,129 @@
+problem: jeb_named
+reviewed: true
+reviewed_by: user
+reviewed_on: '2026-11-15'
+review_notes:
+- Rebuilt 2026-11-15 with exclusion zones (limit judged on stress_for_limit_MPa). Both features
+  move the limit stress about 1 % (bolt holes +0.9 %, pin hole +1.1 %) and mass about 1 %,
+  below the 5 % threshold. pin_hole got controls_limit only from the 'ranks first in limit_ranking'
+  fallback (1.1 vs 0.9 %, within noise), so the user set both to negligible.
+built: '2026-11-15'
+effects:
+  bolt_holes: negligible
+  pin_hole: negligible
+warnings: []
+evidence:
+- reference:
+    values:
+    - 5.1562
+    - 9.5504
+    responses:
+      mass_kg: 0.5765
+      max_stress_MPa: 4493.144572233305
+      stress_for_limit_MPa: 1466.5029442836367
+      max_def_mm: 2.657104464063792
+      safety_factor: 0.577
+  features:
+  - index: 1
+    label: radius of the 4 bolt holes (one size)
+    low: 4.5
+    ref: 5.1562
+    high: 6
+    responses:
+      mass_kg:
+        low: 0.5788
+        ref: 0.5765
+        high: 0.5726
+        change: -0.006199999999999983
+        basis: high_vs_low
+        change_rel: -0.010754553339115323
+      max_stress_MPa:
+        low: 2180.1151604485076
+        ref: 4493.144572233305
+        high: 2671.0216011844927
+        change: 490.90644073598514
+        basis: high_vs_low
+        change_rel: 0.10925676502146947
+      stress_for_limit_MPa:
+        low: 1473.777035128621
+        ref: 1466.5029442836367
+        high: 1486.7863271517385
+        change: 13.009292023117496
+        basis: high_vs_low
+        change_rel: 0.008870962089661762
+      max_def_mm:
+        low: 2.809267003734557
+        ref: 2.657104464063792
+        high: 2.506912273861861
+        change: -0.30235472987269585
+        basis: high_vs_low
+        change_rel: -0.1137910586361639
+      safety_factor:
+        low: 0.574
+        ref: 0.577
+        high: 0.569
+        change: -0.0050000000000000044
+        basis: high_vs_low
+        change_rel: -0.008665511265164653
+    feasible:
+      low: false
+      high: false
+  - index: 2
+    label: radius of the pin hole in the lugs
+    low: 9
+    ref: 9.5504
+    high: 10.5
+    responses:
+      mass_kg:
+        low: 0.5781
+        ref: 0.5765
+        high: 0.5727
+        change: -0.00539999999999996
+        basis: high_vs_low
+        change_rel: -0.009366869037293947
+      max_stress_MPa:
+        low: 7094.2450096915745
+        ref: 4493.144572233305
+        high: 6689.162420722309
+        change: -405.0825889692651
+        basis: high_vs_low
+        change_rel: -0.09015569885567247
+      stress_for_limit_MPa:
+        low: 1476.4205092994196
+        ref: 1466.5029442836367
+        high: 1492.2208072677354
+        change: 15.800297968315817
+        basis: high_vs_low
+        change_rel: 0.010774133137546486
+      max_def_mm:
+        low: 2.648099889028314
+        ref: 2.657104464063792
+        high: 2.6701126297792483
+        change: 0.022012740750934512
+        basis: high_vs_low
+        change_rel: 0.008284484501323703
+      safety_factor:
+        low: 0.573
+        ref: 0.577
+        high: 0.567
+        change: -0.006000000000000005
+        basis: high_vs_low
+        change_rel: -0.010398613518197583
+    feasible:
+      low: false
+      high: false
+  ranking:
+  - 1
+  - 2
+  limit_ranking:
+    safety_factor:
+    - 2
+    - 1
+  best_feasible: null
+  errors: {}
+  failed: 0
+  note: No design meets the limits. To reach them, change the features that move the limited
+    response most (limit_ranking), not the ones ranked first for the objective.
+  stopped: done
+  solves: 5
+  seconds_per_design: 56.2
