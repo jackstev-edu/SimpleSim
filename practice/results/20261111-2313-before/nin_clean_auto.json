@@ -1119,7 +1119,7 @@
    },
    "feature_recall": {
     "result": "fail",
-    "detail": "missed ['mount_holes', 'lug_root_fillet_a', 'lug_root_fillet_b']"
+    "detail": "missed ['mount_holes']"
    },
    "ranges_valid": {
     "result": "pass",

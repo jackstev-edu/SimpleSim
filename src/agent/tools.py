@@ -417,7 +417,8 @@ class Workbench:
                 "mass_kg": round(volume * self.material["density_kg_m3"] * 1e-9, 4),
                 "min_wall_mm": None if wall is None else round(wall, 3),
                 "default_element_size_mm": screen.default_element_size(wall, volume),
-                "faces": faces, "inside_corners": geo.inside_corners()}
+                "faces": faces, "inside_corners": geo.inside_corners(),
+                "holes": screen.holes(faces)}  # each hole with all its faces: a split hole has two
 
     def _responses(self, d: dict) -> dict:
         """Derived design measures of a stored design: mass, safety factor and cost."""
@@ -648,7 +649,10 @@ class Workbench:
         elif name == "set_load_case":
             self.load_case = args
             self.designs = {}
-            out = {"ok": True, "note": "Load case set; earlier results were cleared.",
+            out = {"ok": True, "note": "Load case set; earlier results were cleared. Check that fixed_holes and "
+                                       "loaded_holes match the number of holes the user named.",
+                   "fixed_holes": screen.count_holes(self.faces, args["fixed_face_ids"]),
+                   "loaded_holes": screen.count_holes(self.faces, args["load_face_ids"]),
                    "seconds_per_design": self.seconds_per_design()}
         elif name == "evaluate_design":
             if self.load_case is None:

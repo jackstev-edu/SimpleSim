@@ -57,3 +57,11 @@ def test_result_that_breaks_the_contract_is_refused_before_any_api_call():
     with pytest.raises(ResultContractError):
         explain(bad, c)
     assert c.sent == []
+
+
+def test_instructions_say_when_the_baseline_fails_a_limit():
+    # gusset smoke 11-21: "+11 % mass" explained as a trade-off, not as the cost of meeting SF 1.5
+    c = ScriptClient("ok")
+    explain(R, c)
+    ins = " ".join(c.sent[0]["instructions"].split())
+    assert "baseline.feasible is false" in ins and "baseline.violated" in ins

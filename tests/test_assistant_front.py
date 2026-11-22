@@ -154,3 +154,9 @@ def test_open_part_is_not_offered_to_the_model():
 def test_prompt_switches_when_not_the_l_bracket():
     tail = PROMPT.split("not the L-bracket")[1][:120]
     assert "switch_to_ansys" in tail
+
+
+def test_prompt_uses_the_family_face_text_for_support():
+    # gusset smoke 11-21: "back face" was refused by set_support, which wants "back face at X = 0"
+    p = " ".join(PROMPT.split())
+    assert "exact face text describe_setup shows" in p

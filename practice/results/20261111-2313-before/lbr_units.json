@@ -567,8 +567,8 @@
     "detail": ""
    },
    "feature_recall": {
-    "result": "fail",
-    "detail": "missed ['corner_fillet']"
+    "result": "pass",
+    "detail": ""
    },
    "ranges_valid": {
     "result": "fail",

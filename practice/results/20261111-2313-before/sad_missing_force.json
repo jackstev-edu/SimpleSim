@@ -717,8 +717,8 @@
     "detail": ""
    },
    "feature_recall": {
-    "result": "fail",
-    "detail": "missed ['left_corner_fillet']"
+    "result": "pass",
+    "detail": ""
    },
    "ranges_valid": {
     "result": "pass",

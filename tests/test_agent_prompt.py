@@ -89,3 +89,21 @@ def test_limit_stress_location_and_mesh_check_wording():
     assert "stress_for_limit_at_mm" in S
     assert "stress_for_limit_MPa" in tool_desc("check_mesh")
     assert "If max stress changes" not in tool_desc("check_mesh")
+
+
+def test_down_is_worked_out_from_the_part_never_defaulted_to_z():
+    # after-run 11-15: lbr_clean_auto set "straight down" as -Z on a wall-mounted L-bracket
+    assert "no gravity" in S and "never default to Z" in S
+    assert "bolted to a wall is vertical" in S
+
+
+def test_user_words_map_to_faces_literally():
+    # lbr_units: "hanging from the end of the short leg" went on the hole; sad_clean_auto: flange
+    # faces fixed for "the two small holes are bolted down"
+    assert "end of a leg is its end face" in S
+    assert "fix the bore faces of those holes" in S
+
+
+def test_set_load_case_once_after_every_setup_question_is_answered():
+    # sad_clean_auto: set_load_case called, then a support question asked, then called again
+    assert "Call set_load_case once" in S

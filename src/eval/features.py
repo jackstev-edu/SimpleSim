@@ -25,6 +25,16 @@ def proposal_features(proposal: dict | None) -> list[dict]:
     return out
 
 
+def fixed_fillets(proposal: dict | None) -> list[dict]:
+    """Fillets the proposal applies at a fixed size (fixed_edits), shaped like proposal_features.
+    They count for feature recall only (user, 2026-11-21), not for ranges or obedience."""
+    if not proposal:
+        return []
+    return [{"face_id": e.get("face_id"), "action": "fillet", "other_face_id": e.get("other_face_id"),
+             "also_face_ids": [], "low": e.get("value_mm"), "high": e.get("value_mm"), "label": "fixed fillet"}
+            for e in proposal.get("input", {}).get("fixed_edits") or [] if e.get("action") == "fillet"]
+
+
 def _holes(faces: list[dict], face_ids: list[str]) -> set[str]:
     known = {f["id"] for f in faces}
     out: set[str] = set()

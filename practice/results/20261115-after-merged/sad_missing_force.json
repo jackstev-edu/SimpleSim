@@ -674,7 +674,7 @@
    },
    "feature_recall": {
     "result": "fail",
-    "detail": "missed ['left_flange', 'left_corner_fillet']"
+    "detail": "missed ['left_flange']"
    },
    "ranges_valid": {
     "result": "pass",

@@ -3,13 +3,13 @@
 | jeb_complex | graded | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | – | – | – | ✓ | ✓ | ✓ | ✓ |
 | jeb_named | graded | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | – | ✓ | – | ✓ | – | ✓ | ✓ |
 | lbr_clean_auto | graded | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | – | – | ✓ | ✓ | – | ✓ | ✗ |
-| lbr_missing_support | graded | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | – | – | ✗ | ✓ | – | ✓ | ✓ |
+| lbr_missing_support | graded | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | – | – | ✓ | ✓ | – | ✓ | ✓ |
 | lbr_named | graded | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | – | ✓ | – | ✓ | – | ✓ | ✓ |
-| lbr_units | graded | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | – | ✗ | ✗ | – | ✓ | ✓ |
+| lbr_units | graded | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | – | ✓ | ✗ | – | ✓ | ✓ |
 | nin_bad_sf | graded | ✓ | ✓ | ✓ | ✓ | ✓ | – | ✓ | – | ✗ | ✓ | – | ✓ | ✓ |
 | nin_clean_auto | graded | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | – | – | ✗ | ✓ | – | ✗ | ✓ |
 | nin_named_holes | graded | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | – | ✓ | – | ✓ | – | ✓ | ✓ |
-| sad_clean_auto | graded | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | – | – | ✗ | ✓ | – | ✓ | ✗ |
-| sad_missing_force | graded | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | – | – | ✗ | ✓ | – | ✓ | ✓ |
+| sad_clean_auto | graded | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | – | – | ✓ | ✓ | – | ✓ | ✗ |
+| sad_missing_force | graded | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | – | – | ✓ | ✓ | – | ✓ | ✓ |
 | sad_named | graded | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | – | ✓ | – | ✓ | – | ✓ | ✓ |
-| passed | | 10/12 | 11/12 | 12/12 | 12/12 | 12/12 | 9/11 | 2/2 | 4/4 | 1/7 | 11/12 | 1/1 | 11/12 | 10/12 |
+| passed | | 10/12 | 11/12 | 12/12 | 12/12 | 12/12 | 9/11 | 2/2 | 4/4 | 5/7 | 11/12 | 1/1 | 11/12 | 10/12 |

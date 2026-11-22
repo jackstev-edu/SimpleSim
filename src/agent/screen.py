@@ -196,6 +196,50 @@ def hole_faces(faces: list[dict], face_id: str, tol_mm: float = 0.01) -> list[st
     return out
 
 
+def holes(faces: list[dict]) -> list[dict]:
+    """Concave cylinder faces grouped per hole (a split hole's halves together), in face order."""
+    out, seen = [], set()
+    for f in faces:
+        if f.get("type") != "cylinder" or f.get("kind") != "concave" or f["id"] in seen:
+            continue
+        by_id = {g["id"]: g for g in faces}
+        ids = [i for i in hole_faces(faces, f["id"]) if i not in seen]
+        seen.update(ids)
+        for part in _split_along_axis([by_id[i] for i in ids], f["axis_dir"]):  # one pin through two lugs: two holes
+            out.append({"face_ids": part, "radius_mm": f["radius_mm"], "axis_point_mm": f["axis_point_mm"]})
+    return out
+
+
+def _span(face: dict, d: list[float]) -> tuple[float, float] | None:
+    """The face's extent along the axis, from its bounding box corners; None without a box."""
+    if "bbox_min_mm" not in face:
+        return None
+    lo, hi = face["bbox_min_mm"], face["bbox_max_mm"]
+    proj = [_dot([(lo, hi)[(k >> j) & 1][j] for j in range(3)], d) for k in range(8)]
+    return min(proj), max(proj)
+
+
+def _split_along_axis(group: list[dict], d: list[float], tol_mm: float = 0.01) -> list[list[str]]:
+    """Coaxial faces whose spans along the axis overlap form one hole; separated spans are separate holes."""
+    parts: list[tuple[float, float, list[str]]] = []
+    for g in group:
+        s = _span(g, d)
+        for i, (a, b, ids) in enumerate(parts):
+            if s is None or a is None or (s[0] <= b + tol_mm and a <= s[1] + tol_mm):
+                parts[i] = (a if s is None or a is None else min(a, s[0]), b if s is None or b is None else max(b, s[1]),
+                            ids + [g["id"]])
+                break
+        else:
+            parts.append((None, None, [g["id"]]) if s is None else (s[0], s[1], [g["id"]]))
+    return [ids for _, _, ids in parts]
+
+
+def count_holes(faces: list[dict], ids: list[str]) -> int:
+    """How many distinct holes the given face ids touch."""
+    want = set(ids)
+    return sum(1 for h in holes(faces) if want & set(h["face_ids"]))
+
+
 def default_element_size(min_wall: float | None, volume_mm3: float) -> float:
     """About two elements through the thinnest wall and at most 2 mm, but never finer than the size at which
     check_mesh's halved mesh fits the node budget (that floor wins, even above 2 mm, for large parts)."""

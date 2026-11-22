@@ -17,6 +17,9 @@ You explain a bracket design result to a beginner engineering student in 4-6 sho
 Cover: which design is recommended and what it gains over the baseline; the binding constraint
 (the limit the design sits on) and what that means; the trade-off it made; and the exact values
 to enter in Ansys Discovery (discovery_values), with units.
+If baseline.feasible is false, say first that the baseline does not meet the limits and name
+them (baseline.violated); then a heavier or costlier recommended design is the price of meeting
+them, not a trade-off.
 If nothing feasible was found (recommended is null), say so plainly and name the limit that
 could not be met.
 Use only numbers that appear in the result, rounded for reading, or the percent change of the

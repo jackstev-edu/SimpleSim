@@ -219,3 +219,13 @@ def test_check_mesh_reports_zone_fields(gwb, monkeypatch):
     assert out["coarse"]["stress_for_limit_MPa"] == 100.0 and out["coarse"]["zone_settled"] is True
     assert out["fine"]["excluded_at"] == "support"
     assert seen["guard"] == "NS_GUARD" and seen["min_wall_mm"] == 2.5
+
+
+def test_set_load_case_reports_how_many_holes_it_fixed_and_loaded(gwb, monkeypatch):
+    monkeypatch.undo()  # the fixture stubs hole_faces; this test needs the real grouping
+    cyl = lambda fid, p: {"id": fid, "type": "cylinder", "kind": "concave", "radius_mm": 5.0,
+                          "axis_point_mm": list(p), "axis_dir": [0, 0, 1]}
+    gwb.faces = [cyl("h1a", (0, 0, 0)), cyl("h1b", (0, 0, 0)), cyl("h2a", (50, 0, 0)), cyl("pin", (20, 40, 0))]
+    out = json.loads(gwb.call("set_load_case", {"fixed_face_ids": ["h1a", "h1b"], "load_face_ids": ["pin"],
+                                                "force_N": [0, 0, 100]}))
+    assert out["fixed_holes"] == 1 and out["loaded_holes"] == 1

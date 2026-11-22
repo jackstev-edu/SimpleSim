@@ -287,3 +287,12 @@ def test_optional_key_feature_is_not_required_for_recall_but_counts_when_propose
 def test_recall_is_na_when_the_key_requires_no_feature():
     eff = {"reviewed": True, "effects": {"wall": "unknown", "corner": "unknown", "hole2": "unknown"}}
     assert res(grade(problem(), eff, good_log()), "feature_recall") == "n/a"
+
+
+def test_recall_counts_a_fillet_applied_at_a_fixed_size():
+    # user 2026-11-21: a corner fillet in fixed_edits counts as proposing the fillet feature
+    lg = good_log(GOOD_FEATS[:1])
+    lg["proposal"]["input"]["fixed_edits"] = [{"face_id": "w3", "other_face_id": "w1", "action": "fillet",
+                                               "value_mm": 3}]
+    c = grade(problem(), EFFECTS, lg)
+    assert res(c, "feature_recall") == "pass" and res(c, "ranges_valid") == "pass"

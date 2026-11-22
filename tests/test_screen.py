@@ -176,3 +176,36 @@ def test_cylinder_kind_ignores_offset_along_axis_and_tilted_axis():
     p = [10 + 0.6 * 4, 20 + 0.8 * 4, 9]  # 4 mm along the axis, radius 9 straight up in z
     assert screen.cylinder_kind(p, [0, 0, -1], [10, 20, 0], d) == "concave"
     assert screen.cylinder_kind(p, [0, 0, 1], [10, 20, 0], d) == "convex"
+
+
+def _hole(fid, r, p):
+    return {**_cyl(fid, r, p), "kind": "concave"}
+
+
+def test_holes_groups_concave_halves_and_leaves_out_convex_faces():
+    # jeb_named 11-21: four bolt holes stored as eight half faces; the agent fixed only two holes
+    faces = [_hole("a1", 5.0, (0, 0, 0)), _hole("a2", 5.0, (0, 0, 0)), _hole("b1", 5.0, (52, 1.6, 0)),
+             _hole("b2", 5.0, (52, 1.6, 0)), {**_cyl("boss", 17.8, (0, 0, 0)), "kind": "convex"},
+             {"id": "p", "type": "plane", "normal": [0, 0, 1]}]
+    got = screen.holes(faces)
+    assert [h["face_ids"] for h in got] == [["a1", "a2"], ["b1", "b2"]]
+    assert got[0]["radius_mm"] == 5.0 and got[1]["axis_point_mm"] == [52, 1.6, 0]
+
+
+def test_count_holes_counts_each_split_hole_once():
+    faces = [_hole("a1", 5.0, (0, 0, 0)), _hole("a2", 5.0, (0, 0, 0)), _hole("b1", 5.0, (52, 1.6, 0)),
+             {"id": "p", "type": "plane", "normal": [0, 0, 1]}]
+    assert screen.count_holes(faces, ["a1", "a2"]) == 1
+    assert screen.count_holes(faces, ["a1", "b1"]) == 2
+    assert screen.count_holes(faces, ["p"]) == 0
+
+
+def test_holes_splits_coaxial_bores_in_separate_lugs():
+    # jeb_named 11-21: one pin through two lugs; the four bore faces were counted as one hole, so the
+    # agent added an unrelated face to reach the "pin holes" the user named
+    def bore(fid, y0, y1):
+        return {**_hole(fid, 9.55, (0, 0, 0)), "axis_dir": [0, 1, 0], "bbox_min_mm": [-10, y0, -10],
+                "bbox_max_mm": [10, y1, 10]}
+    faces = [bore("l1a", -92, -85), bore("l1b", -92, -85), bore("l2a", -64, -57), bore("l2b", -64, -57)]
+    assert [h["face_ids"] for h in screen.holes(faces)] == [["l1a", "l1b"], ["l2a", "l2b"]]
+    assert screen.count_holes(faces, ["l1a", "l1b", "l2a", "l2b"]) == 2

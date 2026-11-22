@@ -18,7 +18,7 @@ from __future__ import annotations
 import math
 import re
 
-from src.eval.features import _holes, match_all, matches, proposal_features, unmatched
+from src.eval.features import _holes, fixed_fillets, match_all, matches, proposal_features, unmatched
 from src.eval.problems import Problem
 
 CHECKS = ("setup_fixed_faces", "setup_load_faces", "setup_force", "setup_material", "safety_factor_stated",
@@ -164,7 +164,7 @@ def grade(problem: Problem, effects: dict | None, run_log: dict | None) -> dict:
         c["feature_recall"] = _r("fail", "no proposal")
     else:
         controls = [f for f in feats if labels.get(f["id"]) == "controls_limit" and not f.get("optional")]
-        got = match_all(controls, props, faces)
+        got = match_all(controls, props + fixed_fillets(proposal), faces)  # a fixed-size fillet counts (user 11-21)
         missed = [k for k, idx in got.items() if not idx]
         if not controls:
             c["feature_recall"] = _r("n/a", "the key requires no feature")
