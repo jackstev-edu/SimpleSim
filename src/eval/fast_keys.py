@@ -150,12 +150,14 @@ def sim_optimum(study: dict, family: str) -> dict:
     for lim in study.get("limits") or []:
         col = df[lim["metric"]] if lim["metric"] != "safety_factor" else SIM_YIELD_MPA / df["max_stress_mpa"]
         ok &= col >= lim["value"] if lim["op"] == ">=" else col <= lim["value"]
+    if not ok.any():
+        return {**none, "reason": "no table row meets the safety factor and limits"}
     for k in fam.ranges_mm:
         if k not in varied:
             ok &= (df[k] - fam.baseline_mm[k]).abs() <= FIXED_TOL * fam.baseline_mm[k]
     rows = df[ok]
     if rows.empty:
-        return {**none, "reason": "no table row meets the limits with the non-varied dimensions at baseline"}
+        return {**none, "reason": "no table row that meets the limits has the non-varied dimensions at baseline"}
     obj = study["objective"]
     col = rows[obj["metric"]] if obj["metric"] != "safety_factor" else SIM_YIELD_MPA / rows["max_stress_mpa"]
     r = rows.loc[col.idxmin() if obj["direction"] == "minimize" else col.idxmax()]

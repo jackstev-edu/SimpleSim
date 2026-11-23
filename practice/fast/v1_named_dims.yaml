@@ -1,0 +1,57 @@
+id: v1_named_dims
+family: l_bracket_gusset_v1
+request: For this gusseted steel bracket I am only allowed to change the thickness, the gusset thickness and the
+  gusset length. It takes 500 N down at the end, safety factor 1.5. What is the lightest version?
+hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
+  the horizontal flange. Load: 500 N straight down. Material: structural steel. Safety factor: 1.5. Goal: as light
+  as possible. Only the thickness, the gusset thickness and the gusset length may change; every other dimension
+  stays as it is.'
+key:
+  study:
+    force_n: 500.0
+    angle_deg: -90.0
+    material_key: structural_steel
+    safety_factor: 1.5
+    objective:
+      metric: mass_kg
+      direction: minimize
+    limits: []
+    vary:
+    - thickness_mm
+    - gusset_thickness_mm
+    - gusset_length_mm
+  must_ask:
+  - support
+  - load_face
+  states_setup: false
+  expect_handoff: false
+  model_optimum:
+    design:
+      thickness_mm: 7.401674276302042
+      flange_length_mm: 80.0
+      arm_width_mm: 40.0
+      hole_diameter_mm: 8.0
+      fillet_radius_mm: 4.0
+      vertical_height_mm: 60.0
+      gusset_thickness_mm: 9.692076278243043
+      gusset_length_mm: 22.48412621480826
+    objective_value: 0.32589880534669846
+    safety_factor_worst: 1.5000385005714272
+    method: power_law predict, n=400000, seed=0
+    median:
+      design:
+        thickness_mm: 7.129189599604461
+        flange_length_mm: 80.0
+        arm_width_mm: 40.0
+        hole_diameter_mm: 8.0
+        fillet_radius_mm: 4.0
+        vertical_height_mm: 60.0
+        gusset_thickness_mm: 9.963106847284855
+        gusset_length_mm: 21.99362963835999
+      objective_value: 0.3149356608672139
+  sim_optimum:
+    design_id: null
+    design: null
+    objective_value: null
+    max_stress_mpa: null
+    reason: no table row that meets the limits has the non-varied dimensions at baseline

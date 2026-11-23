@@ -1,0 +1,49 @@
+id: v0_alu_vague
+family: l_bracket_v0
+request: Can you make this aluminium L-bracket as light as possible? It carries 400 N downward at the tip and needs
+  a safety factor of 1.5.
+hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
+  the horizontal flange. Load: 400 N straight down. Material: aluminium; you do not know the alloy, and you accept
+  6061 if the assistant offers it. Safety factor: 1.5. Goal: as light as possible; all dimensions may change.'
+key:
+  study:
+    force_n: 400.0
+    angle_deg: -90.0
+    material_key: aluminum_6061
+    safety_factor: 1.5
+    objective:
+      metric: mass_kg
+      direction: minimize
+    limits: []
+    vary:
+    - all
+  must_ask:
+  - support
+  - load_face
+  - material
+  states_setup: false
+  expect_handoff: false
+  model_optimum:
+    design:
+      thickness_mm: 5.297970765774517
+      flange_length_mm: 75.07169493451546
+      arm_width_mm: 33.14251283543481
+      hole_diameter_mm: 11.255764628665933
+      fillet_radius_mm: 7.86446797031306
+    objective_value: 0.06128852081983676
+    safety_factor_worst: 1.5445750678193229
+    method: power_law predict, n=400000, seed=0
+    median:
+      design:
+        thickness_mm: 5.43151563701735
+        flange_length_mm: 75.7286920016104
+        arm_width_mm: 32.307446096909196
+        hole_diameter_mm: 11.32917623168386
+        fillet_radius_mm: 5.974055964146661
+      objective_value: 0.06092348304996314
+  sim_optimum:
+    design_id: null
+    design: null
+    objective_value: null
+    max_stress_mpa: null
+    reason: the CalculiX tables are 500 N, -90 deg, steel only

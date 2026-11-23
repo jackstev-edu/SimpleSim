@@ -1,0 +1,50 @@
+id: v0_clean_mass
+family: l_bracket_v0
+request: I have a steel L-bracket bolted to a wall by the back of its upright leg. The free end of the horizontal
+  flange carries 500 N straight down. I need a safety factor of 1.5. Please make it as light as possible.
+hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
+  the horizontal flange. Load: 500 N straight down. Material: structural steel. Safety factor: 1.5. Goal: as light
+  as possible; all dimensions may change.'
+key:
+  study:
+    force_n: 500.0
+    angle_deg: -90.0
+    material_key: structural_steel
+    safety_factor: 1.5
+    objective:
+      metric: mass_kg
+      direction: minimize
+    limits: []
+    vary:
+    - all
+  must_ask: []
+  states_setup: true
+  expect_handoff: false
+  model_optimum:
+    design:
+      thickness_mm: 6.306818568233176
+      flange_length_mm: 75.3499835693183
+      arm_width_mm: 32.9592566813142
+      hole_diameter_mm: 9.257270109639911
+      fillet_radius_mm: 7.313905490991756
+    objective_value: 0.21020593753841066
+    safety_factor_worst: 1.516004237358887
+    method: power_law predict, n=400000, seed=0
+    median:
+      design:
+        thickness_mm: 6.337099140333383
+        flange_length_mm: 75.0086896203161
+        arm_width_mm: 32.44024919529371
+        hole_diameter_mm: 10.89310121733266
+        fillet_radius_mm: 6.40126407109744
+      objective_value: 0.2052508745280422
+  sim_optimum:
+    design_id: formal_20261111_104
+    design:
+      thickness_mm: 7.041675150219352
+      flange_length_mm: 80.89746106276327
+      arm_width_mm: 37.76214867265845
+      hole_diameter_mm: 9.101397845698942
+      fillet_radius_mm: 2.269508416311378
+    objective_value: 0.2761398143127484
+    max_stress_mpa: 154.8742874109001

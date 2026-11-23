@@ -1,0 +1,54 @@
+id: v1_sf2_lbf
+family: l_bracket_gusset_v1
+request: Gusseted steel bracket carrying 150 lbf straight down at the tip. I need a safety factor of 2. Lightest
+  design please.
+hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
+  the horizontal flange. Load: 150 lbf straight down. Material: structural steel. Safety factor: 2. Goal: as light
+  as possible; all dimensions may change.'
+key:
+  study:
+    force_n: 667.233
+    angle_deg: -90.0
+    material_key: structural_steel
+    safety_factor: 2.0
+    objective:
+      metric: mass_kg
+      direction: minimize
+    limits: []
+    vary:
+    - all
+  must_ask:
+  - support
+  - load_face
+  states_setup: false
+  expect_handoff: false
+  model_optimum:
+    design:
+      thickness_mm: 9.837116380312754
+      flange_length_mm: 76.3764103574519
+      arm_width_mm: 35.68959052769233
+      hole_diameter_mm: 10.367738740029315
+      fillet_radius_mm: 4.293609339253131
+      vertical_height_mm: 51.98263897134859
+      gusset_thickness_mm: 7.832080262083772
+      gusset_length_mm: 32.41110768195733
+    objective_value: 0.35414430977204603
+    safety_factor_worst: 2.0310687837403774
+    method: power_law predict, n=400000, seed=0
+    median:
+      design:
+        thickness_mm: 9.670086493780007
+        flange_length_mm: 76.10617442139032
+        arm_width_mm: 32.31407951418077
+        hole_diameter_mm: 9.402082630568204
+        fillet_radius_mm: 2.7423779782454782
+        vertical_height_mm: 51.32438550080421
+        gusset_thickness_mm: 8.8748661339513
+        gusset_length_mm: 33.39300906758196
+      objective_value: 0.3236284369515078
+  sim_optimum:
+    design_id: null
+    design: null
+    objective_value: null
+    max_stress_mpa: null
+    reason: the CalculiX tables are 500 N, -90 deg, steel only
