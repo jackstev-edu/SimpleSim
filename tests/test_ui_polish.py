@@ -68,8 +68,8 @@ def fast_run_script(closing="The lighter design is in the table."):
         reply(call("record_study_inputs", {"safety_factor": 1.5, "objective": "mass_kg", "direction": "minimize"}, "a")),
         reply(call("confirm_setup", {}, "b"), call("optimize_design", {}, "c")),
         reply(say("The recommended design is lighter than the baseline.")),  # the explanation step's own model call
-        reply(say("Adopt it. It is lighter and meets every limit. Checked with the fitted model only. Next, solve it once in Ansys.")),  # the verdict's call
         reply(say(closing)),
+        reply(say("Adopt it. It is lighter and meets every limit. Checked with the fitted model only. Next, solve it once in Ansys.")),  # the verdict's call, when the done event is built
     ]
 
 
@@ -288,4 +288,37 @@ def test_compare_window_pairs_baseline_with_the_recommended_design(open_gui):
     expect(win).to_be_hidden()
     expect(page.locator("#winVar")).to_be_visible()  # the normal layout is back
     assert "var-off" not in page.get_attribute("#vp", "class")
+    assert errors == []
+
+
+# ---------------------------------------------------------------- 6. the verdict after every optimization
+
+
+def test_verdict_is_pinned_in_recommendations_and_posted_in_the_chat(open_gui, tmp_path):
+    page, expect, _, errors = open_gui(*fast_run_script())
+    run_fast_path(page, expect, tmp_path)
+    last = page.locator("#log .msg.agent:not(.tool)").filter(has_text="Adopt it. It is lighter").first
+    expect(last).to_be_visible()
+    expect(last.locator(".chip")).to_contain_text("Verdict, written by the model")
+    page.get_by_role("tab", name="Recommendations", exact=True).click()
+    card = page.locator("#recs .verdict")
+    expect(card).to_be_visible()
+    assert page.evaluate("() => document.getElementById('recs').firstElementChild.className") == "verdict"  # pinned at the top
+    expect(card).to_contain_text("Adopt it. It is lighter and meets every limit.")
+    expect(card.locator(".chip")).to_contain_text("written by the model")
+    assert errors == []
+
+
+def test_emulator_run_gets_the_template_verdict(open_gui):
+    page, expect, _, errors = open_gui()
+    pyd_confirm_demo(page, expect)
+    page.click('[data-pyd="optimize"]')
+    expect(page.locator("#loaded")).to_contain_text("PyDiscovery result")
+    card = page.locator("#recs .verdict")
+    expect(card).to_be_visible()  # the tab opens Recommendations after a run
+    expect(card).to_contain_text("Adopt it")
+    expect(card).to_contain_text("fitted model only")
+    expect(card.locator(".chip")).to_contain_text("template")
+    page.get_by_role("tab", name="Agent", exact=True).click()
+    expect(page.locator("#log .msg.agent").last).to_contain_text("Next step:")
     assert errors == []

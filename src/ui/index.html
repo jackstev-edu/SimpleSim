@@ -285,6 +285,11 @@
   .tip div { display: flex; justify-content: space-between; gap: 16px; color: #c3c2b7; }
   .tip strong { color: #f0efec; font-variant-numeric: tabular-nums; }
   .rec-objective { color: #ccc8bc; }
+  .verdict { margin: 0 0 10px; padding: 8px 11px; border: 1px solid #639bd0; border-left: 4px solid var(--blue); background: #182634; font-size: 14px; line-height: 1.45; }
+  .verdict .vhead { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; font-variant: small-caps; letter-spacing: .04em; color: #fff; }
+  .verdict p { margin: 0; }
+  .verdict .w { margin-top: 6px; padding: 3px 8px; border-left: 3px solid var(--amber); background: #33280d; color: var(--amber); font-size: 12.5px; }
+  .chip.verdict-model { color: #a9cff3; } .chip.verdict-template { color: var(--fake); border-style: dashed; }
   .rec-card, .rec-more { margin: 8px 0; padding: 8px 10px; border: 1px solid #4b4b46; border-radius: 5px; }
   .rec-card[data-rank="1"] { border-color: #639bd0; background: #202b35; }
   #recs summary { cursor: pointer; padding: 2px 0; }
@@ -521,7 +526,7 @@ const STEP_MS = 600;
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const S = { spec: null, pred: null, res: null, rows: [], msgs: [], shown: 0, sel: "baseline", run: 0, tab: "variations", limits: {}, origin: "", cmp: { a: "baseline", b: null } };
+const S = { spec: null, pred: null, res: null, rows: [], msgs: [], shown: 0, sel: "baseline", run: 0, tab: "variations", limits: {}, origin: "", cmp: { a: "baseline", b: null }, verdict: null };
 // The live assistant chat (Role 3's AssistantSession through /api/assistant): its messages sit under the fixture log.
 const AST = { on: false, status: null, msgs: [], busy: false, controller: null, quick: [] };
 
@@ -795,7 +800,8 @@ async function loadPicked(fileList) {
   if (errs.length) { clearAll(); showBanner("Could not use the selected files", errs, true); return; }
   accept(got.spec, got.pred, got.res, [names.spec, names.pred, names.res]);
 }
-function accept(spec, pred, res, names, live = false) {
+const checkVerdict = (v) => isObj(v) && isStr(v.text) && (v.source === "model" || v.source === "template") && Array.isArray(v.warnings) ? v : null;
+function accept(spec, pred, res, names, live = false, verdict = null) {
   const errs = [];
   // The spec's family sets the dimension list the checks and every table use; v0 files keep the five.
   if (isObj(spec) && isStr(spec.bracket_family)) {
@@ -810,7 +816,7 @@ function accept(spec, pred, res, names, live = false) {
   }
   if (errs.length) { clearAll(); showBanner("Fixture does not match the contract", errs, location.protocol === "file:"); return; }
   hideBanner();
-  Object.assign(S, { spec, pred, res, live, sel: "baseline" });
+  Object.assign(S, { spec, pred, res, live, sel: "baseline", verdict: checkVerdict(verdict) });
   S.limits = limitsFromSpec(res.spec); // the editable requirement sliders start at the spec's own limits
   S.cmp = { a: "baseline", b: (res.recommended || res.finalists[0] || {}).design_id || null }; // compare defaults to baseline vs recommended
   S.origin = String(names[0]).startsWith("assistant") ? "assistant" : String(names[0]).startsWith("PyDiscovery") ? "pydiscovery" : "fixture";
@@ -830,7 +836,7 @@ function showBanner(title, lines, withPicker) {
 }
 function hideBanner() { $("banner").hidden = true; }
 function clearAll() {
-  Object.assign(S, { spec: null, pred: null, res: null, rows: [], msgs: [], shown: 0, sel: "baseline", cmp: { a: "baseline", b: null } });
+  Object.assign(S, { spec: null, pred: null, res: null, rows: [], msgs: [], shown: 0, sel: "baseline", cmp: { a: "baseline", b: null }, verdict: null });
   showWin("winCompare", false);
   document.body.dataset.demo = "idle";
   $("loaded").textContent = "No data loaded";
@@ -938,6 +944,7 @@ function buildMessages(names) {
     who: "agent", chip: selectedKind, text: res.recommended ? "Enter in Discovery:" : "Enter in Discovery (baseline fallback):", values: res.discovery_values,
     warns: res.recommended ? [] : ["These are the baseline values, not a recommendation."],
   });
+  if (S.verdict) msgs.push({ who: "agent", chip: "verdict-" + S.verdict.source, text: S.verdict.text, warns: S.verdict.warnings });
   return msgs;
 }
 
@@ -945,8 +952,9 @@ function buildMessages(names) {
 function renderAll() { renderTree(); renderTable(); renderParams(); renderCases(); renderChat(); renderScene(); renderReadout(); renderGraphs(); renderRecs(); renderCompare(); }
 const rowById = (id) => id === "baseline" ? S.baseRow : S.rows.find((r) => r.id === id);
 const showingTemplate = () => isTemplateFamily(S.res?.spec.bracket_family);
+const CHIP_LABEL = { "verdict-model": "Verdict, written by the model", "verdict-template": "Verdict, template from result.json" };
 const chip = (kind, source = "") => {
-  const { label = kind.charAt(0).toUpperCase() + kind.slice(1), style = kind } = PROVENANCE[kind] || {};
+  const { label = CHIP_LABEL[kind] || kind.charAt(0).toUpperCase() + kind.slice(1), style = kind } = PROVENANCE[kind] || {};
   return `<span class="chip ${style}"${source ? ` title="${esc(source)}"` : ""}>${label}</span>`;
 };
 const hasResult = (r) => r.show === "evaluated" && !!r.ver;
@@ -1555,7 +1563,7 @@ function renderRecs() {
   if (!S.res) { el.innerHTML = '<div class="empty">No result loaded.</div>'; return; }
   if (S.shown < S.msgs.length) { el.innerHTML = '<div class="empty">Recommendations appear when the run finishes.</div>'; return; }
   const { res, pred } = S;
-  el.innerHTML = recommendationOptions(res, pred) + recommendationStudyNotes(res, pred);
+  el.innerHTML = verdictHtml() + recommendationOptions(res, pred) + recommendationStudyNotes(res, pred);
   S.tex = [];
   if (!isRecommendationFixture(res, pred) || S.live) return;
 
@@ -1568,6 +1576,16 @@ function renderRecs() {
     ${mech.derived.map(eqHtml).join("")}
     <table class="where"><tbody>${mech.where.map(([label, description]) => `<tr><td>${label}</td><td>${esc(description)}</td></tr>`).join("")}</tbody></table>
   </details>`);
+}
+// The judgement call that came with the run (src/assistant/verdict.py): every number in it is from result.json.
+function verdictHtml() {
+  const v = S.verdict;
+  if (!v) return "";
+  const box = el("div", "verdict"), head = el("div", "vhead", "Is it worth adopting? ");
+  head.insertAdjacentHTML("beforeend", chip("verdict-" + v.source));
+  box.append(head, mdNodes(v.text));
+  for (const w of v.warnings) box.append(el("div", "w", w));
+  return box.outerHTML; // built from nodes, so the text is never parsed as markup
 }
 function showATab(tab) {
   for (const b of document.querySelectorAll("#winAgent .wtabs .t")) b.setAttribute("aria-selected", String(b.dataset.atab === tab));
@@ -1890,7 +1908,7 @@ function pydLiveOption(selectIt) {
   if (selectIt) sel.value = PYD_LIVE;
 }
 function pydShowLast() {
-  if (PYD.last) { S.run++; accept(PYD.last.spec, PYD.last.pred, PYD.last.res, PYD_NAMES, true); return; }
+  if (PYD.last) { S.run++; accept(PYD.last.spec, PYD.last.pred, PYD.last.res, PYD_NAMES, true, PYD.last.verdict); return; }
   // Nothing live yet: keep what is on screen, or the normal fixture, and point at the tab.
   if (!S.res) { $("fixture").value = "normal"; loadFixture("normal"); }
   if (PYD.on) { PYD.error = "No live run yet. Open a part, confirm the setup and optimize."; renderPyd(); showATab("pyd"); }
@@ -1902,9 +1920,9 @@ async function pydOptimize(constraints) {
   const data = await pydRun("Optimizing", () => pydTool("optimize_design", { objective: "mass_kg", direction: "minimize", constraints }));
   if (!data || data.ok !== true) return;
   S.run++;
-  accept(data.study_spec, data.prediction, data.result, PYD_NAMES, true);
+  accept(data.study_spec, data.prediction, data.result, PYD_NAMES, true, data.verdict);
   if (S.res !== data.result) return; // accept() showed why it did not pass the contract check
-  PYD.last = { spec: data.study_spec, pred: data.prediction, res: data.result }; PYD.saved = "";
+  PYD.last = { spec: data.study_spec, pred: data.prediction, res: data.result, verdict: data.verdict }; PYD.saved = "";
   pydLiveOption(true);
   showWin("winAgent", true); showTab("variations"); showATab("recs");
   renderPyd();
@@ -2135,7 +2153,7 @@ function astEvent(ev) {
 function astShowRun(run) {
   // The fast path's optimize_design, through the assistant's own tools session: show it like a PyDiscovery run.
   S.run++;
-  accept(run.study_spec, run.prediction, run.result, AST_NAMES, true);
+  accept(run.study_spec, run.prediction, run.result, AST_NAMES, true, run.verdict);
   if (S.res !== run.result) return; // accept() showed why it did not pass the contract check
   showWin("winAgent", true); showTab("variations");
   AST.msgs.push({ who: "agent", chip: "result", text: "The result is in the Variations table, Graphs and Recommendations." });

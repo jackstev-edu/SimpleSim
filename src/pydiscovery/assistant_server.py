@@ -194,9 +194,24 @@ class AssistantAPI:
             return None
         self._sent_result = id(result)
         prediction = getattr(part, "last_prediction", None)
-        return {"study_spec": result.spec.model_dump(mode="json"),
-                "prediction": prediction.model_dump(mode="json") if prediction is not None else None,
-                "result": result.model_dump(mode="json")}
+        run = {"study_spec": result.spec.model_dump(mode="json"),
+               "prediction": prediction.model_dump(mode="json") if prediction is not None else None,
+               "result": result.model_dump(mode="json")}
+        run["verdict"] = self._verdict(run["result"], run["prediction"])
+        return run
+
+    def _verdict(self, result: dict, prediction: dict | None) -> dict:
+        """The judgement call on the run (src/assistant/verdict.py): one model call under the budget cap, else the template."""
+        from src.assistant.verdict import template_verdict, verdict
+
+        try:
+            text, source, warnings = verdict(result, self.session.client, prediction=prediction)
+        except BudgetExceeded as exc:
+            text, source, warnings = template_verdict(result, prediction), "template", [f"Verdict used the template: the {exc}."]
+        except Exception as exc:  # noqa: BLE001 - a paid search result must never be lost over its summary
+            traceback.print_exc()
+            text, source, warnings = template_verdict(result, prediction), "template", [f"Verdict used the template: {type(exc).__name__}: {str(exc)[:120]}."]
+        return {"text": text, "source": source, "warnings": warnings}
 
     # ------------------------------------------------------------ the session
 
