@@ -107,18 +107,18 @@ def grade_fast(problem: FastProblem, log: dict) -> dict:
     sf = next((c["value"] for c in cons if c["metric"] == "safety_factor" and c["op"] == ">="), None)
     lims = sorted((c["metric"], c["op"], round(c["value"], 6)) for c in cons if not (c["metric"] == "safety_factor" and c["op"] == ">="))
     want_lims = sorted((x["metric"], x["op"], round(x["value"], 6)) for x in study.get("limits") or [])
-    varied = {p["name"] for p in spec["parameters"] if p["high_mm"] > p["low_mm"]}
-    f = spec["load"]["force_n"]
+    varied = {p["name"] for p in spec.get("parameters", []) if p["high_mm"] > p["low_mm"]}
+    load = spec.get("load") or {}
+    f, angle = load.get("force_n"), load.get("angle_deg", -90.0)
 
     def cmp(name, ok, got, want):
         checks[name] = _r("pass" if ok else "fail", f"got {got}, want {want}")
 
-    cmp("force", abs(f - study["force_n"]) <= FORCE_REL * study["force_n"], f, study["force_n"])
-    cmp("direction", abs(spec["load"].get("angle_deg", -90.0) - study["angle_deg"]) <= ANGLE_DEG,
-        spec["load"].get("angle_deg"), study["angle_deg"])
+    cmp("force", f is not None and abs(f - study["force_n"]) <= FORCE_REL * study["force_n"], f, study["force_n"])
+    cmp("direction", abs(angle - study["angle_deg"]) <= ANGLE_DEG, angle, study["angle_deg"])
     cmp("material", spec.get("material_key") == study["material_key"], spec.get("material_key"), study["material_key"])
     cmp("safety_factor", sf is not None and math.isclose(sf, study["safety_factor"]), sf, study["safety_factor"])
-    cmp("objective", spec["objective"] == study["objective"], spec["objective"], study["objective"])
+    cmp("objective", spec.get("objective") == study["objective"], spec.get("objective"), study["objective"])
     cmp("limits", lims == want_lims, lims, want_lims)
     want_vary = _vary_names(problem.family, study.get("vary") or ["all"])
     cmp("vary", varied == want_vary, sorted(varied), sorted(want_vary))
