@@ -86,7 +86,7 @@ def grade_fast(problem: FastProblem, log: dict) -> dict:
         checks = {c: _r("n/a") for c in STUDY_CHECKS}
         checks["handoff"] = _r("pass" if ok else "fail", "handed off to ANSYS" if ok else "stayed on the fast path")
         return {"id": problem.id, "checks": checks, "pick": pick}
-    checks["handoff"] = _r("n/a")
+    checks["handoff"] = _r("fail", "handed off to ANSYS on a fast-path problem") if went_slow else _r("pass", "stayed on the fast path")
 
     study = key["study"]
     checks["asked"] = (_r("pass") if all(_asked(events, i) for i in key.get("must_ask", []))

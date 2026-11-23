@@ -1,0 +1,65 @@
+{
+  "id": "v0_missing_force",
+  "checks": {
+    "handoff": {
+      "result": "fail",
+      "detail": "handed off to ANSYS on a fast-path problem"
+    },
+    "asked": {
+      "result": "fail",
+      "detail": "not asked before use: load_face"
+    },
+    "confirmed": {
+      "result": "fail",
+      "detail": "confirm_setup was never called"
+    },
+    "force": {
+      "result": "fail",
+      "detail": "no optimize result (handoff)"
+    },
+    "direction": {
+      "result": "fail",
+      "detail": "no optimize result (handoff)"
+    },
+    "material": {
+      "result": "fail",
+      "detail": "no optimize result (handoff)"
+    },
+    "safety_factor": {
+      "result": "fail",
+      "detail": "no optimize result (handoff)"
+    },
+    "objective": {
+      "result": "fail",
+      "detail": "no optimize result (handoff)"
+    },
+    "limits": {
+      "result": "fail",
+      "detail": "no optimize result (handoff)"
+    },
+    "vary": {
+      "result": "fail",
+      "detail": "no optimize result (handoff)"
+    },
+    "no_silent_default": {
+      "result": "fail",
+      "detail": "no optimize result (handoff)"
+    },
+    "feasible": {
+      "result": "fail",
+      "detail": "no optimize result (handoff)"
+    },
+    "pick_gap": {
+      "result": "fail",
+      "detail": "no optimize result (handoff)"
+    },
+    "sim_gap": {
+      "result": "n/a",
+      "detail": "no optimize result (handoff)"
+    }
+  },
+  "pick": {
+    "gap": null,
+    "sim_gap": null
+  }
+}

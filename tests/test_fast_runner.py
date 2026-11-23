@@ -109,3 +109,14 @@ def test_regrade_reads_saved_logs(tmp_path):
     graded = fast_runner.regrade(tmp_path, {"p": problem()})
     assert graded[0]["id"] == "p" and "force" in graded[0]["checks"]
     assert "| p |" in fast_runner.summary_markdown(graded)
+
+
+def test_unexpected_handoff_stops_without_ansys(tmp_path):
+    class Slow(FakeSession):
+        def send(self, text):
+            self.path = None  # the real session resets the path when ANSYS fails to start
+            yield {"type": "path", "path": "slow", "reason": "load direction"}
+    log = run(problem(handoff=False), tmp_path, factory=Slow)
+    assert {"make_workbench", "make_agent"} <= set(FakeSession.made[-1].kw)  # never the real ANSYS
+    assert log["stopped"] == "handoff"
+    assert sum(e["type"] == "student" for e in log["events"]) == 1

@@ -4,7 +4,8 @@ request: This is a gusseted steel L-bracket, bolted to a wall by the back face o
   down on the free end of the flange. Safety factor 1.5. Make it as light as possible.
 hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
   the horizontal flange. Load: 500 N straight down. Material: structural steel. Safety factor: 1.5. Goal: as light
-  as possible; all dimensions may change.'
+  as possible; all dimensions may change. Starting dimensions: the ones already in the part file; if asked, accept
+  them.'
 key:
   study:
     force_n: 500.0

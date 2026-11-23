@@ -1,0 +1,65 @@
+{
+  "id": "v0_kn_units",
+  "checks": {
+    "handoff": {
+      "result": "pass",
+      "detail": "stayed on the fast path"
+    },
+    "asked": {
+      "result": "pass",
+      "detail": ""
+    },
+    "confirmed": {
+      "result": "fail",
+      "detail": "confirm_setup was never called"
+    },
+    "force": {
+      "result": "fail",
+      "detail": "no optimize result (reply cap)"
+    },
+    "direction": {
+      "result": "fail",
+      "detail": "no optimize result (reply cap)"
+    },
+    "material": {
+      "result": "fail",
+      "detail": "no optimize result (reply cap)"
+    },
+    "safety_factor": {
+      "result": "fail",
+      "detail": "no optimize result (reply cap)"
+    },
+    "objective": {
+      "result": "fail",
+      "detail": "no optimize result (reply cap)"
+    },
+    "limits": {
+      "result": "fail",
+      "detail": "no optimize result (reply cap)"
+    },
+    "vary": {
+      "result": "fail",
+      "detail": "no optimize result (reply cap)"
+    },
+    "no_silent_default": {
+      "result": "fail",
+      "detail": "no optimize result (reply cap)"
+    },
+    "feasible": {
+      "result": "fail",
+      "detail": "no optimize result (reply cap)"
+    },
+    "pick_gap": {
+      "result": "fail",
+      "detail": "no optimize result (reply cap)"
+    },
+    "sim_gap": {
+      "result": "n/a",
+      "detail": "no optimize result (reply cap)"
+    }
+  },
+  "pick": {
+    "gap": null,
+    "sim_gap": null
+  }
+}

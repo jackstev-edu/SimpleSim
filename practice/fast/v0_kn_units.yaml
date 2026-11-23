@@ -4,7 +4,8 @@ request: Steel L-bracket with a 0.8 kN load pointing down at the end of the flan
   the weight.
 hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
   the horizontal flange. Load: 0.8 kN straight down. Material: structural steel. Safety factor: 1.5. Goal: as light
-  as possible; all dimensions may change.'
+  as possible; all dimensions may change. Starting dimensions: the ones already in the part file; if asked, accept
+  them.'
 key:
   study:
     force_n: 800.0

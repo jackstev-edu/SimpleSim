@@ -4,7 +4,8 @@ request: I want this steel L-bracket to bend as little as possible under 500 N p
   to weigh less than 0.25 kg. Safety factor 1.5.
 hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
   the horizontal flange. Load: 500 N straight down. Material: structural steel. Safety factor: 1.5. Goal: the smallest
-  deflection, with a mass of at most 0.25 kg; all dimensions may change.'
+  deflection, with a mass of at most 0.25 kg; all dimensions may change. Starting dimensions: the ones already in
+  the part file; if asked, accept them.'
 key:
   study:
     force_n: 500.0

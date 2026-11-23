@@ -91,8 +91,9 @@ def run_fast_problem(problem: FastProblem, client, out_dir: Path, max_replies: i
                 texts.append(e["text"])
         return "\n\n".join(texts)
 
-    kw = {"make_workbench": _StubWorkbench, "make_agent": _StubAgent} if problem.key.get("expect_handoff") else {}
-    session = session_factory(client, out_dir / problem.id, backend="fitted", **kw)
+    # always the stand-ins: the benchmark never starts ANSYS, and any hand-off ends the run
+    session = session_factory(client, out_dir / problem.id, backend="fitted",
+                              make_workbench=_StubWorkbench, make_agent=_StubAgent)
     student = student_factory(problem, client)
     part = write_demo_part(out_dir / problem.id / f"{problem.id}.dsco", family=FAMILIES[problem.family], physics=False)
     log = {"id": problem.id, "events": events, "result": None, "stopped": None}
@@ -105,7 +106,7 @@ def run_fast_problem(problem: FastProblem, client, out_dir: Path, max_replies: i
             log["result"] = _result(session)
             if log["result"] is not None:
                 break
-            if getattr(session, "path", None) == "slow":
+            if any(e["type"] in ("path", "handoff") and e.get("path", "slow") == "slow" for e in events):
                 log["stopped"] = "handoff"
                 break
             if replies >= max_replies:

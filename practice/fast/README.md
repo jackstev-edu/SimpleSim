@@ -20,4 +20,4 @@ Rebuild the keys with `python -m scripts.build_fast_keys` (deterministic: n = 40
 
 ## Review status
 
-Keys built 2026-11-22. **Not yet reviewed by the user**; a run graded before the review is a trial only.
+Keys built 2026-11-22 and **approved by the user 2026-11-22**. The run `fast-20261122-2239-costcheck` came before the approval and is a trial only.

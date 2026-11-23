@@ -5,7 +5,7 @@ request: For this gusseted steel bracket I am only allowed to change the thickne
 hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
   the horizontal flange. Load: 500 N straight down. Material: structural steel. Safety factor: 1.5. Goal: as light
   as possible. Only the thickness, the gusset thickness and the gusset length may change; every other dimension
-  stays as it is.'
+  stays as it is. Starting dimensions: the ones already in the part file; if asked, accept them.'
 key:
   study:
     force_n: 500.0

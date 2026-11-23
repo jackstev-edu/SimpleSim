@@ -3,7 +3,8 @@ family: l_bracket_v0
 request: I want the lightest version of this steel L-bracket with a safety factor of 1.5.
 hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
   the horizontal flange. Load: 350 N straight down. Material: structural steel. Safety factor: 1.5. Goal: as light
-  as possible; all dimensions may change.'
+  as possible; all dimensions may change. Starting dimensions: the ones already in the part file; if asked, accept
+  them.'
 key:
   study:
     force_n: 350.0

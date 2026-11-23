@@ -59,7 +59,7 @@ def checks(p, lg):
 def test_clean_run_passes_all():
     out = grade_fast(problem(), log())
     assert all(c["result"] in ("pass", "info", "n/a") for c in out["checks"].values()), out["checks"]
-    assert out["checks"]["handoff"]["result"] == "n/a"
+    assert out["checks"]["handoff"]["result"] == "pass"
     assert out["pick"]["gap"] == pytest.approx(0.0, abs=1e-9)
 
 
@@ -118,3 +118,8 @@ def test_sim_gap_is_info_only():
     out = grade_fast(problem(), log())
     assert out["checks"]["sim_gap"]["result"] == "info"
     assert out["pick"]["sim_gap"] == pytest.approx(MASS / (MASS * 1.2) - 1)
+
+
+def test_unexpected_handoff_fails():
+    lg = log(events=[*GOOD_EVENTS[:2], {"type": "path", "path": "slow", "reason": "direction"}], result=False)
+    assert checks(problem(), lg)["handoff"] == "fail"

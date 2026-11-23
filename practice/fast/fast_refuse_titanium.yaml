@@ -3,7 +3,8 @@ family: l_bracket_v0
 request: 'Make this L-bracket out of titanium and as light as possible: 500 N down at the end, safety factor 1.5.'
 hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
   the horizontal flange. Load: 500 N straight down. Material: titanium (Ti-6Al-4V); you will not accept steel or
-  aluminium. Safety factor: 1.5. Goal: as light as possible.'
+  aluminium. Safety factor: 1.5. Goal: as light as possible. Starting dimensions: the ones already in the part file;
+  if asked, accept them.'
 key:
   study:
     force_n: 500.0

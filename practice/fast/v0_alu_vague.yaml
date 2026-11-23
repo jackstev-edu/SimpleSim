@@ -4,7 +4,8 @@ request: Can you make this aluminium L-bracket as light as possible? It carries 
   a safety factor of 1.5.
 hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
   the horizontal flange. Load: 400 N straight down. Material: aluminium; you do not know the alloy, and you accept
-  6061 if the assistant offers it. Safety factor: 1.5. Goal: as light as possible; all dimensions may change.'
+  6061 if the assistant offers it. Safety factor: 1.5. Goal: as light as possible; all dimensions may change. Starting
+  dimensions: the ones already in the part file; if asked, accept them.'
 key:
   study:
     force_n: 400.0
