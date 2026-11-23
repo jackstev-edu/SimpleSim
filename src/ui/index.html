@@ -212,6 +212,10 @@
   .achat .astatus .off { color: var(--amber); }
   .achat input[type="text"] { flex: 1; min-width: 160px; height: 30px; padding: 0 9px; font-size: 14.5px; background: #141414; border: 1px solid #2f7fd0; color: var(--text); }
   .achat input[type="text"]:disabled, .achat .pbtn:disabled { opacity: .45; }
+  .quick { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 5px; }
+  .quick[hidden] { display: none; }
+  .quick .qbtn { background: #1a2a3a; border: 1px solid #3f86cf; color: #dbe9f8; border-radius: 12px; height: 24px; padding: 0 10px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .quick .qbtn:hover:not(:disabled) { background: var(--sel); } .quick .qbtn:disabled { opacity: .45; cursor: default; }
   .msg.tool { font-size: 13px; line-height: 1.4; background: #1d1d1d; }
   .msg.tool details { margin-top: 3px; }
   .msg.tool summary { cursor: pointer; color: var(--muted); font-size: 12.5px; }
@@ -407,6 +411,7 @@
       <button type="submit" class="pbtn" id="astSend" disabled>Send</button>
       <button type="button" class="pbtn" id="astStop" disabled>Stop</button>
       <button type="button" class="pbtn" id="astReset" disabled>Reset</button>
+      <div class="quick" id="astQuick" hidden aria-label="Quick replies"></div>
     </form>
     <div class="apane" id="graphs" hidden></div>
     <div class="apane" id="recs" hidden></div>
@@ -474,7 +479,7 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const S = { spec: null, pred: null, res: null, rows: [], msgs: [], shown: 0, sel: "baseline", run: 0, tab: "variations" };
 // The live assistant chat (Role 3's AssistantSession through /api/assistant): its messages sit under the fixture log.
-const AST = { on: false, status: null, msgs: [], busy: false, controller: null };
+const AST = { on: false, status: null, msgs: [], busy: false, controller: null, quick: [] };
 
 // ---- Icons: our own flat glyphs on a 24 px grid, coloured to read like a CAE ribbon.
 const PU = "#a850d8", GY = "#9c9c9c", WH = "#e8e8e8", GR = "#27b535", OR = "#f5a21f", RD = "#e5463c", BL = "#3aa0ff";
@@ -1820,6 +1825,35 @@ function astMsg(m) {
   for (const w of m.warns || []) box.append(el("div", "w", w));
   return box;
 }
+// Quick replies under the chat input. A text event may carry an "options" list (docs/assistant-api.md); without
+// one the likely answers are guessed from the question itself, and a result gets the four follow-ups.
+const QUICK_AFTER_RUN = ["Why this design?", "Compare to baseline", "Lighter but less safe", "Try aluminum"];
+function quickReplies(text) {
+  const t = String(text || ""), low = t.toLowerCase();
+  if (!/\?/.test(t)) return [];
+  const asks = (...words) => words.some((w) => low.includes(w));
+  if (asks("safety factor")) {
+    const named = [...new Set((t.match(/\b\d\.\d\b/g) || []).filter((n) => Number(n) >= 1 && Number(n) <= 5))];
+    const picks = named.length ? named : ["1.5", "2.0"];
+    if (named.length === 1 && named[0] !== "2.0") picks.push("2.0");
+    return picks.map((n) => `Use ${n}`);
+  }
+  if (asks("setup card", "setup is right", "is this right", "setup correct", "confirm the setup", "shall i confirm", "look right")) return ["Yes, the setup is right", "No, something is off"];
+  if (asks("l-bracket") && asks("is this", "is it", "is your part", "is the part")) return ["Yes, it is the L-bracket", "No, it is another part"];
+  if (asks("aluminum", "aluminium") && asks("grade", "6061")) return ["Yes, use aluminum 6061", "Keep structural steel"];
+  if (asks("material")) return ["Use structural steel", "Use aluminum 6061"];
+  if (asks("which dimensions", "dimensions may change", "allowed to change", "vary")) return ["Vary every dimension", "Keep the hole diameter fixed"];
+  if (asks("objective", "lighter or", "minimize", "minimise")) return ["Minimize mass", "Maximize the safety factor"];
+  if (asks("use ansys", "ansys search")) return ["Use ANSYS", "Stay on the fast search"];
+  if (asks("optimize", "optimise", "run the search", "start the search", "shall i")) return ["Yes, go ahead", "Not yet"];
+  if (asks("straight down", "direction", "which way")) return ["Straight down", "Along the arm"];
+  return ["Yes", "No"];
+}
+function renderQuick() {
+  const row = $("astQuick"), off = !AST.status || !AST.status.available || AST.busy;
+  row.replaceChildren(...AST.quick.map((q) => { const b = el("button", "qbtn", q); b.type = "button"; b.dataset.quick = q; b.disabled = off; return b; }));
+  row.hidden = !AST.quick.length;
+}
 function astStatusLine() {
   const s = AST.status;
   if (!s) return "";
@@ -1836,6 +1870,7 @@ function renderAst() {
   const off = !AST.status || !AST.status.available || AST.busy;
   $("astText").disabled = off; $("astSend").disabled = off; $("astFile").disabled = off;
   $("astReset").disabled = !AST.status || AST.busy; $("astStop").disabled = !AST.busy;
+  renderQuick();
   renderChat();
 }
 async function astStatus() {
@@ -1853,7 +1888,10 @@ function astLastTool(name) {
 }
 function astEvent(ev) {
   if (ev.type === "path") AST.msgs.push({ who: "agent", chip: ev.path === "fast" ? "fast search" : "ANSYS search", text: `${AST_PATH[ev.path] || ev.path}: ${ev.reason}` });
-  else if (ev.type === "text") AST.msgs.push({ who: "agent", text: ev.text });
+  else if (ev.type === "text") {
+    AST.msgs.push({ who: "agent", text: ev.text });
+    AST.quick = Array.isArray(ev.options) && ev.options.every(isStr) ? ev.options.slice(0, 6) : quickReplies(ev.text);
+  }
   else if (ev.type === "tool") AST.msgs.push({ who: "agent", kind: "tool", name: ev.name, input: ev.input, steps: [], done: false, error: false, result: null });
   else if (ev.type === "progress") { const t = astLastTool(ev.tool || null) || astLastTool(null); if (t) t.steps.push(ev.text); }
   else if (ev.type === "tool_result") { const t = astLastTool(ev.name); if (t) { t.done = true; t.error = !!ev.is_error; t.result = ev.content; } }
@@ -1867,6 +1905,7 @@ function astShowRun(run) {
   if (S.res !== run.result) return; // accept() showed why it did not pass the contract check
   showWin("winAgent", true); showTab("variations");
   AST.msgs.push({ who: "agent", chip: "result", text: "The result is in the Variations table, Graphs and Recommendations." });
+  AST.quick = QUICK_AFTER_RUN.slice();
 }
 async function astStream(path, opts) {
   AST.busy = true; AST.controller = new AbortController(); renderAst();
@@ -1897,19 +1936,21 @@ async function astStream(path, opts) {
     renderAst();
   }
 }
-$("achat").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const text = $("astText").value.trim();
+async function astSend(text) {
   if (!text || AST.busy) return;
   $("astText").value = "";
+  AST.quick = [];
   AST.msgs.push({ who: "user", text });
   await astStream("/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
-});
+}
+$("achat").addEventListener("submit", async (e) => { e.preventDefault(); await astSend($("astText").value.trim()); });
+$("astQuick").addEventListener("click", async (e) => { const b = e.target.closest("[data-quick]"); if (b && !b.disabled) await astSend(b.dataset.quick); });
 $("astFile").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   e.target.value = "";
   if (!file || AST.busy) return;
   AST.msgs.push({ who: "user", text: `Uploaded ${file.name}` });
+  AST.quick = [];
   await astStream("/upload?name=" + encodeURIComponent(file.name), { method: "POST", body: file });
 });
 $("astStop").addEventListener("click", async () => {
@@ -1922,7 +1963,7 @@ $("astReset").addEventListener("click", async () => {
     const d = await (await fetch(AST_API + "/reset", { method: "POST", cache: "no-store" })).json();
     if (isObj(d) && d.ok === true) AST.status = d;
   } catch (e) { /* keep the last status */ }
-  AST.msgs = [];
+  AST.msgs = []; AST.quick = [];
   renderAst();
 });
 (async function astInit() {

@@ -88,6 +88,12 @@ Every event has a `type`. The first six come from Role 3's session unchanged; `d
 {"type": "text", "text": "I see an L-bracket with a 500 N load. What safety factor do you want? 1.5 is a common choice."}
 ```
 
+A `text` event may carry an optional `options` list: short answers the user can pick with one click. The session does not send one today; the GUI guesses the likely answers from the question itself (a safety factor question offers "Use 1.5" and "Use 2.0", a setup card offers "Yes, the setup is right", and so on) and shows the four follow-ups "Why this design?", "Compare to baseline", "Lighter but less safe" and "Try aluminum" after a result. When the session starts sending `options`, the GUI uses them instead and nothing else changes. The server passes session events through unchanged, so no server change is needed.
+
+```json
+{"type": "text", "text": "What safety factor do you want? 1.5 is a common choice.", "options": ["Use 1.5", "Use 2.0"]}
+```
+
 **`tool`**: the assistant is calling a tool. `name` is the tool, `input` its arguments. Show it as a collapsed step, pending until its `tool_result`.
 
 ```json
@@ -122,7 +128,7 @@ Every event has a `type`. The first six come from Role 3's session unchanged; `d
 
 ## In the team GUI
 
-`src/ui/index.html` wires all of this into the **Agent** tab: a chat bar with the status line, **Upload part**, a message box, **Send**, **Stop** and **Reset**. Messages and tool steps stream into the log, and a `run` in the `done` event goes through the page's contract checks and into Variations, Graphs and Recommendations. The bar only appears when `GET /api/assistant` answers, so a page served without the launcher looks as before. `tests/test_ui_assistant_chat.py` drives it in a browser with a fake model when `SIMPLESIM_CHROME` is set.
+`src/ui/index.html` wires all of this into the **Agent** tab: a chat bar with the status line, **Upload part**, a message box, **Send**, **Stop**, **Reset** and a row of quick replies under the box (a click sends that text as an ordinary message). Messages and tool steps stream into the log, and a `run` in the `done` event goes through the page's contract checks and into Variations, Graphs and Recommendations. The bar only appears when `GET /api/assistant` answers, so a page served without the launcher looks as before. `tests/test_ui_assistant_chat.py` drives it in a browser with a fake model when `SIMPLESIM_CHROME` is set.
 
 ## What the fitted engine changes
 

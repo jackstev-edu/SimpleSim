@@ -137,3 +137,35 @@ def test_replies_render_bold_lists_and_code_without_raw_asterisks(open_gui, tmp_
     size = page.evaluate("() => [getComputedStyle(document.querySelector('#log .msg.agent')).fontSize, getComputedStyle(document.getElementById('astText')).fontSize]")
     assert size == ["14.5px", "14.5px"]
     assert errors == []
+
+
+# ---------------------------------------------------------------- 3. quick replies under the chat input
+
+
+def test_quick_replies_follow_the_question_and_send_as_a_message(open_gui, tmp_path):
+    page, expect, client, errors = open_gui(*fast_run_script())
+    page.get_by_role("tab", name="Agent", exact=True).click()
+    expect(page.locator("#astQuick")).to_be_hidden()
+    page.locator("#astFile").set_input_files(str(write_demo_part(tmp_path / "l_bracket.dsco")))
+    expect(page.locator("#log")).to_contain_text("What safety factor do you want?")
+    buttons = page.locator("#astQuick .qbtn")
+    expect(buttons).to_have_text(["Use 1.5", "Use 2.0"])
+    buttons.first.click()  # sends "Use 1.5" as an ordinary user message
+    expect(page.locator("#log .msg.user").last).to_contain_text("Use 1.5")
+    expect(page.locator("#log")).to_contain_text("The result is in the Variations table")
+    assert any(isinstance(m, dict) and m.get("role") == "user" and m.get("content") == "Use 1.5" for m in client.sent[1]["input"])
+    expect(page.locator("#astQuick .qbtn")).to_have_text(["Why this design?", "Compare to baseline", "Lighter but less safe", "Try aluminum"])
+    assert errors == []
+
+
+def test_options_on_a_text_event_replace_the_guess(open_gui):
+    page, expect, _, errors = open_gui(assistant=True)
+    page.get_by_role("tab", name="Agent", exact=True).click()
+    page.evaluate("""() => { AST.status = { ok: true, available: true, engine: "fitted", model: "m", budget_usd: 1, budget_left_usd: 1 };
+      astEvent({ type: "text", text: "Which support?", options: ["Back face", "Bottom face"] }); renderAst(); }""")
+    expect(page.locator("#astQuick .qbtn")).to_have_text(["Back face", "Bottom face"])
+    page.evaluate("""() => { astEvent({ type: "text", text: "Is the setup card right?" }); renderAst(); }""")
+    expect(page.locator("#astQuick .qbtn")).to_have_text(["Yes, the setup is right", "No, something is off"])
+    page.evaluate("""() => { astEvent({ type: "text", text: "Done. I set the material." }); renderAst(); }""")
+    expect(page.locator("#astQuick")).to_be_hidden()  # a statement, not a question
+    assert errors == []
