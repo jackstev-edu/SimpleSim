@@ -17,8 +17,26 @@ Then open http://localhost:8000/. Double-clicking `index.html` also works: brows
 - **Run demo** replays the agent messages 600 ms apart and fills the Variations table row by row.
 - Click a table row, or focus it and use the arrow keys, to show that design in the viewport.
 - The Variations and Agent windows float inside the viewport as in Discovery. Drag them by their tab bar; the two buttons at the right of the bar maximise and close. The Parameters, Variations and Tables ribbon buttons reopen the Variations window, and the handle on the left edge shows or hides the Agent window.
-- The Agent window has three tabs. **Agent** is the chat log. **Graphs** plots every variation against the requirements; hover a point for its values, click it to select that row. **Recommendations** restates the result, typesets the mechanics behind it and lists next steps; it unlocks when the run finishes. Maximise the window (button at the right of its tab bar, or double-click the bar) to see the charts side by side.
+- The Agent window opens to **PyDiscovery** when the local API is available. Its tabs run left to right as **PyDiscovery**, **Recommendations**, **Graphs**, and **Agent**. The static demo and explicit `?fixture=` links open to **Agent**. **Agent** is the chat log. **Graphs** plots every variation against the requirements; hover a point for its values, click it to select that row. **Recommendations** ranks feasible choices and shows what dimensions to change after the run finishes. Maximise the window (button at the right of its tab bar, or double-click the bar) to see the charts side by side.
 - Structural opens its menu (Support, Force and so on). Everything else on the ribbon, the toolbars and the corner wheels is visual only.
+
+## Ranked recommendations
+
+Open **Recommendations** after optimization. The first card shows what to change, why it ranks first for the study goal, and how its mass, factor of safety, and displacement compare with the requirements. Expand the other cards or **Inspect dimensions** to see exact before and after values in millimeters.
+
+**Other feasible options** lists up to two more designs. Evaluated finalists come first. A **Predicted feasible** option meets the requirements at the conservative end of its prediction ranges and still needs evaluation. **Study explanation and model notes** contains the supplied explanation, model name, and warnings. The v0 formula fixtures also have a collapsible beam-equation section.
+
+## Geometry templates
+
+Run `python launch_gui.py --engine fitted --predictor power_law` from the repository root and open **PyDiscovery** in the Agent window.
+
+1. Open a STEP or a part file without named parameters. Choose a geometry in **Which bracket?** and click **Use this bracket**. The picker includes both L-brackets and templates T01 through T10.
+2. Review the family’s dimensions and bounds in millimeters. **Apply dimensions** checks values against the backend’s geometry rules. Fill missing support, load, and material, then confirm the setup and click **Optimize**.
+3. See the fitted results and the family-specific dimensions in **Variations**, **Graphs**, and **Recommendations**. The viewport reports when a template geometry preview is unavailable.
+
+Named slot files can match T02 and T03 by the same dimensions. The setup asks you which shape the file represents. For T03, use a STEP export or a file without named parameters so you can explicitly select Twin-slot bracket T03. Use the same selection workflow for twin-gusset T08 files that appear as single-gusset v1.
+
+The shared GUI runs these templates using the fitted power-law model. CalculiX and ANSYS FEA through the shared GUI are available only for the two original L-bracket families, subject to local solver setup.
 
 ## Fixtures
 
@@ -71,3 +89,7 @@ Hovering a table cell shows the file, field and raw contract value behind it.
 - There is no result contour or colour legend, because the contracts carry no field data.
 - The equations on the Recommendations tab are the closed-form beam model in `contracts/fakes.py` (`beam_formula`), typeset with the browser's MathML, with the LaTeX source one click away. They are fixed text, not computed, and `tests/test_ui_fixtures.py` fails if the constants in `beam_formula` change. When the trained model and a real solver replace the fakes they still explain the direction of each change, but no longer reproduce the numbers.
 - Chart axis ticks are round scale marks and are the only numbers on screen that are not contract values. Chart colours were checked for colour-blind separation, and each state also has its own marker shape.
+
+## Geometry browser checks
+
+With Playwright installed and `SIMPLESIM_CHROME` set to an installed Chrome executable, run `python -m pytest tests/test_ui_geometry_families.py -q`. These checks run the shared GUI and local fitted API using temporary files.
