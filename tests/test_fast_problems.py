@@ -1,4 +1,7 @@
 """The 10 fast-path benchmark problems: present, keyed, and consistent with the fast path's limits."""
+import pytest
+
+pytest.importorskip("yaml")  # Role 3 package (src/sim/requirements.txt); skip on a root-only install
 from src.eval.fast_keys import load_fast_problems
 
 IDS = ["v0_clean_mass", "v0_missing_sf", "v0_missing_force", "v0_alu_vague", "v0_kn_units", "v0_stiff",

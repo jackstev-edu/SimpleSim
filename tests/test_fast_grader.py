@@ -1,4 +1,7 @@
 """Fast-path benchmark grader on hand-built run logs (no LLM, no network)."""
+import pytest
+
+pytest.importorskip("yaml")  # Role 3 package (src/sim/requirements.txt); skip on a root-only install
 from pathlib import Path
 
 import pytest

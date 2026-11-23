@@ -1,4 +1,7 @@
 """Fast-path benchmark keys: problem loading, the model's view of a design, and the brute-force optima."""
+import pytest
+
+pytest.importorskip("yaml")  # Role 3 package (src/sim/requirements.txt); skip on a root-only install
 from pathlib import Path
 
 import pytest
