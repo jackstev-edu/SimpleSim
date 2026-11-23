@@ -1,4 +1,7 @@
 """Fast-path benchmark runner with a scripted session and student (no LLM, no ANSYS, no network)."""
+import pytest
+
+pytest.importorskip("yaml")  # Role 3 package (src/sim/requirements.txt); skip on a root-only install
 import json
 from pathlib import Path
 from types import SimpleNamespace
