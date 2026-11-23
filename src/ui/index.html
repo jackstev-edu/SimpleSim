@@ -204,6 +204,18 @@
   .msg td { padding: 1px 12px 1px 0; }
   .msg td small { color: var(--muted); }
   .empty { color: var(--muted); padding: 14px; }
+  .outs { margin-top: 10px; }
+  .outs th.lim { min-width: 230px; }
+  .outs td.lim { text-align: left; white-space: nowrap; }
+  .outs td.lim input[type="range"] { width: 130px; vertical-align: middle; margin: 0 6px 0 0; accent-color: var(--blue); }
+  .outs td.lim .lval { display: inline-block; min-width: 92px; font-variant-numeric: tabular-nums; }
+  .outs td.lim .lval.edited { color: var(--amber); }
+  .outs td.lim .nolim { color: var(--muted); }
+  .outs td.pass.yes { color: #7ee08a; } .outs td.pass.no { color: var(--red); font-weight: 700; }
+  .outs .ohead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 6px 6px 2px; color: #d0d0d0; }
+  .outs .ohead .sep { flex: 1; }
+  .outs .onote { color: var(--muted); font-size: 12px; padding: 2px 6px 6px; }
+  .grid td.yl.yes { color: #7ee08a; } .grid td.yl.no { color: var(--red); font-weight: 700; }
 
   /* Assistant chat bar under the Agent log (Role 3's assistant through /api/assistant) */
   .achat { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 4px 4px; flex: none; }
@@ -477,7 +489,7 @@ const STEP_MS = 600;
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const S = { spec: null, pred: null, res: null, rows: [], msgs: [], shown: 0, sel: "baseline", run: 0, tab: "variations" };
+const S = { spec: null, pred: null, res: null, rows: [], msgs: [], shown: 0, sel: "baseline", run: 0, tab: "variations", limits: {}, origin: "" };
 // The live assistant chat (Role 3's AssistantSession through /api/assistant): its messages sit under the fixture log.
 const AST = { on: false, status: null, msgs: [], busy: false, controller: null, quick: [] };
 
@@ -767,6 +779,8 @@ function accept(spec, pred, res, names, live = false) {
   if (errs.length) { clearAll(); showBanner("Fixture does not match the contract", errs, location.protocol === "file:"); return; }
   hideBanner();
   Object.assign(S, { spec, pred, res, live, sel: "baseline" });
+  S.limits = limitsFromSpec(res.spec); // the editable requirement sliders start at the spec's own limits
+  S.origin = String(names[0]).startsWith("assistant") ? "assistant" : String(names[0]).startsWith("PyDiscovery") ? "pydiscovery" : "fixture";
   build(names);
   S.rows.forEach((r) => { r.show = r.ver ? "evaluated" : "predicted"; });
   S.shown = S.msgs.length; // static load shows the finished state; Run demo replays it
@@ -902,6 +916,37 @@ const chip = (kind, source = "") => {
   return `<span class="chip ${style}"${source ? ` title="${esc(source)}"` : ""}>${label}</span>`;
 };
 const hasResult = (r) => r.show === "evaluated" && !!r.ver;
+// CalculiX (src/data/solver.py) takes the peak von Mises stress from the stress tensor, the ANSYS engine
+// (src/sim/mechanical.py) reads Mechanical's equivalent stress outside the support and load zones, and the fitted
+// power laws are trained on those runs. The formula fakes report bending stress times a concentration factor.
+const stressIsVonMises = () => !!S.res && resultSources(S.res).every((src) => ["fea", "ansys", "fitted"].includes(resultKind(src)))
+  && (!S.pred || predictionKind(S.pred) !== "formula");
+const metricLabel = (m) => m === "max_stress_mpa" ? (stressIsVonMises() ? "Max. Von Mises Stress" : "Max. Stress") : METRIC_LABEL[m];
+
+// ---- Requirement limits the user can drag: one per output, starting from the spec's constraints.
+const LIMIT_OP = { mass_kg: "<=", max_stress_mpa: "<=", max_disp_mm: "<=", safety_factor: ">=" };
+function limitsFromSpec(spec) {
+  const out = {};
+  for (const m of METRICS) {
+    const c = spec.constraints.find((k) => k.metric === m);
+    out[m] = c ? { op: c.op, value: c.value, spec: c.value } : { op: LIMIT_OP[m], value: null, spec: null };
+  }
+  return out;
+}
+const limitsEdited = () => METRICS.some((m) => S.limits[m] && S.limits[m].value !== S.limits[m].spec);
+// The value a row is judged by: the reported value, or the conservative end of the estimate band.
+function limitValue(r, m) {
+  if (hasResult(r)) return r.ver[m];
+  if (m === "mass_kg") return r.cand.mass_kg;
+  return S.limits[m].op === ">=" ? r.cand[m].p05 : r.cand[m].p95;
+}
+const meetsLimit = (v, lim) => lim.value === null || (lim.op === ">=" ? v >= lim.value : v <= lim.value);
+function passesLimits(r) {
+  if (r.show === "none") return null;
+  const failed = METRICS.filter((m) => !meetsLimit(limitValue(r, m), S.limits[m]));
+  return { ok: !failed.length, failed };
+}
+const limitsAsConstraints = () => METRICS.filter((m) => S.limits[m].value !== null).map((m) => ({ metric: m, op: S.limits[m].op, value: S.limits[m].value }));
 
 function renderTree() {
   const s = S.spec, el = $("tree");
@@ -958,9 +1003,17 @@ function rowHtml(r) {
     ${PARAMS.map((p) => `<td class="p" title="${p} = ${design[p]} mm">${U.mm(design[p])}</td>`).join("")}
     ${METRICS.map((m) => monitorCell(r, m)).join("")}
     <td class="m ${feas === null ? "" : feas ? "yes" : "no"}" title="${esc(feasTitle)}">${feas === null ? "" : feas ? "Yes" : "No"}</td>
+    ${limitsEdited() ? yourLimitsCell(r) : ""}
     <td class="m inr" title="${r.cand ? esc(r.candPath) + ".in_training_range" : "not in the prediction shortlist"}">${blank ? "" : inr === null ? "n/a" : inr ? "Yes" : "No"}</td>
     <td class="m">${blank ? "" : chip(...rowProvenance(r))}</td>
   </tr>`;
+}
+// Pass or fail against the dragged limits, kept apart from the contract's own Feasible column.
+function yourLimitsCell(r) {
+  const p = passesLimits(r);
+  if (!p) return '<td class="m yl"></td>';
+  const title = p.ok ? "meets every limit set in Parameters" : "fails: " + p.failed.map((m) => `${m} ${S.limits[m].op} ${S.limits[m].value}`).join(", ");
+  return `<td class="m yl ${p.ok ? "yes" : "no"}" title="${esc(title)}">${p.ok ? "Yes" : "No"}</td>`;
 }
 function renderTable() {
   const pane = $("pane-variations"), hadFocus = pane.contains(document.activeElement);
@@ -969,7 +1022,7 @@ function renderTable() {
   const evaluated = n(hasResult), pending = n((r) => r.show !== "none" && !hasResult(r)), idle = n((r) => r.show === "none");
   const th = (cls, label, inner) => `<th scope="col" class="${cls}" title="${label}">${inner || label}</th>`;
   const head = th("", "Selected", `<span class="cb${evaluated ? " on" : ""}"></span>`) + th("", "Status", '<span class="st info"></span>') + th("", "Favourite", '<span class="star">★</span>') + th("", "Name")
-    + PARAMS.map((p) => th("pc", PARAM_LABEL[p])).join("") + METRICS.map((m) => th("mc", METRIC_LABEL[m])).join("") + th("", "Feasible") + th("", "In range") + th("", "State");
+    + PARAMS.map((p) => th("pc", PARAM_LABEL[p])).join("") + METRICS.map((m) => th("mc", metricLabel(m))).join("") + th("", "Feasible") + (limitsEdited() ? th("", "Your limits") : "") + th("", "In range") + th("", "State");
   const top = pane.scrollTop;
   pane.innerHTML = `<table class="grid" aria-label="Variations"><thead><tr>${head}</tr></thead><tbody>${rowHtml(S.baseRow)}${S.rows.map(rowHtml).join("")}</tbody></table>`;
   pane.scrollTop = top;
@@ -979,6 +1032,7 @@ function renderTable() {
   const cnt = (cls, v, t) => `<span class="cnt" title="${t}"><span class="st ${cls}"></span>${v}</span>`;
   $("bfoot").innerHTML = cnt("complete", evaluated, "evaluated finalists") + cnt("pending", pending, "pending: predicted rows") + cnt("stopped", 0, "stopped") + cnt("solving", 0, "evaluating") + cnt("failed", 0, "failed evaluations") + cnt("none", idle, "not started")
     + `${ic("list", 17)}<span class="reset">${ic("reset", 15)}Reset</span><span class="feas">${okCount} of ${evaluated} evaluated rows feasible</span>`
+    + (limitsEdited() ? `<span class="feas">${[S.baseRow, ...S.rows].filter((r) => passesLimits(r)?.ok).length} of ${1 + S.rows.filter((r) => r.show !== "none").length} rows pass your limits</span>` : "")
     + `<span class="right">${src.map((source) => chip(resultKind(source), source)).join("")}<span class="st info"></span></span>`;
   renderStage();
   renderGraphs(); // the charts plot the same rows
@@ -988,8 +1042,93 @@ function renderParams() {
   if (!s || !S.res) { pane.innerHTML = '<div class="empty">No parameters loaded.</div>'; return; }
   const r = rowById(S.sel) || S.baseRow, d = (r.ver || r.cand).design;
   pane.innerHTML = `<table class="grid"><thead><tr><th>Name</th><th>Low</th><th>High</th><th>Baseline</th><th>${esc(r.name)}</th></tr></thead><tbody>${s.parameters.map((p) =>
-    `<tr class="ver"><td class="name">${esc(p.name)}</td><td class="p">${U.mm(p.low_mm)}</td><td class="p">${U.mm(p.high_mm)}</td><td class="m">${U.mm(S.res.baseline.design[p.name])}</td><td class="m">${U.mm(d[p.name])}</td></tr>`).join("")}</tbody></table>`;
+    `<tr class="ver"><td class="name">${esc(p.name)}</td><td class="p">${U.mm(p.low_mm)}</td><td class="p">${U.mm(p.high_mm)}</td><td class="m">${U.mm(S.res.baseline.design[p.name])}</td><td class="m">${U.mm(d[p.name])}</td></tr>`).join("")}</tbody></table>`
+    + outputsHtml(r);
 }
+// The slider for one output spans the values on the table plus the limit, in contract units; the readout
+// beside it is in the page's display units. The slider's end points are scale marks, like chart ticks.
+function sliderRange(m) {
+  const lim = S.limits[m], vals = [];
+  for (const row of [S.baseRow, ...S.rows]) {
+    if (row.show === "none") continue;
+    if (hasResult(row)) vals.push(row.ver[m]);
+    else if (m === "mass_kg") vals.push(row.cand.mass_kg);
+    else vals.push(row.cand[m].p05, row.cand[m].p95);
+  }
+  if (lim.value !== null) vals.push(lim.value);
+  if (lim.spec !== null) vals.push(lim.spec);
+  const lo = Math.min(...vals), hi = Math.max(...vals), pad = (hi - lo || Math.abs(hi) || 1) * 0.25;
+  const min = Math.max(0, lo - pad), max = hi + pad;
+  return { min, max, step: (max - min) / 400 };
+}
+function limitText(m) {
+  const lim = S.limits[m];
+  return lim.value === null ? "no limit" : `${opSym(lim.op)} ${metricText(m, lim.value)}`;
+}
+function outputsHtml(r) {
+  const evaluated = hasResult(r), blank = r.show === "none";
+  const val = (row, m) => row.show === "none" ? "" : hasResult(row) ? metricText(m, row.ver[m]) : metricText(m, m === "mass_kg" ? row.cand.mass_kg : row.cand[m].value);
+  const can = reoptimizeTarget();
+  const rows = METRICS.map((m) => {
+    const lim = S.limits[m], { min, max, step } = sliderRange(m), edited = lim.value !== lim.spec;
+    const ok = blank ? null : meetsLimit(limitValue(r, m), lim);
+    return `<tr class="ver" data-out="${m}"><td class="name" title="${m}">${metricLabel(m)}</td>
+      <td class="lim"><input type="range" data-limit="${m}" min="${min}" max="${max}" step="${step}" value="${lim.value === null ? (lim.op === ">=" ? min : max) : lim.value}" aria-label="Limit on ${metricLabel(m)}" title="drag to set the limit (${m} ${lim.op} ..., contract units)"><span class="lval${edited ? " edited" : ""}${lim.value === null ? " nolim" : ""}">${limitText(m)}</span></td>
+      <td class="m">${val(S.baseRow, m)}</td><td class="m">${val(r, m)}${blank || evaluated ? "" : " <small>estimate</small>"}</td>
+      <td class="m pass ${ok === null || lim.value === null ? "" : ok ? "yes" : "no"}">${ok === null || lim.value === null ? "" : ok ? "Yes" : "No"}</td></tr>`;
+  }).join("");
+  const stressNote = stressIsVonMises() ? "Stress is the peak von Mises (equivalent) stress reported by the solver or the model fitted on its runs."
+    : "Stress here is a beam-formula value with a stress concentration factor, not a von Mises peak.";
+  return `<div class="outs">
+    <div class="ohead"><b>Outputs and limits</b><span class="sep"></span>
+      <button type="button" class="pbtn" data-limits="reset"${limitsEdited() ? "" : " disabled"}>Back to the spec's limits</button>
+      <button type="button" class="btn-run" data-limits="reopt"${can ? "" : " disabled"} title="${esc(can ? reoptimizeHint(can) : "Open and confirm a part in PyDiscovery, or upload one to the assistant, to re-optimize")}">Re-optimize with these limits</button></div>
+    <table class="grid"><thead><tr><th>Output</th><th class="lim">Limit (drag to change)</th><th>Baseline</th><th>${esc(r.name)}</th><th>Passes</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="onote">${limitsEdited() ? "The Variations table shows a Your limits column while a limit differs from the spec; the Feasible column stays as the result reported it. " : ""}${stressNote}</div>
+  </div>`;
+}
+// Where a re-optimize can go: the live emulator when a part is confirmed there, or the assistant on its fast search.
+function reoptimizeTarget() {
+  const pyd = PYD.on && PYD.card?.state?.confirmed === true && !pydFamilyBlocker(PYD.card.state) && !PYD.busy;
+  const ast = AST.on && AST.status?.available && AST.status.path === "fast" && AST.status.part && !AST.busy;
+  if (S.origin === "assistant" && ast) return "assistant";
+  if (pyd) return "pydiscovery";
+  return ast ? "assistant" : "";
+}
+const reoptimizeHint = (t) => t === "pydiscovery" ? "Runs optimize_design in the PyDiscovery emulator with these limits" : "Asks the assistant to run the search again with these limits";
+function limitsSentence() {
+  const words = { mass_kg: "mass", max_stress_mpa: "max stress", max_disp_mm: "max deflection", safety_factor: "safety factor" };
+  const unit = { mass_kg: " kg", max_stress_mpa: " MPa", max_disp_mm: " mm", safety_factor: "" };
+  return limitsAsConstraints().map((c) => `${words[c.metric]} ${c.op} ${c.value}${unit[c.metric]}`).join(", ");
+}
+async function reoptimize() {
+  const target = reoptimizeTarget();
+  if (!target) return;
+  if (target === "pydiscovery") {
+    const sf = S.limits.safety_factor, dl = S.limits.max_disp_mm;
+    if (sf.value !== null) PYD.form.min_sf = sf.value;
+    if (dl.value !== null) PYD.form.max_disp_mm = dl.value;
+    await pydOptimize(limitsAsConstraints());
+    return;
+  }
+  showATab("chat");
+  await astSend(`Run the search again with these limits: ${limitsSentence()}. Keep the same objective.`);
+}
+$("pane-parameters").addEventListener("input", (e) => {
+  const m = e.target.dataset.limit;
+  if (!m) return;
+  S.limits[m].value = Number(Number(e.target.value).toPrecision(3)); // the slider snaps to its step grid; keep a readable limit
+  // While the thumb is dragged only the readout moves; the tables follow on release (change).
+  const span = e.target.nextElementSibling;
+  span.textContent = limitText(m); span.className = "lval" + (S.limits[m].value !== S.limits[m].spec ? " edited" : "");
+});
+$("pane-parameters").addEventListener("change", (e) => { if (e.target.dataset.limit) { renderTable(); renderParams(); } });
+$("pane-parameters").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-limits]");
+  if (!b || b.disabled) return;
+  if (b.dataset.limits === "reset") { S.limits = limitsFromSpec(S.res.spec); renderTable(); renderParams(); }
+  if (b.dataset.limits === "reopt") await reoptimize();
+});
 function renderCases() {
   const s = S.spec, pane = $("pane-testcases");
   if (!s) { pane.innerHTML = '<div class="empty">No test cases loaded.</div>'; return; }
@@ -1070,7 +1209,7 @@ function renderReadout() {
   el.innerHTML = `<div class="ricons">${ic("scene", 22)}${ic("charts", 22)}${ic("monitors", 22)}</div>
     <div class="rname"><b>${esc(r.name)}</b> ${esc(r.id)} ${ic("kebab", 12).replace("<svg", '<svg style="display:inline;vertical-align:-1px"')}</div>
     <div class="rchips">${blank ? "" : chip(...rowProvenance(r))}${r.isRec && evaluated ? chip("recommended") : ""}</div>
-    <table>${METRICS.map((m, i) => `<tr><td>${METRIC_LABEL[m]}</td><td${i === 1 ? ' class="und"' : ""}>${val(m)}</td></tr>`).join("")}</table>`;
+    <table>${METRICS.map((m, i) => `<tr><td>${metricLabel(m)}</td><td${i === 1 ? ' class="und"' : ""}>${val(m)}</td></tr>`).join("")}</table>`;
 }
 // Stage control at the bottom centre; the counts are warnings and variation rows.
 function renderStage() {
@@ -1648,7 +1787,7 @@ async function pydRun(label, fn) {
     if (isObj(data) && data.ok === false) PYD.error = data.message || "The request failed.";
     return data;
   } catch (e) { PYD.error = e.message; return null; }
-  finally { PYD.busy = ""; renderPyd(); }
+  finally { PYD.busy = ""; renderPyd(); if (S.res) renderParams(); }
 }
 function pydLiveOption(selectIt) {
   const sel = $("fixture");
@@ -1662,10 +1801,10 @@ function pydShowLast() {
   if (!S.res) { $("fixture").value = "normal"; loadFixture("normal"); }
   if (PYD.on) { PYD.error = "No live run yet. Open a part, confirm the setup and optimize."; renderPyd(); showATab("pyd"); }
 }
-async function pydOptimize() {
+async function pydOptimize(constraints) {
   if (pydFamilyBlocker(PYD.card?.state)) return;
   const f = PYD.form;
-  const constraints = [{ metric: "safety_factor", op: ">=", value: Number(f.min_sf) }, { metric: "max_disp_mm", op: "<=", value: Number(f.max_disp_mm) }];
+  constraints = constraints || [{ metric: "safety_factor", op: ">=", value: Number(f.min_sf) }, { metric: "max_disp_mm", op: "<=", value: Number(f.max_disp_mm) }];
   const data = await pydRun("Optimizing", () => pydTool("optimize_design", { objective: "mass_kg", direction: "minimize", constraints }));
   if (!data || data.ok !== true) return;
   S.run++;
@@ -1771,7 +1910,7 @@ $("pyd").addEventListener("click", async (e) => {
   else if (act === "load") await pydRun("Setting the load", () => pydTool("set_load", { force_n: Number(PYD.form.force_n) }));
   else if (act === "material") await pydRun("Setting the material", () => pydTool("set_material", { material: PYD.form.material }));
   else if (act === "confirm" && !pydFamilyBlocker(PYD.card?.state)) await pydRun("Confirming", () => pydTool("confirm_setup"));
-  else if (act === "optimize") await pydOptimize();
+  else if (act === "optimize") await pydOptimize(null);
   else if (act === "save") { const d = await pydRun("Saving", () => pydTool("save_design", {})); if (d && d.ok === true) { PYD.saved = d.path; renderPyd(); } }
 });
 $("pyd").addEventListener("submit", async (e) => {
@@ -1872,6 +2011,7 @@ function renderAst() {
   $("astReset").disabled = !AST.status || AST.busy; $("astStop").disabled = !AST.busy;
   renderQuick();
   renderChat();
+  if (S.res) renderParams(); // the re-optimize button follows the assistant's state
 }
 async function astStatus() {
   const r = await fetch(AST_API, { cache: "no-store" });

@@ -169,3 +169,87 @@ def test_options_on_a_text_event_replace_the_guess(open_gui):
     page.evaluate("""() => { astEvent({ type: "text", text: "Done. I set the material." }); renderAst(); }""")
     expect(page.locator("#astQuick")).to_be_hidden()  # a statement, not a question
     assert errors == []
+
+
+# ---------------------------------------------------------------- 4. output rows with requirement sliders
+
+
+def set_slider(page, metric, value):
+    """Move one limit slider the way a drag does: input events while moving, change on release."""
+    page.evaluate("""([m, v]) => { const s = document.querySelector(`[data-limit="${m}"]`); s.value = v;
+      s.dispatchEvent(new Event("input", { bubbles: true })); s.dispatchEvent(new Event("change", { bubbles: true })); }""", [metric, value])
+
+
+def test_output_rows_show_values_and_sliders_set_limits(open_gui):
+    page, expect, _, errors = open_gui(query="?fixture=normal")
+    page.get_by_role("tab", name="Parameters", exact=True).click()
+    outs = page.locator("#pane-parameters .outs tbody tr")
+    expect(outs).to_have_count(4)
+    expect(outs.nth(0)).to_contain_text("Mass")
+    expect(outs.nth(1)).to_contain_text("Max. Stress")  # the formula fixture is not a von Mises peak
+    expect(page.locator("#pane-parameters .outs .onote")).to_contain_text("beam-formula")
+    expect(page.locator('[data-limit="safety_factor"]')).to_have_count(1)
+    expect(page.locator('tr[data-out="safety_factor"] .lval')).to_contain_text("≥ 2")
+    expect(page.locator('tr[data-out="mass_kg"] .lval')).to_contain_text("no limit")
+    expect(page.locator("#pane-variations th", has_text="Your limits")).to_have_count(0)
+    # Raise the safety factor well above every row: nothing passes any more.
+    set_slider(page, "safety_factor", 50)
+    expect(page.locator('tr[data-out="safety_factor"] .lval')).to_have_class("lval edited")
+    expect(page.locator("#pane-variations th", has_text="Your limits")).to_have_count(1)
+    expect(page.locator("#pane-variations td.yl.no")).not_to_have_count(0)
+    assert page.locator("#pane-variations td.yl.yes").count() == 0
+    expect(page.locator("#bfoot")).to_contain_text("0 of")
+    expect(page.locator("#bfoot")).to_contain_text("rows pass your limits")
+    # The contract's own Feasible column is untouched.
+    assert page.locator("#pane-variations td.m.yes").count() > 0
+    page.click('[data-limits="reset"]')
+    expect(page.locator("#pane-variations th", has_text="Your limits")).to_have_count(0)
+    expect(page.locator('[data-limits="reopt"]')).to_be_disabled()  # nothing live to re-run against
+    assert errors == []
+
+
+def pyd_confirm_demo(page, expect):
+    page.get_by_role("tab", name="PyDiscovery", exact=True).click()
+    page.click('[data-pyd="demo"]')
+    expect(page.locator("#pyd .card")).to_be_visible()
+    for act in ("support", "load", "material"):
+        if page.locator(f'[data-pyd="{act}"]').count():
+            page.click(f'[data-pyd="{act}"]')
+    page.click('[data-pyd="confirm"]')
+    expect(page.locator("#pyd .pok")).to_contain_text("Confirmed")
+
+
+def test_reoptimize_runs_the_emulator_with_the_dragged_limits(open_gui):
+    page, expect, _, errors = open_gui()
+    pyd_confirm_demo(page, expect)
+    page.click('[data-pyd="optimize"]')
+    expect(page.locator("#loaded")).to_contain_text("PyDiscovery result")
+    page.get_by_role("tab", name="Parameters", exact=True).click()
+    expect(page.locator("#pane-parameters .outs")).to_contain_text("Max. Von Mises Stress")  # fitted on CalculiX runs
+    top = page.evaluate("() => Number(document.querySelector('[data-limit=\"safety_factor\"]').max)")
+    set_slider(page, "safety_factor", top)  # the slider's own upper mark, above every row on the table
+    want = page.evaluate("() => S.limits.safety_factor.value")
+    assert want > 1.5
+    expect(page.locator('[data-limits="reopt"]')).to_be_enabled()
+    page.click('[data-limits="reopt"]')
+    expect(page.locator("#pyd")).not_to_contain_text("Working")
+    expect(page.locator("#loaded")).to_contain_text("PyDiscovery result")
+    cons = page.evaluate("() => S.res.spec.constraints")
+    assert {"metric": "safety_factor", "op": ">=", "value": want} in cons
+    expect(page.locator("#pane-variations th", has_text="Your limits")).to_have_count(0)  # the new spec carries the limit
+    assert errors == []
+
+
+def test_reoptimize_on_the_fast_search_asks_the_assistant(open_gui, tmp_path):
+    page, expect, client, errors = open_gui(*fast_run_script(), reply(say("Searching again.")))
+    run_fast_path(page, expect, tmp_path)
+    page.get_by_role("tab", name="Parameters", exact=True).click()
+    set_slider(page, "max_disp_mm", 0.3)
+    expect(page.locator('[data-limits="reopt"]')).to_be_enabled()
+    page.click('[data-limits="reopt"]')
+    expect(page.locator("#log .msg.user").last).to_contain_text("Run the search again with these limits")
+    expect(page.locator("#log .msg.user").last).to_contain_text("max deflection <= 0.3 mm")
+    expect(page.locator("#astStatus")).not_to_contain_text("Working")
+    sent = [m.get("content") for m in client.sent[-1]["input"] if isinstance(m, dict) and m.get("role") == "user"]
+    assert sent[-1].startswith("Run the search again with these limits: max deflection <= 0.3 mm, safety factor >= 1.5")
+    assert errors == []
