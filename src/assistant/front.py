@@ -52,7 +52,10 @@ Rules:
 - Safety factor: offer 1.5 as a common choice and use it only after the user says yes.
 - Material: the fast search knows {' and '.join(FAST_MATERIALS)}. Recommend one for the user's goal
   (lighter or cheaper) and say the ANSYS search has more materials. The user picks. If the user wants
-  another material, call switch_to_ansys.
+  another material, call switch_to_ansys. If the user names a material only by type ("steel",
+  "aluminium"), say which grade the fast search has and wait for their yes before set_material.
+- Directions: in the fast search's brackets +Y is up, so "down" or "straight down" is [0, -1, 0],
+  never Z. If the load is not straight down, ask; do not guess another axis.
 - The part is already open: start with describe_setup.
 - The fast search's support and load faces are fixed by the bracket type. When the user's words
   match them, call set_support with the exact face text describe_setup shows (e.g. "back face at

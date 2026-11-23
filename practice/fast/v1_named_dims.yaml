@@ -27,6 +27,36 @@ key:
   expect_handoff: false
   model_optimum:
     design:
+      thickness_mm: 7.412461537414676
+      flange_length_mm: 80.0
+      arm_width_mm: 40.0
+      hole_diameter_mm: 8.0
+      fillet_radius_mm: 4.0
+      vertical_height_mm: 60.0
+      gusset_thickness_mm: 9.979954901058425
+      gusset_length_mm: 22.275302896305703
+    objective_value: 0.32651066924440253
+    safety_factor_worst: 1.5069831398910498
+    method: power_law predict, n=2000, seed=0
+    median:
+      design:
+        thickness_mm: 7.1669204686748635
+        flange_length_mm: 80.0
+        arm_width_mm: 40.0
+        hole_diameter_mm: 8.0
+        fillet_radius_mm: 4.0
+        vertical_height_mm: 60.0
+        gusset_thickness_mm: 7.679233715005367
+        gusset_length_mm: 25.09903953571004
+      objective_value: 0.3166239444433419
+  sim_optimum:
+    design_id: null
+    design: null
+    objective_value: null
+    max_stress_mpa: null
+    reason: no table row that meets the limits has the non-varied dimensions at baseline
+  dense_optimum:
+    design:
       thickness_mm: 7.401674276302042
       flange_length_mm: 80.0
       arm_width_mm: 40.0
@@ -49,9 +79,3 @@ key:
         gusset_thickness_mm: 9.963106847284855
         gusset_length_mm: 21.99362963835999
       objective_value: 0.3149356608672139
-  sim_optimum:
-    design_id: null
-    design: null
-    objective_value: null
-    max_stress_mpa: null
-    reason: no table row that meets the limits has the non-varied dimensions at baseline

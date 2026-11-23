@@ -1,0 +1,1 @@
+Recommended pl-0-01069: mass 0.231 kg (-8% vs baseline), safety factor 1.57, displacement 0.434 mm. Binding constraint: safety_factor >= 1.5. Verified with power_law_v0.

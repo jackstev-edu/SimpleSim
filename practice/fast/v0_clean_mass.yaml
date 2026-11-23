@@ -23,6 +23,34 @@ key:
   expect_handoff: false
   model_optimum:
     design:
+      thickness_mm: 6.742626021572916
+      flange_length_mm: 82.40357286557095
+      arm_width_mm: 32.44943127657805
+      hole_diameter_mm: 11.19599605078951
+      fillet_radius_mm: 7.321609956096569
+    objective_value: 0.23072200375097227
+    safety_factor_worst: 1.5288723443036187
+    method: power_law predict, n=2000, seed=0
+    median:
+      design:
+        thickness_mm: 6.742626021572916
+        flange_length_mm: 82.40357286557095
+        arm_width_mm: 32.44943127657805
+        hole_diameter_mm: 11.19599605078951
+        fillet_radius_mm: 7.321609956096569
+      objective_value: 0.23072200375097227
+  sim_optimum:
+    design_id: formal_20261111_104
+    design:
+      thickness_mm: 7.041675150219352
+      flange_length_mm: 80.89746106276327
+      arm_width_mm: 37.76214867265845
+      hole_diameter_mm: 9.101397845698942
+      fillet_radius_mm: 2.269508416311378
+    objective_value: 0.2761398143127484
+    max_stress_mpa: 154.8742874109001
+  dense_optimum:
+    design:
       thickness_mm: 6.306818568233176
       flange_length_mm: 75.3499835693183
       arm_width_mm: 32.9592566813142
@@ -39,13 +67,3 @@ key:
         hole_diameter_mm: 10.89310121733266
         fillet_radius_mm: 6.40126407109744
       objective_value: 0.2052508745280422
-  sim_optimum:
-    design_id: formal_20261111_104
-    design:
-      thickness_mm: 7.041675150219352
-      flange_length_mm: 80.89746106276327
-      arm_width_mm: 37.76214867265845
-      hole_diameter_mm: 9.101397845698942
-      fillet_radius_mm: 2.269508416311378
-    objective_value: 0.2761398143127484
-    max_stress_mpa: 154.8742874109001

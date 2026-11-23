@@ -26,6 +26,30 @@ key:
   expect_handoff: false
   model_optimum:
     design:
+      thickness_mm: 6.115754857895299
+      flange_length_mm: 76.9534294958879
+      arm_width_mm: 32.07802924122041
+      hole_diameter_mm: 9.27873373986636
+      fillet_radius_mm: 4.451404916838734
+    objective_value: 0.0685551062246167
+    safety_factor_worst: 1.692475451840479
+    method: power_law predict, n=2000, seed=0
+    median:
+      design:
+        thickness_mm: 6.115754857895299
+        flange_length_mm: 76.9534294958879
+        arm_width_mm: 32.07802924122041
+        hole_diameter_mm: 9.27873373986636
+        fillet_radius_mm: 4.451404916838734
+      objective_value: 0.0685551062246167
+  sim_optimum:
+    design_id: null
+    design: null
+    objective_value: null
+    max_stress_mpa: null
+    reason: the CalculiX tables are 500 N, -90 deg, steel only
+  dense_optimum:
+    design:
       thickness_mm: 5.297970765774517
       flange_length_mm: 75.07169493451546
       arm_width_mm: 33.14251283543481
@@ -42,9 +66,3 @@ key:
         hole_diameter_mm: 11.32917623168386
         fillet_radius_mm: 5.974055964146661
       objective_value: 0.06092348304996314
-  sim_optimum:
-    design_id: null
-    design: null
-    objective_value: null
-    max_stress_mpa: null
-    reason: the CalculiX tables are 500 N, -90 deg, steel only

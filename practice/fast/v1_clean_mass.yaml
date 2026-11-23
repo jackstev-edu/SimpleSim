@@ -23,6 +23,43 @@ key:
   expect_handoff: false
   model_optimum:
     design:
+      thickness_mm: 8.381032140102416
+      flange_length_mm: 81.51461496669168
+      arm_width_mm: 32.94495124377386
+      hole_diameter_mm: 10.013798275563559
+      fillet_radius_mm: 5.199236676602013
+      vertical_height_mm: 53.419746083763556
+      gusset_thickness_mm: 7.260439589361956
+      gusset_length_mm: 26.024488749127144
+    objective_value: 0.2902721811591142
+    safety_factor_worst: 1.6195699362878273
+    method: power_law predict, n=2000, seed=0
+    median:
+      design:
+        thickness_mm: 7.553213750799937
+        flange_length_mm: 76.55158395766271
+        arm_width_mm: 33.019634062270555
+        hole_diameter_mm: 8.594512683280904
+        fillet_radius_mm: 4.930887653126482
+        vertical_height_mm: 60.47509402140445
+        gusset_thickness_mm: 9.711326025588477
+        gusset_length_mm: 21.670528808517965
+      objective_value: 0.26947004609747466
+  sim_optimum:
+    design_id: v1_20261116_0639
+    design:
+      thickness_mm: 8.21588209271431
+      flange_length_mm: 76.8676334945485
+      arm_width_mm: 33.855105850845575
+      hole_diameter_mm: 6.659799110144377
+      fillet_radius_mm: 2.7544040363281965
+      vertical_height_mm: 62.80222672969103
+      gusset_thickness_mm: 3.7383000580593944
+      gusset_length_mm: 21.30623110756278
+    objective_value: 0.29237109028493535
+    max_stress_mpa: 165.5363567557665
+  dense_optimum:
+    design:
       thickness_mm: 7.968012411231383
       flange_length_mm: 75.04076003517356
       arm_width_mm: 33.17486212957965
@@ -45,16 +82,3 @@ key:
         gusset_thickness_mm: 7.842022240973145
         gusset_length_mm: 29.059510796726705
       objective_value: 0.24952000657791185
-  sim_optimum:
-    design_id: v1_20261116_0639
-    design:
-      thickness_mm: 8.21588209271431
-      flange_length_mm: 76.8676334945485
-      arm_width_mm: 33.855105850845575
-      hole_diameter_mm: 6.659799110144377
-      fillet_radius_mm: 2.7544040363281965
-      vertical_height_mm: 62.80222672969103
-      gusset_thickness_mm: 3.7383000580593944
-      gusset_length_mm: 21.30623110756278
-    objective_value: 0.29237109028493535
-    max_stress_mpa: 165.5363567557665

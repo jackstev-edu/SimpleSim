@@ -15,9 +15,9 @@ PICK_GAP_PASS = 0.05  # provisional pass line (user decision 2026-11-22), recali
 FORCE_REL = 0.005
 ANGLE_DEG = 1.0
 STUDY_CHECKS = ("force", "direction", "material", "safety_factor", "objective", "limits", "vary",
-                "asked", "confirmed", "no_silent_default", "feasible", "pick_gap", "sim_gap")
+                "asked", "confirmed", "no_silent_default", "feasible", "pick_gap", "dense_gap", "sim_gap")
 ASK_PATTERNS = {
-    "support": re.compile(r"support|fixed|bolt|wall|back face|mount", re.I),
+    "support": re.compile(r"support|fix|bolt|wall|back face|mount|held|hold|attach|clamp", re.I),
     "load_face": re.compile(r"free end|end face|load(ed)? face|where .*load|tip", re.I),
     "safety_factor": re.compile(r"safety factor|\bSF\b", re.I),
     "force": re.compile(r"force|newton|\bN\b|load|how much", re.I),
@@ -87,7 +87,7 @@ def _vary_names(family: str, vary: list[str]) -> set[str]:
 def grade_fast(problem: FastProblem, log: dict) -> dict:
     key, events, result = problem.key, log.get("events", []), log.get("result")
     checks: dict[str, dict] = {}
-    pick = {"gap": None, "sim_gap": None}
+    pick = {"gap": None, "dense_gap": None, "sim_gap": None}
     went_slow = any(e["type"] in ("path", "handoff") and e.get("path", "slow") == "slow" for e in events)
     optimized = any(_tool("optimize_design")(e) for e in events)
 
@@ -109,6 +109,7 @@ def grade_fast(problem: FastProblem, log: dict) -> dict:
         for c in ("force", "direction", "material", "safety_factor", "objective", "limits", "vary",
                   "no_silent_default", "feasible", "pick_gap"):
             checks[c] = _r("fail", why)
+        checks["dense_gap"] = _r("n/a", why)
         checks["sim_gap"] = _r("n/a", why)
         return {"id": problem.id, "checks": checks, "pick": pick}
 
@@ -138,6 +139,7 @@ def grade_fast(problem: FastProblem, log: dict) -> dict:
     if not rec:
         checks["feasible"] = _r("fail", "no recommendation")
         checks["pick_gap"] = _r("fail", "no recommendation")
+        checks["dense_gap"] = _r("n/a", "no recommendation")
         checks["sim_gap"] = _r("n/a", "no recommendation")
         return {"id": problem.id, "checks": checks, "pick": pick}
 
@@ -151,6 +153,12 @@ def grade_fast(problem: FastProblem, log: dict) -> dict:
     pick["gap"] = sign * (val - opt) / opt
     checks["pick_gap"] = _r("pass" if pick["gap"] <= PICK_GAP_PASS else "fail",
                             f"{metric} {val:.5g} vs model optimum {opt:.5g} ({pick['gap']:+.1%})")
+    dense = key.get("dense_optimum") or {}
+    if dense.get("objective_value"):  # info: what a 400,000-design search would have found
+        pick["dense_gap"] = sign * (val - dense["objective_value"]) / dense["objective_value"]
+        checks["dense_gap"] = _r("info", f"vs 400,000-design best {dense['objective_value']:.5g} ({pick['dense_gap']:+.1%})")
+    else:
+        checks["dense_gap"] = _r("n/a", "no dense optimum in the key")
     sim = key.get("sim_optimum") or {}
     if sim.get("design_id"):
         pick["sim_gap"] = sign * (val - sim["objective_value"]) / sim["objective_value"]

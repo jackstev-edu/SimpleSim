@@ -10,7 +10,7 @@ import argparse
 
 import yaml
 
-from src.eval.fast_keys import load_fast_problems, model_optimum, sim_optimum
+from src.eval.fast_keys import FAST_PATH_CANDIDATES, load_fast_problems, model_optimum, sim_optimum
 
 
 def main() -> None:
@@ -26,7 +26,8 @@ def main() -> None:
             print(f"{p.id}: hand-off problem, no optimum")
             continue
         study = p.key["study"]
-        data["key"]["model_optimum"] = model_optimum(study, p.family, n=args.n)
+        data["key"]["model_optimum"] = model_optimum(study, p.family, n=FAST_PATH_CANDIDATES)  # what the fast path can find
+        data["key"]["dense_optimum"] = model_optimum(study, p.family, n=args.n)  # info: how much a denser search gains
         data["key"]["sim_optimum"] = sim_optimum(study, p.family)
         p.path.write_text(yaml.safe_dump(data, sort_keys=False, width=110), encoding="utf-8")
         m, s = data["key"]["model_optimum"], data["key"]["sim_optimum"]

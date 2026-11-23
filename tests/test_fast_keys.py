@@ -56,3 +56,11 @@ def test_missing_key_refused(tmp_path):
     with pytest.raises(ValueError, match="model_optimum"):
         load_fast_problem(tmp_path / "x.yaml")
     assert load_fast_problem(tmp_path / "x.yaml", require_key=False).id == "x"
+
+
+def test_key_reproduces_the_fast_path_search():
+    # the scoring key uses Part.optimize's own sample: 2,000 designs, seed 0
+    from src.eval.fast_keys import FAST_PATH_CANDIDATES
+    from src.pydiscovery.session import Part
+    import inspect
+    assert FAST_PATH_CANDIDATES == inspect.signature(Part.optimize).parameters["n_candidates"].default

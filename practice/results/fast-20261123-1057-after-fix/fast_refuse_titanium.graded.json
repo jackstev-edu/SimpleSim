@@ -1,0 +1,70 @@
+{
+  "id": "fast_refuse_titanium",
+  "checks": {
+    "force": {
+      "result": "n/a",
+      "detail": ""
+    },
+    "direction": {
+      "result": "n/a",
+      "detail": ""
+    },
+    "material": {
+      "result": "n/a",
+      "detail": ""
+    },
+    "safety_factor": {
+      "result": "n/a",
+      "detail": ""
+    },
+    "objective": {
+      "result": "n/a",
+      "detail": ""
+    },
+    "limits": {
+      "result": "n/a",
+      "detail": ""
+    },
+    "vary": {
+      "result": "n/a",
+      "detail": ""
+    },
+    "asked": {
+      "result": "n/a",
+      "detail": ""
+    },
+    "confirmed": {
+      "result": "n/a",
+      "detail": ""
+    },
+    "no_silent_default": {
+      "result": "n/a",
+      "detail": ""
+    },
+    "feasible": {
+      "result": "n/a",
+      "detail": ""
+    },
+    "pick_gap": {
+      "result": "n/a",
+      "detail": ""
+    },
+    "dense_gap": {
+      "result": "n/a",
+      "detail": ""
+    },
+    "sim_gap": {
+      "result": "n/a",
+      "detail": ""
+    },
+    "handoff": {
+      "result": "pass",
+      "detail": "handed off to ANSYS"
+    }
+  },
+  "pick": {
+    "gap": null,
+    "dense_gap": null,
+    "sim_gap": null
+  }
+}
