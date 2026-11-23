@@ -201,6 +201,20 @@
   .msg td small { color: var(--muted); }
   .empty { color: var(--muted); padding: 14px; }
 
+  /* Assistant chat bar under the Agent log (Role 3's assistant through /api/assistant) */
+  .achat { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 4px 4px; flex: none; }
+  .achat[hidden] { display: none; }
+  .achat .astatus { flex-basis: 100%; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+  .achat .astatus .off { color: var(--amber); }
+  .achat input[type="text"] { flex: 1; min-width: 160px; height: 26px; padding: 0 8px; background: #141414; border: 1px solid #2f7fd0; color: var(--text); }
+  .achat input[type="text"]:disabled, .achat .pbtn:disabled { opacity: .45; }
+  .msg.tool { font-size: 12.5px; background: #1d1d1d; }
+  .msg.tool details { margin-top: 3px; }
+  .msg.tool summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+  .msg.tool pre { margin: 4px 0 0; max-height: 180px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: 11.5px/1.4 Consolas, "Cascadia Mono", monospace; color: #c3c2b7; }
+  .msg .steps { margin: 3px 0 0; padding-left: 16px; color: var(--muted); font-size: 12px; }
+  .chip.tool-running { color: var(--amber); } .chip.tool-done { color: #7ee08a; } .chip.tool-failed { color: var(--red); } .chip.path { color: #a9cff3; }
+
   /* Agent window tabs: Graphs and Recommendations */
   .apane { flex: 1; overflow: auto; min-height: 0; margin: 0 4px 4px; border: 1px solid #2f6fb5; background: #161616; padding: 8px 9px; user-select: text; }
   .apane[hidden], .log[hidden] { display: none; }
@@ -382,6 +396,14 @@
       <button class="btn-run" id="run" type="button">Run demo</button>
     </div>
     <div class="log" id="log" aria-live="polite"></div>
+    <form class="achat" id="achat" hidden autocomplete="off" aria-label="Assistant chat">
+      <span class="astatus" id="astStatus"></span>
+      <label class="pbtn" for="astFile" title="Upload a part for the assistant">Upload part</label><input type="file" id="astFile" accept=".dsco,.scdocx,.scdoc,.step,.stp" hidden>
+      <input type="text" id="astText" placeholder="Tell the assistant how the part is held and loaded, and what to optimize" aria-label="Message to the assistant" disabled>
+      <button type="submit" class="pbtn" id="astSend" disabled>Send</button>
+      <button type="button" class="pbtn" id="astStop" disabled>Stop</button>
+      <button type="button" class="pbtn" id="astReset" disabled>Reset</button>
+    </form>
     <div class="apane" id="graphs" hidden></div>
     <div class="apane" id="recs" hidden></div>
     <div class="apane pyd" id="pyd" hidden></div>
@@ -447,6 +469,8 @@ const STEP_MS = 600;
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const S = { spec: null, pred: null, res: null, rows: [], msgs: [], shown: 0, sel: "baseline", run: 0, tab: "variations" };
+// The live assistant chat (Role 3's AssistantSession through /api/assistant): its messages sit under the fixture log.
+const AST = { on: false, status: null, msgs: [], busy: false, controller: null };
 
 // ---- Icons: our own flat glyphs on a 24 px grid, coloured to read like a CAE ribbon.
 const PU = "#a850d8", GY = "#9c9c9c", WH = "#e8e8e8", GR = "#27b535", OR = "#f5a21f", RD = "#e5463c", BL = "#3aa0ff";
@@ -966,7 +990,8 @@ function renderCases() {
 function renderChat() {
   const log = $("log");
   renderRecs(); // recommendations unlock once the last message is shown
-  if (!S.msgs.length) { log.innerHTML = '<div class="empty">No conversation loaded.</div>'; return; }
+  const live = astHtml(); // the assistant's messages follow the fixture log and survive its re-renders
+  if (!S.msgs.length && !live) { log.innerHTML = '<div class="empty">No conversation loaded.</div>'; return; }
   log.innerHTML = S.msgs.slice(0, S.shown).map((m) => {
     let body = esc(m.text);
     if (m.list && m.list.length) body += `<ul>${m.list.map((a) => `<li>${esc(a)}</li>`).join("")}</ul>`;
@@ -975,7 +1000,7 @@ function renderChat() {
     if (m.note) body += `<div class="note">${esc(m.note)}</div>`;
     for (const w of m.warns || []) body += `<div class="w">${esc(w)}</div>`;
     return `<div class="msg ${m.who}"><div class="who">${m.who === "user" ? "You" : "Agent " + chip(m.chip)}</div>${body}</div>`;
-  }).join("");
+  }).join("") + live;
   log.scrollTop = log.scrollHeight;
 }
 // Monitor values of the selected variation, where Discovery shows its result legend.
@@ -1316,6 +1341,7 @@ function renderRecs() {
 function showATab(tab) {
   for (const b of document.querySelectorAll("#winAgent .wtabs .t")) b.setAttribute("aria-selected", String(b.dataset.atab === tab));
   $("log").hidden = tab !== "chat"; $("graphs").hidden = tab !== "graphs"; $("recs").hidden = tab !== "recs"; $("pyd").hidden = tab !== "pyd";
+  $("achat").hidden = tab !== "chat" || !AST.on; // the chat bar belongs to the Agent tab, when the assistant API answers
   hideTip();
   if (tab === "graphs") renderGraphs();
   if (tab === "recs") renderRecs();
@@ -1701,6 +1727,140 @@ $("pyd").addEventListener("input", (e) => { const k = e.target.dataset.form; if 
       showATab("pyd");
     }
   } catch (e) { /* no API: the page behaves as before */ }
+})();
+
+// ---------------------------------------------------------------- the assistant chat (docs/assistant-api.md)
+// Role 3's AssistantSession behind /api/assistant: upload a part, then talk. Each reply is a stream of
+// events, one JSON object per line, rendered into the Agent log as they arrive. A fast-path optimize
+// comes back in the done event as the three contract files and lands in the Variations table like a run.
+const AST_API = "api/assistant", AST_NAMES = ["assistant study_spec", "assistant prediction", "assistant result"];
+const AST_PATH = { fast: "Fast search (the team's predictor and engine)", slow: "ANSYS search" };
+function astHtml() { return AST.msgs.map(astMsg).join(""); }
+function astMsg(m) {
+  if (m.who === "user") return `<div class="msg user"><div class="who">You</div>${esc(m.text)}</div>`;
+  if (m.kind === "tool") {
+    const state = m.done ? (m.error ? "failed" : "done") : "running";
+    return `<div class="msg agent tool"><div class="who">Assistant tool: ${esc(m.name)} <span class="chip tool-${state}">${state}</span></div>
+      <details><summary>Arguments</summary><pre>${esc(JSON.stringify(m.input, null, 1))}</pre></details>
+      ${m.steps.length ? `<ul class="steps">${m.steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>` : ""}
+      ${m.result != null ? `<details><summary>Result</summary><pre>${esc(String(m.result).slice(0, 4000))}</pre></details>` : ""}</div>`;
+  }
+  let body = esc(m.text);
+  for (const w of m.warns || []) body += `<div class="w">${esc(w)}</div>`;
+  return `<div class="msg agent"><div class="who">Assistant${m.chip ? ` <span class="chip path">${esc(m.chip)}</span>` : ""}</div>${body}</div>`;
+}
+function astStatusLine() {
+  const s = AST.status;
+  if (!s) return "";
+  if (!s.available) return `<span class="off">${esc(s.message)}</span>`;
+  const part = s.part ? `Part ${esc(s.part)}` : "No part uploaded yet";
+  const path = s.path ? ` on the ${s.path === "fast" ? "fast search" : "ANSYS search"}` : "";
+  const money = `$${Number(s.budget_left_usd).toFixed(2)} of $${Number(s.budget_usd).toFixed(2)} budget left`;
+  return `Assistant on engine <b>${esc(s.engine)}</b>, model ${esc(s.model)}. ${part}${path}. ${money}${AST.busy ? ". Working..." : "."}`;
+}
+function renderAst() {
+  const bar = $("achat");
+  bar.hidden = !AST.on || $("log").hidden;
+  $("astStatus").innerHTML = astStatusLine();
+  const off = !AST.status || !AST.status.available || AST.busy;
+  $("astText").disabled = off; $("astSend").disabled = off; $("astFile").disabled = off;
+  $("astReset").disabled = !AST.status || AST.busy; $("astStop").disabled = !AST.busy;
+  renderChat();
+}
+async function astStatus() {
+  const r = await fetch(AST_API, { cache: "no-store" });
+  const d = await r.json();
+  if (isObj(d) && d.ok === true) AST.status = d;
+  return d;
+}
+function astLastTool(name) {
+  for (let i = AST.msgs.length - 1; i >= 0; i--) {
+    const m = AST.msgs[i];
+    if (m.kind === "tool" && !m.done && (name == null || m.name === name)) return m;
+  }
+  return null;
+}
+function astEvent(ev) {
+  if (ev.type === "path") AST.msgs.push({ who: "agent", chip: ev.path === "fast" ? "fast search" : "ANSYS search", text: `${AST_PATH[ev.path] || ev.path}: ${ev.reason}` });
+  else if (ev.type === "text") AST.msgs.push({ who: "agent", text: ev.text });
+  else if (ev.type === "tool") AST.msgs.push({ who: "agent", kind: "tool", name: ev.name, input: ev.input, steps: [], done: false, error: false, result: null });
+  else if (ev.type === "progress") { const t = astLastTool(ev.tool || null) || astLastTool(null); if (t) t.steps.push(ev.text); }
+  else if (ev.type === "tool_result") { const t = astLastTool(ev.name); if (t) { t.done = true; t.error = !!ev.is_error; t.result = ev.content; } }
+  else if (ev.type === "error") AST.msgs.push({ who: "agent", text: "", warns: [ev.text] });
+  else if (ev.type === "done" && ev.run) astShowRun(ev.run);
+}
+function astShowRun(run) {
+  // The fast path's optimize_design, through the assistant's own tools session: show it like a PyDiscovery run.
+  S.run++;
+  accept(run.study_spec, run.prediction, run.result, AST_NAMES, true);
+  if (S.res !== run.result) return; // accept() showed why it did not pass the contract check
+  showWin("winAgent", true); showTab("variations");
+  AST.msgs.push({ who: "agent", chip: "result", text: "The result is in the Variations table, Graphs and Recommendations." });
+}
+async function astStream(path, opts) {
+  AST.busy = true; AST.controller = new AbortController(); renderAst();
+  try {
+    const r = await fetch(AST_API + path, Object.assign({ cache: "no-store", signal: AST.controller.signal }, opts));
+    if (r.status !== 200 || !(r.headers.get("content-type") || "").includes("ndjson")) {
+      const d = await r.json().catch(() => ({}));
+      AST.msgs.push({ who: "agent", text: "", warns: [d.message || `The assistant server answered ${r.status}.`] });
+      return;
+    }
+    const reader = r.body.getReader(), dec = new TextDecoder();
+    let buf = "";
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split("\n"); buf = lines.pop();
+      for (const line of lines) if (line.trim()) astEvent(JSON.parse(line));
+      renderAst();
+    }
+    if (buf.trim()) astEvent(JSON.parse(buf));
+  } catch (e) {
+    if (e.name === "AbortError") AST.msgs.push({ who: "agent", text: "Stopped." });
+    else AST.msgs.push({ who: "agent", text: "", warns: [e.message] });
+  } finally {
+    AST.busy = false; AST.controller = null;
+    try { await astStatus(); } catch (e) { /* keep the last status */ }
+    renderAst();
+  }
+}
+$("achat").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const text = $("astText").value.trim();
+  if (!text || AST.busy) return;
+  $("astText").value = "";
+  AST.msgs.push({ who: "user", text });
+  await astStream("/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+});
+$("astFile").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file || AST.busy) return;
+  AST.msgs.push({ who: "user", text: `Uploaded ${file.name}` });
+  await astStream("/upload?name=" + encodeURIComponent(file.name), { method: "POST", body: file });
+});
+$("astStop").addEventListener("click", async () => {
+  try { await fetch(AST_API + "/stop", { method: "POST", cache: "no-store" }); } catch (e) { /* the abort below still ends the turn */ }
+  if (AST.controller) AST.controller.abort();
+});
+$("astReset").addEventListener("click", async () => {
+  if (AST.busy) return;
+  try {
+    const d = await (await fetch(AST_API + "/reset", { method: "POST", cache: "no-store" })).json();
+    if (isObj(d) && d.ok === true) AST.status = d;
+  } catch (e) { /* keep the last status */ }
+  AST.msgs = [];
+  renderAst();
+});
+(async function astInit() {
+  try {
+    const d = await astStatus();
+    if (!isObj(d) || d.ok !== true) return;
+    AST.on = true;
+    renderAst();
+  } catch (e) { /* no assistant API: the page behaves as before */ }
 })();
 
 buildChrome();
