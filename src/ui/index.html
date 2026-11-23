@@ -113,6 +113,30 @@
   .win.max { left: 8px !important; top: 8px !important; right: 8px !important; bottom: 8px !important; width: auto !important; height: auto !important; }
   #winVar { left: 8px; right: 376px; bottom: 118px; height: 268px; }
   #winAgent { right: 8px; top: 8px; width: 360px; bottom: 150px; }
+  #winCompare { left: 300px; right: 376px; top: 8px; bottom: 398px; min-height: 300px; }
+  .vp.agent-off #winCompare { right: 8px; } .vp.var-off #winCompare { bottom: 118px; }
+  .cmp { padding: 6px 8px; user-select: text; }
+  .cmp .pick { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; color: #d0d0d0; }
+  .cmp .pick select { background: #141414; border: 1px solid #2f7fd0; color: var(--text); height: 24px; padding: 0 4px; }
+  .cmp .sides { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .cmp .side { border: 1px solid #3e3e3e; background: #1c1c1c; min-width: 0; }
+  .cmp .side .head { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 4px 8px; background: #262626; }
+  .cmp .side .head b { color: var(--blue); }
+  .cmp .side .head .id { color: var(--muted); font-size: 12px; }
+  .cmp .side .view { height: 150px; background: radial-gradient(ellipse at 50% 42%, #353535 0%, #282828 45%, #141414 100%); }
+  .cmp .side .view svg { width: 100%; height: 100%; overflow: visible; }
+  .cmp .side .view .empty { font-size: 12px; padding: 10px; }
+  table.cmpt { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  .cmpt th { text-align: right; font-weight: 600; color: #c3c2b7; border-bottom: 1px solid #4a4a46; padding: 3px 6px; white-space: nowrap; }
+  .cmpt td { text-align: right; padding: 3px 6px; border-bottom: 1px solid #2a2a2a; white-space: nowrap; vertical-align: top; }
+  .cmpt th:first-child, .cmpt td:first-child { text-align: left; }
+  .cmpt tr.sect td { background: #202020; color: #fff; font-variant: small-caps; letter-spacing: .04em; text-align: left; }
+  .cmpt td small { display: block; color: #9db3d9; font-size: 10.5px; line-height: 11px; }
+  .cmpt td small.pred { color: #8b8b8b; }
+  .cmpt td.up { color: #e66767; } .cmpt td.down { color: #7ee08a; } .cmpt td.same { color: var(--muted); }
+  .cmpt td.yes { color: #7ee08a; } .cmpt td.no { color: var(--red); font-weight: 700; }
+  .cmp .cnote { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  .bfoot .cmpbtn { height: 24px; padding: 0 9px; }
   .wtabs { display: flex; align-items: stretch; height: 27px; flex: none; background: #262626; cursor: move; touch-action: none; }
   .wtabs .t { font-variant: small-caps; font-size: 14.5px; letter-spacing: .03em; padding: 0 9px; border: 0; border-right: 1px solid #4a4a4a; background: none; color: #c8c8c8; display: flex; align-items: center; }
   .wtabs button.t { cursor: pointer; }
@@ -429,6 +453,14 @@
     <div class="apane" id="recs" hidden></div>
     <div class="apane pyd" id="pyd" hidden></div>
   </section>
+
+  <section class="win" id="winCompare" aria-label="Compare window" hidden>
+    <div class="wtabs" role="tablist">
+      <span class="t">Compare</span>
+      <span class="wctl"><button type="button" tabindex="-1" data-max="winCompare" aria-label="Maximise window"></button><button type="button" tabindex="-1" data-close="winCompare" aria-label="Close window"></button></span>
+    </div>
+    <div class="pane cmp" id="cmp"></div>
+  </section>
 </main>
 
 <div class="statusbar">
@@ -489,7 +521,7 @@ const STEP_MS = 600;
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const S = { spec: null, pred: null, res: null, rows: [], msgs: [], shown: 0, sel: "baseline", run: 0, tab: "variations", limits: {}, origin: "" };
+const S = { spec: null, pred: null, res: null, rows: [], msgs: [], shown: 0, sel: "baseline", run: 0, tab: "variations", limits: {}, origin: "", cmp: { a: "baseline", b: null } };
 // The live assistant chat (Role 3's AssistantSession through /api/assistant): its messages sit under the fixture log.
 const AST = { on: false, status: null, msgs: [], busy: false, controller: null, quick: [] };
 
@@ -780,6 +812,7 @@ function accept(spec, pred, res, names, live = false) {
   hideBanner();
   Object.assign(S, { spec, pred, res, live, sel: "baseline" });
   S.limits = limitsFromSpec(res.spec); // the editable requirement sliders start at the spec's own limits
+  S.cmp = { a: "baseline", b: (res.recommended || res.finalists[0] || {}).design_id || null }; // compare defaults to baseline vs recommended
   S.origin = String(names[0]).startsWith("assistant") ? "assistant" : String(names[0]).startsWith("PyDiscovery") ? "pydiscovery" : "fixture";
   build(names);
   S.rows.forEach((r) => { r.show = r.ver ? "evaluated" : "predicted"; });
@@ -797,7 +830,8 @@ function showBanner(title, lines, withPicker) {
 }
 function hideBanner() { $("banner").hidden = true; }
 function clearAll() {
-  Object.assign(S, { spec: null, pred: null, res: null, rows: [], msgs: [], shown: 0, sel: "baseline" });
+  Object.assign(S, { spec: null, pred: null, res: null, rows: [], msgs: [], shown: 0, sel: "baseline", cmp: { a: "baseline", b: null } });
+  showWin("winCompare", false);
   document.body.dataset.demo = "idle";
   $("loaded").textContent = "No data loaded";
   renderAll();
@@ -908,7 +942,7 @@ function buildMessages(names) {
 }
 
 // ---- Rendering
-function renderAll() { renderTree(); renderTable(); renderParams(); renderCases(); renderChat(); renderScene(); renderReadout(); renderGraphs(); renderRecs(); }
+function renderAll() { renderTree(); renderTable(); renderParams(); renderCases(); renderChat(); renderScene(); renderReadout(); renderGraphs(); renderRecs(); renderCompare(); }
 const rowById = (id) => id === "baseline" ? S.baseRow : S.rows.find((r) => r.id === id);
 const showingTemplate = () => isTemplateFamily(S.res?.spec.bracket_family);
 const chip = (kind, source = "") => {
@@ -1031,7 +1065,7 @@ function renderTable() {
   const src = [...new Set(S.rows.filter(hasResult).map((r) => r.ver.source))];
   const cnt = (cls, v, t) => `<span class="cnt" title="${t}"><span class="st ${cls}"></span>${v}</span>`;
   $("bfoot").innerHTML = cnt("complete", evaluated, "evaluated finalists") + cnt("pending", pending, "pending: predicted rows") + cnt("stopped", 0, "stopped") + cnt("solving", 0, "evaluating") + cnt("failed", 0, "failed evaluations") + cnt("none", idle, "not started")
-    + `${ic("list", 17)}<span class="reset">${ic("reset", 15)}Reset</span><span class="feas">${okCount} of ${evaluated} evaluated rows feasible</span>`
+    + `${ic("list", 17)}<span class="reset">${ic("reset", 15)}Reset</span><button type="button" class="pbtn cmpbtn" data-compare="open" title="Compare two designs side by side">Compare</button><span class="feas">${okCount} of ${evaluated} evaluated rows feasible</span>`
     + (limitsEdited() ? `<span class="feas">${[S.baseRow, ...S.rows].filter((r) => passesLimits(r)?.ok).length} of ${1 + S.rows.filter((r) => r.show !== "none").length} rows pass your limits</span>` : "")
     + `<span class="right">${src.map((source) => chip(resultKind(source), source)).join("")}<span class="st info"></span></span>`;
   renderStage();
@@ -1563,10 +1597,12 @@ function camera() {
 const poly = (pts) => pts.map((p) => p[0].toFixed(2) + "," + p[1].toFixed(2)).join(" ");
 function renderScene() {
   const box = $("scenebox"), r = S.res ? rowById(S.sel) || S.baseRow : null;
-  if (!r) { box.innerHTML = ""; return; }
+  box.innerHTML = r ? sceneSvg(r) : "";
+}
+// The drawing for one row. `sfx` makes the clip and gradient ids unique when several copies share the page.
+function sceneSvg(r, sfx = "") {
   if (showingTemplate()) {
-    box.innerHTML = `<div class="empty"><b>${esc(PYD_FAMILY_LABEL[S.res.spec.bracket_family])}</b><p>Geometry preview unavailable. Select a design to inspect its dimensions and metrics in Variations.</p></div>`;
-    return;
+    return `<div class="empty"><b>${esc(PYD_FAMILY_LABEL[S.res.spec.bracket_family])}</b><p>Geometry preview unavailable. Select a design to inspect its dimensions and metrics in Variations.</p></div>`;
   }
   const { rot, pt } = camera();
   const d = (r.ver || r.cand).design, load = S.res.spec.load;
@@ -1608,7 +1644,7 @@ function renderScene() {
   for (let y = 0; y <= H; y += 6) hatch += seg(pt(0, y, 0), pt(-5, y - 4, 0));
   const hot = r.isRec && hasResult(r);
   const f = pt(w + rad * 0.29, w + rad * 0.29, 0); // midpoint of the fillet arc
-  box.innerHTML = `<svg viewBox="-72 -52 184 100" preserveAspectRatio="xMidYMid meet" role="img" aria-label="L-bracket for ${esc(r.name)}">
+  const svg = `<svg viewBox="-72 -52 184 100" preserveAspectRatio="xMidYMid meet" role="img" aria-label="L-bracket for ${esc(r.name)}">
     <defs>
       <clipPath id="face"><polygon points="${poly(front)}"/></clipPath>
       <clipPath id="bore"><polygon points="${poly(ring(0))}"/></clipPath>
@@ -1637,12 +1673,65 @@ function renderScene() {
     <text x="${tail[0] + 2.5}" y="${tail[1] + 3}" fill="#e9d3f7" font-size="3.9">${U.n(load.force_n)}</text>
     ${hot ? `<line x1="${f[0] + 2}" y1="${f[1] - 2}" x2="${f[0] + 17}" y2="${f[1] - 19}" stroke="#ff9a5c" stroke-width=".35"/><text x="${f[0] + 18}" y="${f[1] - 20}" fill="#ffb07a" font-size="3.7">stress hotspot at the fillet (illustrative)</text>` : ""}
   </svg>`;
+  return sfx ? svg.replace(/(id="|url\(#)(face|bore|steel|hotspot|fade|floorMask)/g, `$1$2${sfx}`) : svg;
 }
+
+// ---- Compare: two rows side by side, every number with its provenance, the difference B minus A.
+// The percent change is the only arithmetic here, as in the Recommendations cards.
+const cmpValue = (r, m) => hasResult(r) ? r.ver[m] : m === "mass_kg" ? r.cand.mass_kg : r.cand[m].value;
+function cmpProvenance(r, m) {
+  if (hasResult(r)) return { text: provenanceText(...rowProvenance(r)), pred: false };
+  const e = r.cand[m], k = UNIT_K[m];
+  return { text: m === "mass_kg" ? predictionSummary(S.pred).split(".")[0] : `${PROVENANCE[predictionKind(S.pred)].label}, ${sig(e.p05 * k)} to ${sig(e.p95 * k)}`, pred: true };
+}
+function cmpDiff(a, b, metric) {
+  if (a === b) return '<td class="same">same</td>';
+  const d = b - a, pct = a ? 100 * d / Math.abs(a) : null, up = d > 0;
+  const text = metric === null ? `${up ? "+" : "−"}${U.mm(Math.abs(d), 4)}` : `${up ? "+" : "−"}${metricText(metric, Math.abs(d))}`;
+  return `<td class="${up ? "up" : "down"}">${text}${pct === null ? "" : `<small>${up ? "+" : "−"}${sig(Math.abs(pct), 3)}%</small>`}</td>`;
+}
+function cmpSide(r, sfx) {
+  const blank = r.show === "none", evaluated = hasResult(r);
+  const feas = blank ? null : evaluated ? r.ver.feasible : r.cand.feasible_p95;
+  return `<div class="side"><div class="head"><b>${esc(r.name)}</b><span class="id">${esc(r.id)}</span>${blank ? "" : chip(...rowProvenance(r))}${r.isRec && evaluated ? chip("recommended") : ""}
+      ${feas === null ? "" : `<span class="chip ${feas ? "verified" : "spec"}">${feas ? "meets every requirement" : "fails a requirement"}</span>`}</div>
+    <div class="view">${sceneSvg(r, sfx)}</div></div>`;
+}
+function renderCompare() {
+  const win = $("winCompare"), el = $("cmp");
+  if (win.hidden) return;
+  if (!S.res) { el.innerHTML = '<div class="empty">No result loaded.</div>'; return; }
+  const all = [S.baseRow, ...S.rows], a = rowById(S.cmp.a) || S.baseRow, b = rowById(S.cmp.b) || S.rows.find((r) => r.show !== "none") || S.baseRow;
+  const opt = (side, cur) => `<label>${side} <select data-cmp="${side}">${all.map((r) => `<option value="${esc(r.id)}"${r.id === cur.id ? " selected" : ""}${r.show === "none" ? " disabled" : ""}>${esc(r.name)}${r.isRec ? " (recommended)" : ""}</option>`).join("")}</select></label>`;
+  const d = (r) => (r.ver || r.cand).design;
+  const dimRows = PARAMS.map((pname) => `<tr><td>${PARAM_LABEL[pname]}</td><td>${U.mm(d(a)[pname], 4)}<small>${sig(d(a)[pname], 4)} mm</small></td><td>${U.mm(d(b)[pname], 4)}<small>${sig(d(b)[pname], 4)} mm</small></td>${cmpDiff(d(a)[pname], d(b)[pname], null)}</tr>`).join("");
+  const cell = (r, m) => { const pv = cmpProvenance(r, m); return `<td>${metricText(m, cmpValue(r, m))}<small class="${pv.pred ? "pred" : ""}">${esc(pv.text)}</small></td>`; };
+  const outRows = METRICS.map((m) => `<tr><td>${metricLabel(m)}</td>${cell(a, m)}${cell(b, m)}${cmpDiff(cmpValue(a, m), cmpValue(b, m), m)}</tr>`).join("");
+  const passCell = (r, c) => { const v = hasResult(r) ? r.ver[c.metric] : (c.op === ">=" ? r.cand[c.metric].p05 : r.cand[c.metric].p95), ok = c.op === ">=" ? v >= c.value : v <= c.value; return `<td class="${ok ? "yes" : "no"}">${ok ? "Yes" : "No"}<small class="${hasResult(r) ? "" : "pred"}">${hasResult(r) ? "reported value" : "conservative end of the band"}</small></td>`; };
+  const bind = S.res.binding_constraint;
+  const reqRows = S.res.spec.constraints.map((c) => `<tr><td>${SHORT_LABEL[c.metric]} ${opSym(c.op)} ${metricText(c.metric, c.value)}${bind === `${c.metric} ${c.op} ${c.value}` ? ' <span class="chip bindchip">binding</span>' : ""}</td>${passCell(a, c)}${passCell(b, c)}<td class="same"></td></tr>`).join("");
+  el.innerHTML = `<div class="pick">${opt("A", a)}${opt("B", b)}<span class="mutedp">Shift-click a Variations row to compare it with the selected one.</span></div>
+    <div class="sides">${cmpSide(a, "A")}${cmpSide(b, "B")}</div>
+    <table class="cmpt"><thead><tr><th>Quantity</th><th>${esc(a.name)}</th><th>${esc(b.name)}</th><th>${esc(b.name)} minus ${esc(a.name)}</th></tr></thead><tbody>
+      <tr class="sect"><td colspan="4">Dimensions</td></tr>${dimRows}
+      <tr class="sect"><td colspan="4">Outputs</td></tr>${outRows}
+      <tr class="sect"><td colspan="4">Requirements (${S.res.spec.constraints.length})</td></tr>${reqRows}</tbody></table>
+    <div class="cnote">Each number names its source: a reported finalist value, or a shortlist estimate with its p05 to p95 band. The difference column and its percent change are computed here from those two values.</div>`;
+}
+function openCompare(a, b) {
+  if (!S.res) return;
+  if (a) S.cmp.a = a;
+  if (b) S.cmp.b = b;
+  if (!S.cmp.b || S.cmp.b === S.cmp.a) S.cmp.b = (S.rows.find((r) => r.isRec) || S.rows.find((r) => r.id !== S.cmp.a && r.show !== "none") || {}).id || null;
+  showWin("winCompare", true);
+  renderCompare();
+}
+$("cmp").addEventListener("change", (e) => { const side = e.target.dataset.cmp; if (side) { S.cmp[side === "A" ? "a" : "b"] = e.target.value; renderCompare(); } });
 
 // ---- Interaction
 function select(id, focus) {
   S.sel = id;
-  renderTable(); renderParams(); renderScene(); renderReadout();
+  renderTable(); renderParams(); renderScene(); renderReadout(); renderCompare();
   if (focus) { const tr = $("pane-variations").querySelector("tr.sel"); if (tr) tr.focus(); }
 }
 // Windows stack in their own band (Z_WIN_LOW to Z_WIN_HIGH) under the menu, banner and tooltip overlays.
@@ -1661,7 +1750,7 @@ function front(win) {
 function showWin(id, on) {
   const win = $(id);
   win.hidden = !on;
-  $("vp").classList.toggle(id === "winAgent" ? "agent-off" : "var-off", !on);
+  if (id === "winAgent" || id === "winVar") $("vp").classList.toggle(id === "winAgent" ? "agent-off" : "var-off", !on);
   if (on) front(win);
 }
 function showTab(tab) {
@@ -1689,7 +1778,12 @@ function draggable(win) {
     bar.addEventListener("pointermove", move); bar.addEventListener("pointerup", up); bar.addEventListener("pointercancel", up);
   });
 }
-$("pane-variations").addEventListener("click", (e) => { const tr = e.target.closest("tr.row"); if (tr) select(tr.dataset.id, true); });
+$("pane-variations").addEventListener("click", (e) => {
+  const tr = e.target.closest("tr.row"); if (!tr) return;
+  if (e.shiftKey && tr.dataset.id !== S.sel) { openCompare(S.sel, tr.dataset.id); return; } // the selected row against this one
+  select(tr.dataset.id, true);
+});
+$("bfoot").addEventListener("click", (e) => { if (e.target.closest("[data-compare]")) openCompare("baseline", S.sel === "baseline" ? null : S.sel); });
 $("pane-variations").addEventListener("keydown", (e) => {
   const tr = e.target.closest("tr.row"); if (!tr) return;
   if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(tr.dataset.id, true); }
@@ -2116,7 +2210,7 @@ $("astReset").addEventListener("click", async () => {
 })();
 
 buildChrome();
-draggable($("winVar")); draggable($("winAgent"));
+draggable($("winVar")); draggable($("winAgent")); draggable($("winCompare"));
 // ?fixture=name picks the starting fixture, which also makes the error path easy to show.
 const start = new URLSearchParams(location.search).get("fixture") || "normal";
 if (start in SUFFIX) $("fixture").value = start;

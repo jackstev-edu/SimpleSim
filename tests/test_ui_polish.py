@@ -91,7 +91,7 @@ def test_hundred_focus_clicks_keep_the_tooltip_on_top(open_gui):
     bars = [page.locator("#winVar .wtabs"), page.locator("#winAgent .wtabs")]
     for i in range(100):
         bars[i % 2].click(position={"x": 200, "y": 12})  # the empty part of the tab bar, so no tab switches
-    z = page.evaluate("() => [...document.querySelectorAll('.win')].map((w) => Number(w.style.zIndex))")
+    z = page.evaluate("() => [...document.querySelectorAll('.win')].filter((w) => !w.hidden).map((w) => Number(w.style.zIndex))")
     assert max(z) < 300 and min(z) >= 5 and z[0] != z[1]  # inside the window band, still ordered
     page.get_by_role("tab", name="Graphs", exact=True).click()
     svg = page.locator("#graphs svg[data-ch='0']")
@@ -252,4 +252,40 @@ def test_reoptimize_on_the_fast_search_asks_the_assistant(open_gui, tmp_path):
     expect(page.locator("#astStatus")).not_to_contain_text("Working")
     sent = [m.get("content") for m in client.sent[-1]["input"] if isinstance(m, dict) and m.get("role") == "user"]
     assert sent[-1].startswith("Run the search again with these limits: max deflection <= 0.3 mm, safety factor >= 1.5")
+    assert errors == []
+
+
+# ---------------------------------------------------------------- 5. compare two designs side by side
+
+
+def test_compare_window_pairs_baseline_with_the_recommended_design(open_gui):
+    page, expect, _, errors = open_gui(query="?fixture=normal")
+    win = page.locator("#winCompare")
+    expect(win).to_be_hidden()
+    page.click('[data-compare="open"]')
+    expect(win).to_be_visible()
+    rec_name = page.evaluate("() => S.rows.find((r) => r.isRec).name")
+    expect(page.locator('#cmp select[data-cmp="A"]')).to_have_value("baseline")
+    assert page.locator('#cmp select[data-cmp="B"] option:checked').text_content().startswith(rec_name)
+    expect(page.locator("#cmp .side")).to_have_count(2)
+    expect(page.locator("#cmp .side svg")).to_have_count(2)  # two drawings with their own clip ids
+    assert page.locator("#cmp #faceA").count() == 1 and page.locator("#cmp #faceB").count() == 1
+    n_params, n_cons = page.evaluate("() => [PARAMS.length, S.res.spec.constraints.length]")
+    expect(page.locator("#cmp table.cmpt tbody tr:not(.sect)")).to_have_count(n_params + 4 + n_cons)
+    head = page.locator("#cmp table.cmpt thead th")
+    expect(head.nth(3)).to_contain_text(f"{rec_name} minus Baseline")
+    body = page.locator("#cmp table.cmpt").inner_text()
+    assert "%" in body and "Fitted" not in body and "Formula demo" in body  # every number names its source
+    expect(page.locator("#cmp table.cmpt td.yes")).not_to_have_count(0)
+    # Shift-click another row: it becomes side B against the selected row (the baseline).
+    rows = page.locator("#pane-variations tr.row")
+    other = rows.nth(2)
+    other.click(modifiers=["Shift"])
+    expect(page.locator('#cmp select[data-cmp="B"]')).to_have_value(other.get_attribute("data-id"))
+    page.locator('#cmp select[data-cmp="A"]').select_option(rows.nth(1).get_attribute("data-id"))
+    expect(page.locator("#cmp table.cmpt thead th").nth(1)).to_have_text(rows.nth(1).locator("td.name").inner_text())
+    page.click('[data-close="winCompare"]')
+    expect(win).to_be_hidden()
+    expect(page.locator("#winVar")).to_be_visible()  # the normal layout is back
+    assert "var-off" not in page.get_attribute("#vp", "class")
     assert errors == []
