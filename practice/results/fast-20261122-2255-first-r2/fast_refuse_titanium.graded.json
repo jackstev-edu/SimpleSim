@@ -49,6 +49,10 @@
       "result": "n/a",
       "detail": ""
     },
+    "dense_gap": {
+      "result": "n/a",
+      "detail": ""
+    },
     "sim_gap": {
       "result": "n/a",
       "detail": ""
@@ -60,6 +64,7 @@
   },
   "pick": {
     "gap": null,
+    "dense_gap": null,
     "sim_gap": null
   }
 }

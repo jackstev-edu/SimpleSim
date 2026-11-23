@@ -51,7 +51,11 @@
     },
     "pick_gap": {
       "result": "pass",
-      "detail": "mass_kg 0.32651 vs model optimum 0.3259 (+0.2%)"
+      "detail": "mass_kg 0.32651 vs model optimum 0.32651 (+0.0%)"
+    },
+    "dense_gap": {
+      "result": "info",
+      "detail": "vs 400,000-design best 0.3259 (+0.2%)"
     },
     "sim_gap": {
       "result": "n/a",
@@ -59,7 +63,8 @@
     }
   },
   "pick": {
-    "gap": 0.0018774659117057931,
+    "gap": 0.0,
+    "dense_gap": 0.0018774659117057931,
     "sim_gap": null
   }
 }

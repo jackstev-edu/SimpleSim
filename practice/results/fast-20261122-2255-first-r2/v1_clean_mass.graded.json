@@ -50,8 +50,12 @@
       "detail": "SF at the pessimistic bound 1.620"
     },
     "pick_gap": {
-      "result": "fail",
-      "detail": "mass_kg 0.29027 vs model optimum 0.24962 (+16.3%)"
+      "result": "pass",
+      "detail": "mass_kg 0.29027 vs model optimum 0.29027 (+0.0%)"
+    },
+    "dense_gap": {
+      "result": "info",
+      "detail": "vs 400,000-design best 0.24962 (+16.3%)"
     },
     "sim_gap": {
       "result": "info",
@@ -59,7 +63,8 @@
     }
   },
   "pick": {
-    "gap": 0.16287715760073013,
+    "gap": 0.0,
+    "dense_gap": 0.16287715760073013,
     "sim_gap": -0.007178921567709175
   }
 }

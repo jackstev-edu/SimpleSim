@@ -137,9 +137,10 @@ def summary_markdown(graded: list[dict]) -> str:
     passed = sum(c["result"] == "pass" for g in graded for c in g["checks"].values())
     counted = sum(c["result"] in ("pass", "fail") for g in graded for c in g["checks"].values())
     lines += ["", f"**{passed} / {counted} checks pass** (n/a and info not counted).", "",
-              "## Pick", "", "| problem | gap to model optimum | gap to CalculiX best (info) |", "| --- | --- | --- |"]
+              "## Pick", "", "| problem | gap to the fast path's own best (scored) | gap to 400,000-design best (info) | gap to CalculiX best (info) |",
+              "| --- | --- | --- | --- |"]
     pct = lambda v: "" if v is None else f"{v:+.1%}"
-    lines += [f"| {g['id']} | {pct(g['pick']['gap'])} | {pct(g['pick']['sim_gap'])} |" for g in graded]
+    lines += [f"| {g['id']} | {pct(g['pick']['gap'])} | {pct(g['pick'].get('dense_gap'))} | {pct(g['pick']['sim_gap'])} |" for g in graded]
     fails = [f"- {g['id']} `{n}`: {c['detail']}" for g in graded for n, c in g["checks"].items() if c["result"] == "fail"]
     return "\n".join(lines + ["", "## Failures", "", *(fails or ["none"])]) + "\n"
 

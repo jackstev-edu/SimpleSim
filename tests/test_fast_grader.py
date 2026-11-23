@@ -155,3 +155,13 @@ def test_confirmed_setup_card_counts_as_asking_load_face():
               {"type": "tool", "name": "confirm_setup", "input": {}},
               {"type": "tool", "name": "optimize_design", "input": {}}]
     assert checks(problem(must_ask=("support", "load_face")), log(events=events))["asked"] == "pass"
+
+
+def test_dense_gap_is_info_only():
+    # user decision 2026-11-23: the key is the fast path's own 2,000-design search; the 400,000-design best is info
+    p = problem()
+    p.key["dense_optimum"] = {"objective_value": MASS / 1.20}
+    out = grade_fast(p, log())
+    assert out["checks"]["dense_gap"]["result"] == "info"
+    assert out["pick"]["dense_gap"] == pytest.approx(0.20)
+    assert out["checks"]["pick_gap"]["result"] == "pass"

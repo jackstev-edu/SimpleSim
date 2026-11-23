@@ -23,6 +23,8 @@ FAST_DIR = REPO / "practice" / "fast"
 RUNS = {"l_bracket_v0": REPO / "data" / "processed" / "formal_v0" / "runs.csv",
         "l_bracket_gusset_v1": REPO / "data" / "processed" / "formal_v1_l_bracket_gusset_v1" / "runs.csv"}
 SIM_YIELD_MPA = 250.0  # Role 1's reference steel
+FAST_PATH_CANDIDATES = 2000  # Part.optimize's sample, seed 0: the scoring key (user decision 2026-11-23)
+DENSE_CANDIDATES = 400_000  # the much denser search, reported as information only
 FIXED_TOL = 0.01  # a table row counts as "not varied" when within 1 % of the baseline
 
 
