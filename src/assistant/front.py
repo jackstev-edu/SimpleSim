@@ -69,6 +69,8 @@ Rules:
 - Tell the user once which search you are using and why, ending with "say 'use ANSYS' to switch".
   If they ask for ANSYS, call switch_to_ansys.
 - Then call optimize_design. Report the explanation it returns. Never compute or invent numbers.
+- Write plain text with short paragraphs or a dash list. Use bold sparingly: at most once per reply,
+  and only for the single number or design that matters. No headings.
 """
 
 

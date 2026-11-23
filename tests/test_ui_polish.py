@@ -114,3 +114,26 @@ def test_hundred_focus_clicks_keep_the_tooltip_on_top(open_gui):
     }""")
     assert on_top, "the tooltip was covered by a window"
     assert errors == []
+
+
+# ---------------------------------------------------------------- 2. readable replies, Markdown as DOM nodes
+
+
+def test_replies_render_bold_lists_and_code_without_raw_asterisks(open_gui, tmp_path):
+    md = "Use **1.5** as the safety factor.\n\n- thinner *arm*\n- call `set_material` next\n\n1. first\n2. second <b>not html</b>"
+    page, expect, _, errors = open_gui(reply(say(md)))
+    page.get_by_role("tab", name="Agent", exact=True).click()
+    page.locator("#astFile").set_input_files(str(write_demo_part(tmp_path / "l_bracket.dsco")))
+    msg = page.locator("#log .msg.agent").last
+    expect(msg).to_contain_text("Use 1.5 as the safety factor.")
+    expect(msg.locator("strong")).to_have_text("1.5")
+    expect(msg.locator("em")).to_have_text("arm")
+    expect(msg.locator("code")).to_have_text("set_material")
+    expect(msg.locator("ul.md li")).to_have_count(2)
+    expect(msg.locator("ol.md li")).to_have_count(2)
+    expect(msg.locator("ol.md li").last).to_have_text("second <b>not html</b>")  # tags in model text stay text
+    assert msg.locator("b").count() == 0
+    assert "**" not in msg.inner_text() and "`" not in msg.inner_text()
+    size = page.evaluate("() => [getComputedStyle(document.querySelector('#log .msg.agent')).fontSize, getComputedStyle(document.getElementById('astText')).fontSize]")
+    assert size == ["14.5px", "14.5px"]
+    assert errors == []

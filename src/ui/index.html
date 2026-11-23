@@ -189,13 +189,17 @@
   .btn-run:hover { filter: brightness(1.1); }
   .btn-run:focus-visible { outline: 2px solid #fff; outline-offset: -3px; }
   .log { flex: 1; overflow: auto; min-height: 0; margin: 0 4px 4px; border: 1px solid #2f6fb5; background: #161616; padding: 8px; display: flex; flex-direction: column; gap: 8px; user-select: text; }
-  .msg { flex: none; max-width: 95%; padding: 6px 9px; background: #232323; border: 1px solid #3c3c3c; overflow-wrap: anywhere; }
+  .msg { flex: none; max-width: 95%; padding: 7px 10px; background: #232323; border: 1px solid #3c3c3c; overflow-wrap: anywhere; font-size: 14.5px; line-height: 1.45; }
+  .msg p { margin: 0 0 7px; } .msg p:last-child { margin-bottom: 0; }
+  .msg ul.md, .msg ol.md { margin: 4px 0 6px; padding-left: 22px; } .msg ul.md:last-child, .msg ol.md:last-child { margin-bottom: 0; }
+  .msg code { font: 13px/1.3 Consolas, "Cascadia Mono", monospace; background: #141414; border: 1px solid #343434; padding: 0 4px; border-radius: 3px; }
+  .msg strong { color: #fff; }
   .msg.user { align-self: flex-end; background: var(--sel); border-color: #3f86cf; }
   .msg .who { display: flex; gap: 8px; align-items: center; font-variant: small-caps; font-size: 13px; letter-spacing: .05em; color: var(--muted); margin-bottom: 2px; }
   .msg.user .who { color: #cfe3f8; }
   .msg ul { margin: 3px 0 0; padding-left: 18px; }
   .msg .w { margin-top: 6px; padding: 3px 8px; border-left: 3px solid var(--amber); background: #33280d; color: var(--amber); }
-  .msg .note { margin-top: 5px; color: var(--muted); font-size: 12px; }
+  .msg .note { margin-top: 5px; color: var(--muted); font-size: 12.5px; }
   .msg table { border-collapse: collapse; margin-top: 4px; font-variant-numeric: tabular-nums; }
   .msg td { padding: 1px 12px 1px 0; }
   .msg td small { color: var(--muted); }
@@ -206,13 +210,13 @@
   .achat[hidden] { display: none; }
   .achat .astatus { flex-basis: 100%; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
   .achat .astatus .off { color: var(--amber); }
-  .achat input[type="text"] { flex: 1; min-width: 160px; height: 26px; padding: 0 8px; background: #141414; border: 1px solid #2f7fd0; color: var(--text); }
+  .achat input[type="text"] { flex: 1; min-width: 160px; height: 30px; padding: 0 9px; font-size: 14.5px; background: #141414; border: 1px solid #2f7fd0; color: var(--text); }
   .achat input[type="text"]:disabled, .achat .pbtn:disabled { opacity: .45; }
-  .msg.tool { font-size: 12.5px; background: #1d1d1d; }
+  .msg.tool { font-size: 13px; line-height: 1.4; background: #1d1d1d; }
   .msg.tool details { margin-top: 3px; }
-  .msg.tool summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+  .msg.tool summary { cursor: pointer; color: var(--muted); font-size: 12.5px; }
   .msg.tool pre { margin: 4px 0 0; max-height: 180px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: 11.5px/1.4 Consolas, "Cascadia Mono", monospace; color: #c3c2b7; }
-  .msg .steps { margin: 3px 0 0; padding-left: 16px; color: var(--muted); font-size: 12px; }
+  .msg .steps { margin: 3px 0 0; padding-left: 16px; color: var(--muted); font-size: 12.5px; }
   .chip.tool-running { color: var(--amber); } .chip.tool-done { color: #7ee08a; } .chip.tool-failed { color: var(--red); } .chip.path { color: #a9cff3; }
 
   /* Agent window tabs: Graphs and Recommendations */
@@ -987,20 +991,69 @@ function renderCases() {
   pane.innerHTML = `<table class="grid"><thead><tr><th>Name</th><th>Force</th><th>Angle</th><th>Material</th></tr></thead><tbody>
     <tr class="ver"><td class="name">TC1</td><td class="p">${U.n(s.load.force_n)}</td><td class="p">${esc(s.load.angle_deg)}&deg;</td><td class="p">${esc(s.material_key)}</td></tr></tbody></table>`;
 }
+// ---- Chat text: a safe subset of Markdown (bold, italics, inline code, bullet and numbered lists) built as
+// DOM nodes. Text from the model never reaches innerHTML; everything else is textContent.
+function mdInline(text, into) {
+  const re = /\*\*([^*\n]+)\*\*|`([^`\n]+)`|(?<![\w*])\*([^*\n]+)\*(?![\w*])/g;
+  let last = 0, m;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) into.append(text.slice(last, m.index));
+    const node = document.createElement(m[1] !== undefined ? "strong" : m[2] !== undefined ? "code" : "em");
+    node.textContent = m[1] ?? m[2] ?? m[3];
+    into.append(node);
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) into.append(text.slice(last));
+}
+function mdNodes(text) {
+  const frag = document.createDocumentFragment(), lines = String(text ?? "").replace(/\r/g, "").split("\n");
+  const item = /^\s*(?:[-*•]|\d+[.)])\s+/;
+  let i = 0;
+  while (i < lines.length) {
+    if (!lines[i].trim()) { i++; continue; }
+    if (item.test(lines[i])) {
+      const list = document.createElement(/^\s*\d/.test(lines[i]) ? "ol" : "ul");
+      list.className = "md";
+      while (i < lines.length && item.test(lines[i])) {
+        const li = document.createElement("li");
+        mdInline(lines[i].replace(item, ""), li);
+        list.append(li); i++;
+      }
+      frag.append(list);
+      continue;
+    }
+    const p = document.createElement("p");
+    let first = true;
+    while (i < lines.length && lines[i].trim() && !item.test(lines[i])) {
+      if (!first) p.append(document.createElement("br"));
+      mdInline(lines[i], p); first = false; i++;
+    }
+    frag.append(p);
+  }
+  return frag;
+}
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+function fixtureMsg(m) {
+  const box = el("div", `msg ${m.who}`), who = el("div", "who");
+  if (m.who === "user") who.textContent = "You"; else who.innerHTML = "Agent " + chip(m.chip); // the chip is page-made markup
+  box.append(who, mdNodes(m.text));
+  if (m.list && m.list.length) { const ul = el("ul"); for (const a of m.list) ul.append(el("li", "", a)); box.append(ul); }
+  // Discovery values in m to match the table, with the contract mm value beside it.
+  if (m.values) {
+    const t = el("table");
+    for (const p of PARAMS) { const tr = el("tr"); tr.append(el("td", "", PARAM_LABEL[p]), el("td", "", U.mm(m.values[p], 4))); const td = el("td"); td.append(el("small", "", `${sig(m.values[p], 4)} mm`)); tr.append(td); t.append(tr); }
+    box.append(t);
+  }
+  if (m.note) box.append(el("div", "note", m.note));
+  for (const w of m.warns || []) box.append(el("div", "w", w));
+  return box;
+}
 function renderChat() {
   const log = $("log");
   renderRecs(); // recommendations unlock once the last message is shown
-  const live = astHtml(); // the assistant's messages follow the fixture log and survive its re-renders
-  if (!S.msgs.length && !live) { log.innerHTML = '<div class="empty">No conversation loaded.</div>'; return; }
-  log.innerHTML = S.msgs.slice(0, S.shown).map((m) => {
-    let body = esc(m.text);
-    if (m.list && m.list.length) body += `<ul>${m.list.map((a) => `<li>${esc(a)}</li>`).join("")}</ul>`;
-    // Discovery values in m to match the table, with the contract mm value beside it.
-    if (m.values) body += `<table>${PARAMS.map((p) => `<tr><td>${PARAM_LABEL[p]}</td><td>${U.mm(m.values[p], 4)}</td><td><small>${sig(m.values[p], 4)} mm</small></td></tr>`).join("")}</table>`;
-    if (m.note) body += `<div class="note">${esc(m.note)}</div>`;
-    for (const w of m.warns || []) body += `<div class="w">${esc(w)}</div>`;
-    return `<div class="msg ${m.who}"><div class="who">${m.who === "user" ? "You" : "Agent " + chip(m.chip)}</div>${body}</div>`;
-  }).join("") + live;
+  const live = astNodes(); // the assistant's messages follow the fixture log and survive its re-renders
+  if (!S.msgs.length && !live.length) { log.replaceChildren(el("div", "empty", "No conversation loaded.")); return; }
+  log.replaceChildren(...S.msgs.slice(0, S.shown).map(fixtureMsg), ...live);
   log.scrollTop = log.scrollHeight;
 }
 // Monitor values of the selected variation, where Discovery shows its result legend.
@@ -1746,19 +1799,26 @@ $("pyd").addEventListener("input", (e) => { const k = e.target.dataset.form; if 
 // comes back in the done event as the three contract files and lands in the Variations table like a run.
 const AST_API = "api/assistant", AST_NAMES = ["assistant study_spec", "assistant prediction", "assistant result"];
 const AST_PATH = { fast: "Fast search (the team's predictor and engine)", slow: "ANSYS search" };
-function astHtml() { return AST.msgs.map(astMsg).join(""); }
+function astNodes() { return AST.msgs.map(astMsg); }
+// One chat entry as DOM nodes: the model's words go through mdNodes, tool arguments and results stay textContent.
 function astMsg(m) {
-  if (m.who === "user") return `<div class="msg user"><div class="who">You</div>${esc(m.text)}</div>`;
+  if (m.who === "user") { const box = el("div", "msg user"); box.append(el("div", "who", "You"), mdNodes(m.text)); return box; }
   if (m.kind === "tool") {
     const state = m.done ? (m.error ? "failed" : "done") : "running";
-    return `<div class="msg agent tool"><div class="who">Assistant tool: ${esc(m.name)} <span class="chip tool-${state}">${state}</span></div>
-      <details><summary>Arguments</summary><pre>${esc(JSON.stringify(m.input, null, 1))}</pre></details>
-      ${m.steps.length ? `<ul class="steps">${m.steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>` : ""}
-      ${m.result != null ? `<details><summary>Result</summary><pre>${esc(String(m.result).slice(0, 4000))}</pre></details>` : ""}</div>`;
+    const box = el("div", "msg agent tool"), who = el("div", "who", `Assistant tool: ${m.name} `);
+    who.append(el("span", `chip tool-${state}`, state));
+    const args = el("details"); args.append(el("summary", "", "Arguments"), el("pre", "", JSON.stringify(m.input, null, 1)));
+    box.append(who, args);
+    if (m.steps.length) { const ul = el("ul", "steps"); for (const s of m.steps) ul.append(el("li", "", s)); box.append(ul); }
+    if (m.result != null) { const res = el("details"); res.append(el("summary", "", "Result"), el("pre", "", String(m.result).slice(0, 4000))); box.append(res); }
+    return box;
   }
-  let body = esc(m.text);
-  for (const w of m.warns || []) body += `<div class="w">${esc(w)}</div>`;
-  return `<div class="msg agent"><div class="who">Assistant${m.chip ? ` <span class="chip path">${esc(m.chip)}</span>` : ""}</div>${body}</div>`;
+  const box = el("div", "msg agent"), who = el("div", "who", "Assistant");
+  if (m.chip) { who.append(" "); who.append(el("span", "chip path", m.chip)); }
+  box.append(who);
+  if (m.text) box.append(mdNodes(m.text));
+  for (const w of m.warns || []) box.append(el("div", "w", w));
+  return box;
 }
 function astStatusLine() {
   const s = AST.status;
