@@ -113,11 +113,16 @@ Every event has a `type`. The first six come from Role 3's session unchanged; `d
 {"type": "error", "text": "The budget cap reached: $0.20 spent of $0.20. No further model calls this session ($0.20 spent). Restart the launcher to continue, or raise the cap with SIMPLESIM_SESSION_BUDGET_USD.", "budget_exceeded": true}
 ```
 
-**`done`**: the last line of every stream. `path` and `part` as in the status, the spend so far, and `table`, the rows of evaluated designs from the ANSYS search (empty on the fast path; the column order is the Gradio app's `TABLE_HEADERS`).
+**`done`**: the last line of every stream. `path` and `part` as in the status, the spend so far, and `table`, the rows of evaluated designs from the ANSYS search (empty on the fast path; the column order is the Gradio app's `TABLE_HEADERS`). When the fast path ran `optimize_design` during the turn, `run` carries the three contract files (`study_spec`, `prediction`, `result`) once, so the page can show them in its tables; later `done` events leave `run` out until a new optimize runs.
 
 ```json
 {"type": "done", "path": "fast", "part": "l_bracket.dsco", "spent_usd": 0.0135, "budget_left_usd": 0.1865, "table": []}
+{"type": "done", "path": "fast", "part": "l_bracket.dsco", "spent_usd": 0.0212, "budget_left_usd": 0.1788, "table": [], "run": {"study_spec": {...}, "prediction": {...}, "result": {...}}}
 ```
+
+## In the team GUI
+
+`src/ui/index.html` wires all of this into the **Agent** tab: a chat bar with the status line, **Upload part**, a message box, **Send**, **Stop** and **Reset**. Messages and tool steps stream into the log, and a `run` in the `done` event goes through the page's contract checks and into Variations, Graphs and Recommendations. The bar only appears when `GET /api/assistant` answers, so a page served without the launcher looks as before. `tests/test_ui_assistant_chat.py` drives it in a browser with a fake model when `SIMPLESIM_CHROME` is set.
 
 ## What the fitted engine changes
 

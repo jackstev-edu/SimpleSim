@@ -13,6 +13,7 @@ python -m http.server 8000
 
 Then open http://localhost:8000/. Double-clicking `index.html` also works: browsers block `fetch` on `file://` pages, so the page shows a file picker. Select the three JSON files of one case from `fixtures/` (for example `study_spec.json`, `prediction.json` and `result.json`).
 
+- **Assistant chat.** When the launcher serves Role 3's assistant (`/api/assistant`, see `docs/assistant-api.md`), a chat bar appears under the **Agent** log: a status line (engine, model, budget left, or what is missing when the assistant can't run), **Upload part**, a message box, **Send**, **Stop** and **Reset**. Upload a part first, then answer the assistant's questions. Its replies stream into the log as messages and collapsible tool steps; when it runs the fast-path optimize, the result lands in Variations, Graphs and Recommendations like a PyDiscovery run. The bar needs the `openai` package and `OPENAI_API_KEY` on the machine running the launcher; the status line says so otherwise.
 - **Fixture** switches between the three cases. `?fixture=infeasible` or `?fixture=out_of_range` in the URL picks the starting case.
 - **Run demo** replays the agent messages 600 ms apart and fills the Variations table row by row.
 - Click a table row, or focus it and use the arrow keys, to show that design in the viewport.

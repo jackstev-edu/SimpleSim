@@ -47,7 +47,8 @@ def call(name, args=None, call_id="c1"):
 
 def reply(*items, tokens=(100, 0, 50), status="completed"):
     usage = SimpleNamespace(input_tokens=tokens[0], input_tokens_details=SimpleNamespace(cached_tokens=tokens[1]), output_tokens=tokens[2])
-    return SimpleNamespace(output=list(items), status=status, usage=usage, incomplete_details=None)
+    text = "".join(c.text for i in items if i.type == "message" for c in i.content)  # output_text, which the explanation step reads
+    return SimpleNamespace(output=list(items), status=status, usage=usage, incomplete_details=None, output_text=text)
 
 
 class FakeOpenAI:
@@ -166,6 +167,31 @@ def test_send_runs_tools_and_streams_each_step(make, tmp_path):
     assert api.session.front.tools.part.confirmed is True
     outputs = [m for m in client.sent[-1]["input"] if isinstance(m, dict) and m.get("type") == "function_call_output"]
     assert [m["call_id"] for m in outputs] == ["a", "b"]  # the model saw both tool results
+
+
+def test_fast_path_optimize_comes_back_in_the_done_event_once(make, tmp_path):
+    """The front agent runs optimize_design through its own tools; the done event carries the three contract files."""
+    from contracts.models import Prediction, Result, StudySpec
+
+    api, _ = make(reply(say("ok")),
+                  reply(call("record_study_inputs", {"safety_factor": 1.5, "objective": "mass_kg", "direction": "minimize"}, "a")),
+                  reply(call("confirm_setup", {}, "b"), call("optimize_design", {}, "c")),
+                  reply(say("The recommended design is lighter than the baseline and sits on the deflection limit.")),  # the explanation step's call
+                  reply(say("Here is the lighter design.")))
+    upload(api, tmp_path)
+    events = list(post(api, "send", {"text": "safety factor 1.5, minimize mass, the setup is right, go"})[1])  # the loop runs on after each tool
+    tools = [e["name"] for e in events if e["type"] == "tool"]
+    assert tools == ["record_study_inputs", "confirm_setup", "optimize_design"] and all(not e["is_error"] for e in events if e["type"] == "tool_result")
+    optimize = [e for e in events if e["type"] == "tool_result" and e["name"] == "optimize_design"][0]
+    assert "Explanation for the user:\nThe recommended design is lighter" in optimize["content"]  # the model's explanation, numbers checked
+    assert events[-2] == {"type": "text", "text": "Here is the lighter design."}
+    done = events[-1]
+    assert done["type"] == "done" and "run" in done
+    spec, pred, res = StudySpec.model_validate(done["run"]["study_spec"]), Prediction.model_validate(done["run"]["prediction"]), Result.model_validate(done["run"]["result"])
+    assert res.recommended is not None and res.recommended.feasible and res.spec == spec and len(pred.shortlist) > 0
+    assert [c.value for c in spec.constraints if c.metric == "safety_factor"] == [1.5]  # the user's safety factor, never a default
+    events = list(post(api, "send", {"text": "thanks"})[1])
+    assert "run" not in events[-1]  # the same result is not sent twice
 
 
 def test_send_before_upload_and_bad_bodies(make):

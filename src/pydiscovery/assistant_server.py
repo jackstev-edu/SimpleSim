@@ -52,6 +52,7 @@ class AssistantAPI:
         self.session = None
         self.part_name: str | None = None
         self._turn = threading.Lock()  # one turn at a time: two turns would interleave the model's message history
+        self._sent_result: int | None = None  # id() of the last fast-path Result sent in a done event
 
     # ------------------------------------------------------------ availability and status
 
@@ -176,9 +177,26 @@ class AssistantAPI:
     def _done(self) -> dict:
         s = self.session
         spent = cost(self.usage)
-        return {"type": "done", "path": s.path if s is not None else None, "part": self.part_name,
+        done = {"type": "done", "path": s.path if s is not None else None, "part": self.part_name,
                 "spent_usd": round(spent, 6), "budget_left_usd": round(max(self.budget_usd - spent, 0.0), 6),
                 "table": s.table() if s is not None else []}
+        run = self._new_run()
+        if run is not None:
+            done["run"] = run  # the three contract files of a fast-path optimize, once, so the GUI can show them
+        return done
+
+    def _new_run(self) -> dict | None:
+        """The fast path's latest optimize as {study_spec, prediction, result}, or None when nothing new ran."""
+        front = getattr(self.session, "front", None)
+        part = getattr(getattr(front, "tools", None), "part", None)
+        result = getattr(part, "last_result", None)
+        if result is None or id(result) == self._sent_result:
+            return None
+        self._sent_result = id(result)
+        prediction = getattr(part, "last_prediction", None)
+        return {"study_spec": result.spec.model_dump(mode="json"),
+                "prediction": prediction.model_dump(mode="json") if prediction is not None else None,
+                "result": result.model_dump(mode="json")}
 
     # ------------------------------------------------------------ the session
 
