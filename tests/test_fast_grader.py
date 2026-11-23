@@ -131,7 +131,7 @@ def test_asked_needs_keyword_in_the_question():
               {"type": "student", "text": "Back face."},
               {"type": "text", "text": "I've recorded the 500 N load at the free end. Which dimensions may the search change?"},
               {"type": "student", "text": "All of them."},
-              *GOOD_EVENTS[2:]]
+              *(e for e in GOOD_EVENTS[2:] if e["type"] == "tool")]  # no setup card shown
     out = grade_fast(problem(must_ask=("load_face",)), log(events=events))
     assert out["checks"]["asked"]["result"] == "fail"
 
