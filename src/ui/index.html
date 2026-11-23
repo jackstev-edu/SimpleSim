@@ -54,7 +54,7 @@
   .rs span { margin-right: 3px; }
   .dim { color: #7f7f7f; } .dim svg.ic { opacity: .4; filter: grayscale(1); }
   .live { cursor: pointer; } .live:hover, .rb.open { background: #3a3a3a; }
-  .menu { position: fixed; z-index: 30; background: #1e1e1e; border: 1px solid #5a5a5a; padding: 3px 0; box-shadow: 0 6px 20px #000c; }
+  .menu { position: fixed; z-index: 300; background: #1e1e1e; border: 1px solid #5a5a5a; padding: 3px 0; box-shadow: 0 6px 20px #000c; }
   .menu[hidden] { display: none; }
   .menu div { display: flex; align-items: center; gap: 8px; padding: 3px 14px 3px 8px; white-space: nowrap; }
   .menu div:hover { background: var(--sel); }
@@ -234,7 +234,7 @@
   .chart .legend { margin: 2px 0 2px; }
   .vnote, .mutedp { color: #898781; font-size: 12px; }
   .vnote { margin-top: 8px; }
-  .tip { position: fixed; z-index: 50; pointer-events: none; background: #0d0d0d; border: 1px solid #4a4a46; padding: 6px 9px; font-size: 12.5px; min-width: 170px; box-shadow: 0 6px 18px #000c; }
+  .tip { position: fixed; z-index: 500; pointer-events: none; background: #0d0d0d; border: 1px solid #4a4a46; padding: 6px 9px; font-size: 12.5px; min-width: 170px; box-shadow: 0 6px 18px #000c; }
   .tip[hidden] { display: none; }
   .tip b { display: block; color: #f0efec; }
   .tip .tsub { display: block; color: #898781; font-size: 11.5px; margin-bottom: 3px; }
@@ -304,7 +304,7 @@
   .statusbar .files { color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
 
   /* Error banner sits above everything and never blocks the controls */
-  .banner { position: fixed; left: 50%; top: 162px; transform: translateX(-50%); z-index: 40; width: min(720px, 92vw); background: #2a1616; border: 1px solid var(--red); padding: 10px 14px; box-shadow: 0 8px 28px #000c; user-select: text; }
+  .banner { position: fixed; left: 50%; top: 162px; transform: translateX(-50%); z-index: 400; width: min(720px, 92vw); background: #2a1616; border: 1px solid var(--red); padding: 10px 14px; box-shadow: 0 8px 28px #000c; user-select: text; }
   .banner[hidden] { display: none; }
   .banner h3 { margin: 0 0 4px; font-size: 14px; color: var(--red); }
   .banner ul { margin: 4px 0; padding-left: 18px; }
@@ -1448,8 +1448,19 @@ function select(id, focus) {
   renderTable(); renderParams(); renderScene(); renderReadout();
   if (focus) { const tr = $("pane-variations").querySelector("tr.sel"); if (tr) tr.focus(); }
 }
-let zTop = 5;
-const front = (win) => { win.style.zIndex = ++zTop; };
+// Windows stack in their own band (Z_WIN_LOW to Z_WIN_HIGH) under the menu, banner and tooltip overlays.
+// When the counter nears the top of the band the open windows are renumbered in their current order, so
+// a hundred focus clicks can never lift a window above an overlay.
+const Z_WIN_LOW = 5, Z_WIN_HIGH = 200;
+let zTop = Z_WIN_LOW;
+function front(win) {
+  if (zTop >= Z_WIN_HIGH) {
+    const wins = [...document.querySelectorAll(".win")].sort((a, b) => (Number(a.style.zIndex) || Z_WIN_LOW) - (Number(b.style.zIndex) || Z_WIN_LOW));
+    zTop = Z_WIN_LOW;
+    for (const w of wins) w.style.zIndex = ++zTop;
+  }
+  win.style.zIndex = ++zTop;
+}
 function showWin(id, on) {
   const win = $(id);
   win.hidden = !on;
