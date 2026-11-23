@@ -1,0 +1,44 @@
+graph TD
+  S["Student<br/>part + goal"]
+
+  subgraph FL["Assistant (front layer)"]
+    Q["Ask for every missing input<br/>supports, loaded faces, force + units,<br/>material, safety factor, objective"]
+    P{"Path picker<br/>states its choice<br/>student can override"}
+  end
+
+  M["Fast path<br/>PyDiscovery search<br/>on the trained model"]
+
+  subgraph AG["Slow path: ANSYS agent"]
+    D1["Describe the part<br/>wait for the student's OK"]
+    B["Baseline solve"]
+    F["First look<br/>which features matter"]
+    K{"Stop or<br/>go deeper?"}
+    O["optiSLang ARSM optimize<br/>live progress, Stop button"]
+    Z["Finalize<br/>part .scdocx, analysis .mechdb"]
+  end
+
+  C["Checks on every result<br/>reaction = load, mesh refinement,<br/>exclusion zones at supports and load,<br/>128K-node guard"]
+  E["Explanation with number check<br/>+ decision log"]
+
+  S -->|"part + goal"| Q
+  Q -->|"confirmed setup"| P
+  P -->|"known family<br/>study_spec.json"| M
+  P -->|"any other part"| D1
+  D1 --> B --> F --> K
+  K -->|"go deeper"| O --> Z
+  K -->|"stop"| Z
+  B -.-> C
+  F -.-> C
+  O -.-> C
+  M -->|"checked finalists"| E
+  Z -->|"verified design"| E
+  E -->|"result.json"| U["GUI"]
+
+  classDef role2 fill:#FCD34D,stroke:#B45309,color:#111111
+  classDef role3 fill:#14B8A6,stroke:#0F5F57,color:#111111
+  classDef role4 fill:#F3F4F6,stroke:#374151,color:#111111
+  classDef user fill:#FFFFFF,stroke:#111111,stroke-dasharray:5 3,color:#111111
+  class Q,P,D1,B,F,K,O,Z,C,E role3
+  class M role2
+  class U role4
+  class S user

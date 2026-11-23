@@ -1,0 +1,43 @@
+graph TD
+  S["Student<br/>part + goal"]
+  A["Assistant<br/>asks for every missing input<br/>student confirms"]
+  P{"Path picker<br/>states its choice<br/>student can override"}
+  D[("Simulation table<br/>CalculiX runs")]
+  M["Fast path<br/>PyDiscovery search<br/>on the trained model"]
+  V1["Finalist check<br/>CalculiX (main)"]
+  V2["Finalist check<br/>ANSYS (cross-check)"]
+  G["Slow path: ANSYS agent<br/>SpaceClaim edits, Mechanical solves<br/>optiSLang search"]
+  E["Explanation with number check<br/>+ decision log"]
+  U["GUI, back to the student<br/>winner, why it won, trade-off<br/>values to enter in Discovery"]
+
+  S -->|"part + goal"| A
+  A -->|"confirmed setup"| P
+  P -->|"known family<br/>study_spec.json"| M
+  D -->|"runs.csv"| M
+  M -->|"prediction.json<br/>shortlist"| V1
+  M -->|"shortlist"| V2
+  P -->|"any other part"| G
+  V1 --> E
+  V2 --> E
+  G -->|"verified design"| E
+  E -->|"result.json"| U
+
+  subgraph Legend
+    direction TB
+    L1["Role 1: data (Can)"]
+    L2["Role 2: prediction + search (Jack)"]
+    L3["Role 3: assistant + integration (Yunus)"]
+    L4["Role 4: users + interface (Arin)"]
+    L1 ~~~ L2 ~~~ L3 ~~~ L4
+  end
+
+  classDef role1 fill:#1E3A8A,stroke:#0B1A4A,color:#FFFFFF
+  classDef role2 fill:#FCD34D,stroke:#B45309,color:#111111
+  classDef role3 fill:#14B8A6,stroke:#0F5F57,color:#111111
+  classDef role4 fill:#F3F4F6,stroke:#374151,color:#111111
+  classDef user fill:#FFFFFF,stroke:#111111,stroke-dasharray:5 3,color:#111111
+  class D,V1,L1 role1
+  class M,L2 role2
+  class A,P,V2,G,E,L3 role3
+  class U,L4 role4
+  class S user
