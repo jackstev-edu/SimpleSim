@@ -160,3 +160,15 @@ def test_prompt_uses_the_family_face_text_for_support():
     # gusset smoke 11-21: "back face" was refused by set_support, which wants "back face at X = 0"
     p = " ".join(PROMPT.split())
     assert "exact face text describe_setup shows" in p
+
+
+def test_prompt_gives_the_down_direction():
+    # fast-path benchmark 2026-11-22: "straight down" was sent as [0, 0, -1] in 2 of 20 runs and handed off
+    from src.assistant.front import PROMPT
+    assert "[0, -1, 0]" in PROMPT and "never Z" in PROMPT
+
+
+def test_prompt_confirms_a_vague_material_grade():
+    # fast-path benchmark 2026-11-22: "aluminium" was set to aluminium 6061 without asking (rule 2026-11-13)
+    from src.assistant.front import PROMPT
+    assert "only by type" in PROMPT and "before set_material" in PROMPT

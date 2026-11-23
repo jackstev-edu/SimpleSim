@@ -17,7 +17,7 @@ ANGLE_DEG = 1.0
 STUDY_CHECKS = ("force", "direction", "material", "safety_factor", "objective", "limits", "vary",
                 "asked", "confirmed", "no_silent_default", "feasible", "pick_gap", "dense_gap", "sim_gap")
 ASK_PATTERNS = {
-    "support": re.compile(r"support|fixed|bolt|wall|back face|mount", re.I),
+    "support": re.compile(r"support|fix|bolt|wall|back face|mount|held|hold|attach|clamp", re.I),
     "load_face": re.compile(r"free end|end face|load(ed)? face|where .*load|tip", re.I),
     "safety_factor": re.compile(r"safety factor|\bSF\b", re.I),
     "force": re.compile(r"force|newton|\bN\b|load|how much", re.I),

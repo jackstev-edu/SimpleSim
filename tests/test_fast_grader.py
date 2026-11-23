@@ -165,3 +165,11 @@ def test_dense_gap_is_info_only():
     assert out["checks"]["dense_gap"]["result"] == "info"
     assert out["pick"]["dense_gap"] == pytest.approx(0.20)
     assert out["checks"]["pick_gap"]["result"] == "pass"
+
+
+def test_support_question_with_held():
+    # real log 2026-11-23: "Which face is the bracket held by?" is a support question
+    events = [{"type": "text", "text": "Which face is the bracket held by?"},
+              {"type": "student", "text": "The back face."},
+              *(e for e in GOOD_EVENTS[2:] if e["type"] == "tool")]
+    assert checks(problem(must_ask=("support",)), log(events=events))["asked"] == "pass"
