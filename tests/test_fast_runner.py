@@ -120,3 +120,17 @@ def test_unexpected_handoff_stops_without_ansys(tmp_path):
     assert {"make_workbench", "make_agent"} <= set(FakeSession.made[-1].kw)  # never the real ANSYS
     assert log["stopped"] == "handoff"
     assert sum(e["type"] == "student" for e in log["events"]) == 1
+
+
+def test_error_ends_problem_without_crashing(tmp_path):
+    # I4: an API error or empty student reply ends this problem as a graded failure
+    class Mute(Student):
+        def reply(self, text):
+            raise RuntimeError("simulated student gave no text")
+
+    class Never(FakeSession):
+        def __init__(self, *a, **k):
+            super().__init__(*a, **k)
+            self.finish_after = 10_000
+    log = fast_runner.run_fast_problem(problem(), client=None, out_dir=tmp_path, session_factory=Never, student_factory=Mute)
+    assert log["stopped"].startswith("error: RuntimeError")

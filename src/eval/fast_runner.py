@@ -118,6 +118,8 @@ def run_fast_problem(problem: FastProblem, client, out_dir: Path, max_replies: i
             said = turn(session.send(answer))
     except BudgetExceeded:
         log["stopped"] = "budget"
+    except Exception as e:  # noqa: BLE001 - an API error or empty reply ends this problem, not the run
+        log["stopped"] = f"error: {type(e).__name__}: {e}"
     finally:
         close = getattr(session, "close", None)
         if close:

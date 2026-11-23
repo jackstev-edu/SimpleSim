@@ -6,8 +6,8 @@
       "detail": "stayed on the fast path"
     },
     "asked": {
-      "result": "pass",
-      "detail": ""
+      "result": "fail",
+      "detail": "not asked before use: material"
     },
     "confirmed": {
       "result": "pass",

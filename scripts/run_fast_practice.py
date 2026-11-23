@@ -43,6 +43,14 @@ def main() -> None:
     usage: dict = {}
     client = counted_client(usage, args.budget)
     graded = []
+    try:
+        _run_all(problems, client, out, usage, graded)
+    finally:  # the spend reaches the ledger even if a run stops early
+        total = append_spend(LEDGER, f"fast-{args.label or 'run'}", len(problems), usage)
+        print(f"run cost ${cost(usage):.4f}; ledger total ${total:.4f}; results in {out}")
+
+
+def _run_all(problems, client, out, usage, graded) -> None:
     for p in problems.values():
         print(f"[{p.id}] running ...", flush=True)
         t0 = time.time()
@@ -55,8 +63,6 @@ def main() -> None:
         fails = [n for n, c in g["checks"].items() if c["result"] == "fail"]
         print(f"[{p.id}] stopped={log['stopped']} fails={fails} cost so far ${cost(usage):.4f} ({log['seconds']} s)", flush=True)
         (out / "summary.md").write_text(summary_markdown(graded), encoding="utf-8")  # keep partial results
-    total = append_spend(LEDGER, f"fast-{args.label or 'run'}", len(problems), usage)
-    print(f"run cost ${cost(usage):.4f}; ledger total ${total:.4f}; results in {out}")
 
 
 if __name__ == "__main__":

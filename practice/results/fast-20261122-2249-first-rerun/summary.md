@@ -3,7 +3,7 @@
 | problem | force | direction | material | safety_factor | objective | limits | vary | asked | confirmed | no_silent_default | feasible | pick_gap | sim_gap | handoff |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | fast_refuse_titanium | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | pass |
-| v0_alu_vague | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | **fail** | n/a | pass |
+| v0_alu_vague | pass | pass | pass | pass | pass | pass | pass | **fail** | pass | pass | pass | **fail** | n/a | pass |
 | v0_clean_mass | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | **fail** | info | pass |
 | v0_kn_units | **fail** | **fail** | **fail** | **fail** | **fail** | **fail** | **fail** | pass | **fail** | **fail** | **fail** | **fail** | n/a | pass |
 | v0_missing_force | **fail** | **fail** | **fail** | **fail** | **fail** | **fail** | **fail** | **fail** | **fail** | **fail** | **fail** | **fail** | n/a | **fail** |
@@ -13,7 +13,7 @@
 | v1_named_dims | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | n/a | pass |
 | v1_sf2_lbf | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | **fail** | n/a | pass |
 
-**88 / 118 checks pass** (n/a and info not counted).
+**87 / 118 checks pass** (n/a and info not counted).
 
 ## Pick
 
@@ -32,6 +32,7 @@
 
 ## Failures
 
+- v0_alu_vague `asked`: not asked before use: material
 - v0_alu_vague `pick_gap`: mass_kg 0.068555 vs model optimum 0.061289 (+11.9%)
 - v0_clean_mass `pick_gap`: mass_kg 0.23072 vs model optimum 0.21021 (+9.8%)
 - v0_kn_units `confirmed`: confirm_setup was never called

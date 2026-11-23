@@ -123,3 +123,35 @@ def test_sim_gap_is_info_only():
 def test_unexpected_handoff_fails():
     lg = log(events=[*GOOD_EVENTS[:2], {"type": "path", "path": "slow", "reason": "direction"}], result=False)
     assert checks(problem(), lg)["handoff"] == "fail"
+
+
+def test_asked_needs_keyword_in_the_question():
+    # I2: a statement about the load followed by an unrelated question is not asking about the load face
+    events = [{"type": "text", "text": "Where is it bolted?"},
+              {"type": "student", "text": "Back face."},
+              {"type": "text", "text": "I've recorded the 500 N load at the free end. Which dimensions may the search change?"},
+              {"type": "student", "text": "All of them."},
+              *GOOD_EVENTS[2:]]
+    out = grade_fast(problem(must_ask=("load_face",)), log(events=events))
+    assert out["checks"]["asked"]["result"] == "fail"
+
+
+def test_confirm_rejects_negated_agreement():
+    # I3: "not right" is a correction, not agreement
+    events = [e if e.get("text") != "Yes, that is right." else {**e, "text": "No, that's not right."} for e in GOOD_EVENTS]
+    assert checks(problem(), log(events=events))["confirmed"] == "fail"
+
+
+def test_confirm_allows_text_between_yes_and_confirm():
+    # I3: the model may say "Confirming." in the same turn before calling confirm_setup
+    events = [*GOOD_EVENTS[:6], {"type": "text", "text": "Great, confirming the setup now."}, *GOOD_EVENTS[6:]]
+    assert checks(problem(), log(events=events))["confirmed"] == "pass"
+
+
+def test_confirmed_setup_card_counts_as_asking_load_face():
+    # spec: a setup card the student confirms counts as asking for the support and the load face
+    events = [{"type": "text", "text": "Setup: back face fixed, 500 N down on the free-end face, steel. Is this setup correct?"},
+              {"type": "student", "text": "Yes."},
+              {"type": "tool", "name": "confirm_setup", "input": {}},
+              {"type": "tool", "name": "optimize_design", "input": {}}]
+    assert checks(problem(must_ask=("support", "load_face")), log(events=events))["asked"] == "pass"

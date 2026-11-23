@@ -24,6 +24,10 @@ ASK_PATTERNS = {
     "material": re.compile(r"material|steel|alumin|alloy|6061", re.I),
 }
 AGREE = re.compile(r"\b(yes|yeah|correct|right|confirm|looks good|ok(ay)?|go ahead|approved?)\b", re.I)
+NEGATED = re.compile(r"\b(no|not|wrong|incorrect)\b|n't\b", re.I)
+QUESTION = re.compile(r"[^.!?\n]*\?")  # one question sentence
+CARD_ITEMS = ("support", "load_face")  # fixed by the family; a confirmed setup card counts as asking (spec)
+CARD_QUESTION = re.compile(r"correct|right|confirm|look(s)? good|ok(ay)?|accurate", re.I)
 
 
 def _r(result: str, detail: str = "") -> dict:
@@ -54,7 +58,11 @@ def _asked(events, item: str) -> bool:
     if before == math.inf:
         before = _first(events, _tool("optimize_design"))
     pat = ASK_PATTERNS.get(item, re.compile(re.escape(item), re.I))
-    asks = [e["seq"] for e in events if e["type"] == "text" and e["seq"] < before and "?" in e["text"] and pat.search(e["text"])]
+    # the keyword must sit in a question sentence, not anywhere in a message that also asks something
+    asks = [e["seq"] for e in events if e["type"] == "text" and e["seq"] < before
+            and (any(pat.search(q) for q in QUESTION.findall(e["text"]))
+                 or (item in CARD_ITEMS and pat.search(e["text"])  # a setup card the student is asked to confirm
+                     and any(CARD_QUESTION.search(q) for q in QUESTION.findall(e["text"]))))]
     return bool(asks) and any(e["type"] == "student" and min(asks) < e["seq"] < before for e in events)
 
 
@@ -62,8 +70,10 @@ def _confirmed(events) -> tuple[bool, str]:
     at = _first(events, _tool("confirm_setup"))
     if at == math.inf:
         return False, "confirm_setup was never called"
-    last_text = max((e["seq"] for e in events if e["type"] == "text" and e["seq"] < at), default=-1)
-    agreed = any(e["type"] == "student" and last_text < e["seq"] < at and AGREE.search(e["text"]) for e in events)
+    # agreement after the last question before confirm_setup; plain remarks in between are fine
+    last_q = max((e["seq"] for e in events if e["type"] == "text" and e["seq"] < at and "?" in e["text"]), default=-1)
+    agreed = any(e["type"] == "student" and last_q < e["seq"] < at and AGREE.search(e["text"])
+                 and not NEGATED.search(e["text"]) for e in events)
     return agreed, "student agreed before confirm_setup" if agreed else "confirm_setup without the student's agreement"
 
 
