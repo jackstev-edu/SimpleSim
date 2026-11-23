@@ -1,0 +1,65 @@
+{
+  "id": "v0_stiff",
+  "checks": {
+    "handoff": {
+      "result": "pass",
+      "detail": "stayed on the fast path"
+    },
+    "asked": {
+      "result": "pass",
+      "detail": ""
+    },
+    "confirmed": {
+      "result": "pass",
+      "detail": "student agreed before confirm_setup"
+    },
+    "force": {
+      "result": "pass",
+      "detail": "got 500.0, want 500.0"
+    },
+    "direction": {
+      "result": "pass",
+      "detail": "got -90.0, want -90.0"
+    },
+    "material": {
+      "result": "pass",
+      "detail": "got structural_steel, want structural_steel"
+    },
+    "safety_factor": {
+      "result": "pass",
+      "detail": "got 1.5, want 1.5"
+    },
+    "objective": {
+      "result": "pass",
+      "detail": "got {'metric': 'max_disp_mm', 'direction': 'minimize'}, want {'metric': 'max_disp_mm', 'direction': 'minimize'}"
+    },
+    "limits": {
+      "result": "pass",
+      "detail": "got [('mass_kg', '<=', 0.25)], want [('mass_kg', '<=', 0.25)]"
+    },
+    "vary": {
+      "result": "pass",
+      "detail": "got ['arm_width_mm', 'fillet_radius_mm', 'flange_length_mm', 'hole_diameter_mm', 'thickness_mm'], want ['arm_width_mm', 'fillet_radius_mm', 'flange_length_mm', 'hole_diameter_mm', 'thickness_mm']"
+    },
+    "no_silent_default": {
+      "result": "pass",
+      "detail": "got 1.5, want 1.5"
+    },
+    "feasible": {
+      "result": "pass",
+      "detail": "SF at the pessimistic bound 1.820"
+    },
+    "pick_gap": {
+      "result": "fail",
+      "detail": "max_disp_mm 0.25088 vs model optimum 0.21014 (+19.4%)"
+    },
+    "sim_gap": {
+      "result": "n/a",
+      "detail": "no table row meets the safety factor and limits"
+    }
+  },
+  "pick": {
+    "gap": 0.19385776910771638,
+    "sim_gap": null
+  }
+}

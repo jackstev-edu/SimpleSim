@@ -157,8 +157,8 @@
   .cb.on { background: #2f8fef; border-color: #cfe6ff; }
   .cb.on::after { content: ""; position: absolute; left: 3.5px; top: 0; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(40deg); }
   .st { display: inline-block; width: 15px; height: 15px; border-radius: 50%; border: 1.6px solid var(--muted); vertical-align: middle; position: relative; }
-  .st.solved { border-color: var(--green); }
-  .st.solved::after { content: ""; position: absolute; left: 4px; top: 1.5px; width: 3px; height: 6px; border: solid var(--green); border-width: 0 1.6px 1.6px 0; transform: rotate(40deg); }
+  .st.complete { border-color: var(--green); }
+  .st.complete::after { content: ""; position: absolute; left: 4px; top: 1.5px; width: 3px; height: 6px; border: solid var(--green); border-width: 0 1.6px 1.6px 0; transform: rotate(40deg); }
   .st.pending { border-color: var(--amber); }
   .st.pending::after { content: ""; position: absolute; left: 5px; top: 2px; width: 3px; height: 4px; border: solid var(--amber); border-width: 0 0 1.6px 1.6px; }
   .st.stopped { border-color: #e8e8e8; }
@@ -564,7 +564,7 @@ function buildChrome() {
       <line x1="60" y1="80" x2="${yx}" y2="${yy}" stroke="#3ccf4e"/><text x="${yx - 3}" y="${yy - 4}" fill="#3ccf4e">Y</text>
       <line x1="60" y1="80" x2="${zx}" y2="${zy}" stroke="#3aa0ff"/><text x="${zx - 11}" y="${zy + 8}" fill="#3aa0ff">Z</text>
     </g></svg>`;
-  // Tool wheel, bottom right: decorative, the centre dot turns green once rows are solved.
+  // Tool wheel, bottom right: decorative, the centre dot turns green once finalist values are available.
   const spots = [[42, 34, "local"], [74, 22, "study"], [106, 34, "spark"], [30, 66, "em"], [118, 66, "reset"], [36, 100, "tFacets"], [108, 104, "monitors"], [72, 116, "show"]];
   $("toolwheel").innerHTML = `<svg viewBox="0 0 146 146" width="146" height="146">
     <circle cx="80" cy="78" r="70" fill="#0b0b0b" opacity=".62"/><circle cx="76" cy="74" r="33" fill="none" stroke="#3b3b3b" stroke-width="1.500"/>
@@ -718,7 +718,7 @@ async function loadPicked(fileList) {
   if (errs.length) { clearAll(); showBanner("Could not use the selected files", errs, true); return; }
   accept(got.spec, got.pred, got.res, [names.spec, names.pred, names.res]);
 }
-function accept(spec, pred, res, names) {
+function accept(spec, pred, res, names, live = false) {
   const errs = [];
   // The spec's family sets the dimension list the checks and every table use; v0 files keep the five.
   if (isObj(spec) && isStr(spec.bracket_family)) {
@@ -733,9 +733,9 @@ function accept(spec, pred, res, names) {
   }
   if (errs.length) { clearAll(); showBanner("Fixture does not match the contract", errs, location.protocol === "file:"); return; }
   hideBanner();
-  Object.assign(S, { spec, pred, res, sel: "baseline" });
+  Object.assign(S, { spec, pred, res, live, sel: "baseline" });
   build(names);
-  S.rows.forEach((r) => { r.show = r.ver ? "verified" : "predicted"; });
+  S.rows.forEach((r) => { r.show = r.ver ? "evaluated" : "predicted"; });
   S.shown = S.msgs.length; // static load shows the finished state; Run demo replays it
   document.body.dataset.demo = "idle";
   renderAll();
@@ -756,7 +756,7 @@ function clearAll() {
   renderAll();
 }
 
-// ---- Model: join shortlist candidates with verified finalists by design_id.
+// ---- Model: join shortlist candidates with evaluated finalists by design_id.
 function build(names) {
   const { pred, res } = S;
   const cands = new Map(pred.shortlist.map((c, j) => [c.design_id, { c, j }]));
@@ -770,69 +770,105 @@ function build(names) {
   pred.shortlist.forEach((c, j) => { if (!seen.has(c.design_id)) rows.push({ id: c.design_id, ver: null, cand: c, candPath: `${names[1]} shortlist[${j}]` }); });
   rows.forEach((r, k) => { r.n = k + 1; r.name = "DV" + (k + 1); r.isRec = !!res.recommended && res.recommended.design_id === r.id; r.show = "none"; });
   S.rows = rows;
-  S.baseRow = { id: "baseline", name: "Baseline", ver: res.baseline, verPath: `${names[2]} baseline`, cand: null, show: "verified", isBase: true };
+  S.baseRow = { id: "baseline", name: "Baseline", ver: res.baseline, verPath: `${names[2]} baseline`, cand: null, show: "evaluated", isBase: true };
   S.msgs = buildMessages(names);
 }
-const isFake = (s) => /fake/i.test(s);
+const PROVENANCE = {
+  formula: { label: "Formula demo", style: "fake", limit: "Formula demo values illustrate the workflow and are unsuitable for engineering decisions." },
+  trained: { label: "Trained prediction", style: "predicted", limit: "Shortlist estimates and their uncertainty bands depend on the training data and model." },
+  predicted: { label: "Prediction", style: "predicted" },
+  fitted: { label: "Fitted surrogate check", style: "predicted", limit: "A fitted model estimates the finalist metrics. Using the same power law for the shortlist and the check gives no independent validation." },
+  fea: { label: "CalculiX FEA", style: "verified", limit: "The FEA result applies to the modeled bracket, material, supports and load case." },
+  ansys: { label: "ANSYS Mechanical FEA", style: "verified", limit: "The FEA result applies to the modeled bracket, material, supports and load case." },
+  unknown: { label: "Reported result", style: "spec", limit: "The source does not establish that an FEA solve ran." },
+};
+const resultKind = (source) => {
+  if (source === "calculix") return "fea";
+  if (source === "ansys_mechanical") return "ansys";
+  if (source === "power_law_v0" || source === "power_law_v1"
+    || (source.startsWith("power_law_") && isTemplateFamily(source.slice("power_law_".length)))) return "fitted";
+  if (source === "fake_formula" || source === "formula_emulator") return "formula";
+  return "unknown";
+};
+const predictionKind = (pred) => {
+  if (pred.model_name === "fake_formula" || pred.model_name === "formula_emulator") return "formula";
+  return pred.trained_on_runs > 0 ? "trained" : "predicted";
+};
+const resultSources = (res) => [...new Set([res.baseline, ...res.finalists, res.recommended].filter(Boolean).map((r) => r.source))];
+const provenanceText = (kind, source) => `${PROVENANCE[kind].label} (${source})`;
+const rowProvenance = (r) => hasResult(r) ? [resultKind(r.ver.source), r.ver.source] : [predictionKind(S.pred), S.pred.model_name];
+function provenanceWarnings(pred, res) {
+  const kinds = [predictionKind(pred), ...resultSources(res).map(resultKind)];
+  const limitations = kinds.map((kind) => PROVENANCE[kind].limit).filter(Boolean);
+  // This backend warning describes an equation panel that live results no longer show.
+  const warnings = [...pred.warnings, ...res.warnings].filter(
+    (warning) => !warning.includes("the GUI's beam equations describe the v0 L-bracket;"),
+  );
+  if (isTemplateFamily(res.spec.bracket_family)) warnings.unshift(TEMPLATE_LIMIT);
+  const recommended = pred.shortlist.find((candidate) => candidate.design_id === res.recommended?.design_id);
+  if (recommended?.in_training_range === false) warnings.push("The recommended design is outside the training range. Its prediction was extrapolated.");
+  return [...new Set([...warnings, ...limitations])];
+}
+const predictionSummary = (pred) => `${provenanceText(predictionKind(pred), pred.model_name)}. Training runs: ${pred.trained_on_runs}.`;
+function resultExplanation(res) {
+  // The legacy pipeline inserts verification wording for every engine.
+  const source = res.recommended?.source;
+  if (source && PROVENANCE[resultKind(source)].style !== "verified") {
+    const suffix = `Verified with ${source}.`;
+    if (res.explanation.endsWith(suffix)) {
+      return res.explanation.slice(0, -suffix.length) + `${provenanceText(resultKind(source), source)}.`;
+    }
+  }
+  if (!source && (!res.finalists.length || res.finalists.some((f) => PROVENANCE[resultKind(f.source)].style !== "verified"))) {
+    return res.explanation.replace(/^(None of the \d+) verified finalists met every constraint\./, "$1 evaluated finalists met every constraint.");
+  }
+  return res.explanation;
+}
 function buildMessages(names) {
   const { spec, pred, res } = S;
   const sp = res.spec; // the goal is the spec the result was computed for
   const cons = sp.constraints.map((c) => `${GOAL_WORD[c.metric]} ${c.op} ${c.value}${GOAL_UNIT[c.metric]}`).join(" and ");
   const dir = sp.objective.direction.charAt(0).toUpperCase() + sp.objective.direction.slice(1);
   const goal = `${dir} ${GOAL_WORD[sp.objective.metric]} of the ${sp.bracket_family} bracket in ${sp.material_key}. Keep ${cons}, under a ${sp.load.force_n} N load at ${sp.load.angle_deg} deg.`;
-  // Chips come from what the data says about itself: model name, sources and warnings.
-  const predChip = isFake(pred.model_name) || pred.warnings.some(isFake) ? "fake" : "predicted";
-  const sources = [...new Set([...res.finalists.map((f) => f.source), res.baseline.source])];
-  const verChip = sources.some(isFake) ? "fake" : "verified";
-  const source = res.finalists.length ? res.finalists[0].source : res.baseline.source;
+  const predChip = predictionKind(pred);
+  const checks = [...new Set(res.finalists.map((f) => f.source))];
+  const selected = res.recommended || res.baseline;
+  const selectedKind = resultKind(selected.source);
   const missing = res.finalists.filter((f) => !pred.shortlist.some((c) => c.design_id === f.design_id)).length;
   const out = pred.shortlist.filter((c) => !c.in_training_range).length;
-  const recCand = res.recommended && pred.shortlist.find((c) => c.design_id === res.recommended.design_id);
 
   const msgs = [{ who: "user", text: goal }];
   if (JSON.stringify(spec) !== JSON.stringify(sp)) msgs[0].warns = [`${names[0]} differs from the spec inside ${names[2]}; the tree shows the first, the goal the second.`];
   msgs.push({ who: "agent", chip: "spec", text: sp.assumptions.length ? "Assumptions:" : "No assumptions recorded in the spec.", list: sp.assumptions });
   msgs.push({
     who: "agent", chip: predChip, action: "shortlist",
-    text: `Shortlisting with ${pred.model_name}, trained on ${pred.trained_on_runs} runs`,
-    warns: pred.warnings.filter((w) => !res.warnings.includes(w)).concat(out ? [`${out} of ${pred.shortlist.length} shortlisted rows have in_training_range false.`] : []),
+    text: predictionSummary(pred),
+    warns: out ? [`${out} of ${pred.shortlist.length} shortlisted rows have in_training_range false.`] : [],
   });
   msgs.push({
-    who: "agent", chip: verChip, action: "verify",
-    text: `Verifying ${sp.n_verify} finalists with ${source}`,
-    note: missing ? `${missing} of ${res.finalists.length} finalists are not in the ${names[1]} shortlist, so those rows show solver values only.` : null,
+    who: "agent", chip: checks.length === 1 ? resultKind(checks[0]) : "spec", action: "evaluate",
+    text: checks.length ? `${res.finalists.length} finalists evaluated. ${checks.map((source) => provenanceText(resultKind(source), source)).join(", ")}.` : "No finalists evaluated.",
+    note: missing ? `${missing} of ${res.finalists.length} finalists are not in the ${names[1]} shortlist, so those rows show finalist values only.` : null,
   });
-  const endWarns = res.warnings.slice();
-  if (!res.recommended) endWarns.push("No design met every constraint, so there is no recommendation.");
-  if (recCand && !recCand.in_training_range) endWarns.push("The recommended design is outside the training range; its prediction was extrapolated.");
-  msgs.push({ who: "agent", chip: verChip, text: res.explanation, warns: endWarns });
+  const endWarns = provenanceWarnings(pred, res);
+  if (!res.recommended) endWarns.push("No evaluated finalist met every constraint.");
+  msgs.push({ who: "agent", chip: selectedKind, text: resultExplanation(res), warns: endWarns });
   msgs.push({
-    who: "agent", chip: verChip, text: res.recommended ? "Enter in Discovery:" : "Enter in Discovery (baseline fallback):", values: res.discovery_values,
+    who: "agent", chip: selectedKind, text: res.recommended ? "Enter in Discovery:" : "Enter in Discovery (baseline fallback):", values: res.discovery_values,
     warns: res.recommended ? [] : ["These are the baseline values, not a recommendation."],
   });
-  if (isTemplateFamily(sp.bracket_family)) {
-    msgs[3].text = `Evaluated ${res.finalists.length} finalists with ${source}.`;
-    msgs[3].note = null;
-    msgs[4].text = templateExplanation(res);
-    msgs[4].warns = [...templateWarnings(res), ...endWarns.filter((warning) => !res.warnings.includes(warning))];
-  }
   return msgs;
 }
 
 // ---- Rendering
 function renderAll() { renderTree(); renderTable(); renderParams(); renderCases(); renderChat(); renderScene(); renderReadout(); renderGraphs(); renderRecs(); }
 const rowById = (id) => id === "baseline" ? S.baseRow : S.rows.find((r) => r.id === id);
-function templateExplanation(res) {
-  return res.explanation.replace(/Verified with ([^.]+)\.$/, "Evaluation source: $1.")
-    .replace(/^(None of the \d+) verified finalists/, "$1 evaluated finalists");
-}
-function templateWarnings(res) {
-  const warnings = [...S.pred.warnings, ...res.warnings].filter((warning) => !warning.includes("the GUI's beam equations describe the v0 L-bracket;"));
-  return [...new Set([TEMPLATE_LIMIT, ...warnings])];
-}
 const showingTemplate = () => isTemplateFamily(S.res?.spec.bracket_family);
-const chip = (kind) => kind === "verified" && showingTemplate() ? '<span class="chip predicted">Fitted check</span>' : `<span class="chip ${kind}">${kind.charAt(0).toUpperCase() + kind.slice(1)}</span>`;
-const isVerified = (r) => r.show === "verified" && !!r.ver;
+const chip = (kind, source = "") => {
+  const { label = kind.charAt(0).toUpperCase() + kind.slice(1), style = kind } = PROVENANCE[kind] || {};
+  return `<span class="chip ${style}"${source ? ` title="${esc(source)}"` : ""}>${label}</span>`;
+};
+const hasResult = (r) => r.show === "evaluated" && !!r.ver;
 
 function renderTree() {
   const s = S.spec, el = $("tree");
@@ -861,60 +897,56 @@ function renderTree() {
     </ul>`;
 }
 
-// One monitor cell: solver value once verified, otherwise the estimate with its p05 to p95 band.
+// One monitor cell: reported finalist value when available, otherwise the estimate with its p05 to p95 band.
 function monitorCell(r, metric) {
   const fmt = (v) => metricText(metric, v);
   if (r.show === "none") return '<td class="m"></td>';
-  if (isVerified(r)) return `<td class="m" title="${esc(r.verPath)}.${metric} = ${r.ver[metric]}">${fmt(r.ver[metric])}</td>`;
+  if (hasResult(r)) return `<td class="m" title="${esc(r.verPath)}.${metric} = ${r.ver[metric]}">${fmt(r.ver[metric])}</td>`;
   const e = r.cand[metric];
   if (metric === "mass_kg") return `<td class="m" title="${esc(r.candPath)}.mass_kg = ${e}">${fmt(e)}</td>`;
   const k = metric === "max_stress_mpa" ? 1e6 : metric === "max_disp_mm" ? 1e-3 : 1; // unit factor for the band
   return `<td class="m" title="${esc(r.candPath)}.${metric} = ${e.value} (p05 ${e.p05}, p95 ${e.p95})">${fmt(e.value)}<small>${sig(e.p05 * k)} to ${sig(e.p95 * k)}</small></td>`;
 }
 function rowHtml(r) {
-  const verified = isVerified(r), blank = r.show === "none";
+  const evaluated = hasResult(r), blank = r.show === "none";
   const design = (r.ver || r.cand).design;
-  // Verified rows use the solver's feasible flag, predicted rows use feasible_p95.
-  const feas = blank ? null : verified ? r.ver.feasible : r.cand.feasible_p95;
-  const feasTitle = blank ? "" : verified ? `${r.verPath}.feasible` + (r.ver.violated.length ? "; violated: " + r.ver.violated.join(", ") : "") : `${r.candPath}.feasible_p95`;
+  // Evaluated rows use the reported feasible flag, predicted rows use feasible_p95.
+  const feas = blank ? null : evaluated ? r.ver.feasible : r.cand.feasible_p95;
+  const feasTitle = blank ? "" : evaluated ? `${r.verPath}.feasible` + (r.ver.violated.length ? "; violated: " + r.ver.violated.join(", ") : "") : `${r.candPath}.feasible_p95`;
   const inr = r.cand ? r.cand.in_training_range : null;
-  const rec = r.isRec && verified;
-  const cls = ["row", blank ? "blank" : verified ? "ver" : "pred", S.sel === r.id ? "sel" : "", rec ? "rec" : "", feas === false ? "fail" : "", inr === false && !blank ? "oor" : "", r.isBase ? "base" : ""].join(" ");
-  const status = blank ? "none" : verified ? "solved" : "pending";
+  const rec = r.isRec && evaluated;
+  const cls = ["row", blank ? "blank" : evaluated ? "ver" : "pred", S.sel === r.id ? "sel" : "", rec ? "rec" : "", feas === false ? "fail" : "", inr === false && !blank ? "oor" : "", r.isBase ? "base" : ""].join(" ");
+  const status = blank ? "none" : evaluated ? "complete" : "pending";
   return `<tr class="${cls}" data-id="${esc(r.id)}" tabindex="${S.sel === r.id ? 0 : -1}" aria-selected="${S.sel === r.id}">
-    <td class="num">${verified ? '<span class="cb on"></span>' : r.n}</td>
-    <td><span class="st ${status}" title="${blank ? "not started" : verified ? (showingTemplate() ? "Evaluation source: " : "solved by ") + esc(r.ver.source) : "pending: predicted, not yet solved"}"></span></td>
+    <td class="num">${evaluated ? '<span class="cb on"></span>' : r.n}</td>
+    <td><span class="st ${status}" title="${blank ? "not started" : esc(provenanceText(...rowProvenance(r)))}"></span></td>
     <td><span class="star${rec ? " on" : ""}" title="${rec ? "recommended" : ""}">${rec ? "★" : "☆"}</span></td>
     <td class="name" title="${esc(r.id)}">${esc(r.name)}</td>
     ${PARAMS.map((p) => `<td class="p" title="${p} = ${design[p]} mm">${U.mm(design[p])}</td>`).join("")}
     ${METRICS.map((m) => monitorCell(r, m)).join("")}
     <td class="m ${feas === null ? "" : feas ? "yes" : "no"}" title="${esc(feasTitle)}">${feas === null ? "" : feas ? "Yes" : "No"}</td>
     <td class="m inr" title="${r.cand ? esc(r.candPath) + ".in_training_range" : "not in the prediction shortlist"}">${blank ? "" : inr === null ? "n/a" : inr ? "Yes" : "No"}</td>
-    <td class="m">${blank ? "" : chip(verified ? "verified" : "predicted")}</td>
+    <td class="m">${blank ? "" : chip(...rowProvenance(r))}</td>
   </tr>`;
 }
 function renderTable() {
   const pane = $("pane-variations"), hadFocus = pane.contains(document.activeElement);
   if (!S.res) { pane.innerHTML = '<div class="empty">No variations loaded.</div>'; $("bfoot").innerHTML = ""; renderStage(); renderGraphs(); return; }
   const n = (f) => S.rows.filter(f).length;
-  const solved = n(isVerified), pending = n((r) => r.show !== "none" && !isVerified(r)), idle = n((r) => r.show === "none");
+  const evaluated = n(hasResult), pending = n((r) => r.show !== "none" && !hasResult(r)), idle = n((r) => r.show === "none");
   const th = (cls, label, inner) => `<th scope="col" class="${cls}" title="${label}">${inner || label}</th>`;
-  const head = th("", "Selected", `<span class="cb${solved ? " on" : ""}"></span>`) + th("", "Status", '<span class="st info"></span>') + th("", "Favourite", '<span class="star">★</span>') + th("", "Name")
+  const head = th("", "Selected", `<span class="cb${evaluated ? " on" : ""}"></span>`) + th("", "Status", '<span class="st info"></span>') + th("", "Favourite", '<span class="star">★</span>') + th("", "Name")
     + PARAMS.map((p) => th("pc", PARAM_LABEL[p])).join("") + METRICS.map((m) => th("mc", METRIC_LABEL[m])).join("") + th("", "Feasible") + th("", "In range") + th("", "State");
   const top = pane.scrollTop;
   pane.innerHTML = `<table class="grid" aria-label="Variations"><thead><tr>${head}</tr></thead><tbody>${rowHtml(S.baseRow)}${S.rows.map(rowHtml).join("")}</tbody></table>`;
   pane.scrollTop = top;
   if (hadFocus) { const tr = pane.querySelector("tr.sel"); if (tr) tr.focus({ preventScroll: true }); }
-  // Footer counts: verified rows are solved, predicted rows are pending, the rest are not started.
-  const okCount = n((r) => isVerified(r) && r.ver.feasible);
-  const src = [...new Set(S.res.finalists.map((f) => f.source))].join(", ") || S.res.baseline.source;
+  const okCount = n((r) => hasResult(r) && r.ver.feasible);
+  const src = [...new Set(S.rows.filter(hasResult).map((r) => r.ver.source))];
   const cnt = (cls, v, t) => `<span class="cnt" title="${t}"><span class="st ${cls}"></span>${v}</span>`;
-  $("bfoot").innerHTML = cnt("solved", solved, "solved: verified rows") + cnt("pending", pending, "pending: predicted rows") + cnt("stopped", 0, "stopped") + cnt("solving", 0, "solving") + cnt("failed", 0, "failed solves") + cnt("none", idle, "not started")
-    + `${ic("list", 17)}<span class="reset">${ic("reset", 15)}Reset</span><span class="feas">${okCount} of ${solved} solved rows feasible</span>`
-    + `<span class="right">${solved ? `<span>Solved locally</span><span class="chip ${isFake(src) ? "fake" : "verified"}" title="source field of the finalists">${esc(src)}</span>` : ""}<span class="st info"></span></span>`;
-  if (showingTemplate()) {
-    $("bfoot").innerHTML = `<span class="feas">${okCount} of ${solved} evaluated rows feasible</span><span class="right">${esc(src)}</span>`;
-  }
+  $("bfoot").innerHTML = cnt("complete", evaluated, "evaluated finalists") + cnt("pending", pending, "pending: predicted rows") + cnt("stopped", 0, "stopped") + cnt("solving", 0, "evaluating") + cnt("failed", 0, "failed evaluations") + cnt("none", idle, "not started")
+    + `${ic("list", 17)}<span class="reset">${ic("reset", 15)}Reset</span><span class="feas">${okCount} of ${evaluated} evaluated rows feasible</span>`
+    + `<span class="right">${src.map((source) => chip(resultKind(source), source)).join("")}<span class="st info"></span></span>`;
   renderStage();
   renderGraphs(); // the charts plot the same rows
 }
@@ -950,19 +982,19 @@ function renderChat() {
 function renderReadout() {
   const el = $("readout"), r = S.res ? rowById(S.sel) || S.baseRow : null;
   if (!r) { el.innerHTML = ""; return; }
-  const verified = isVerified(r), blank = r.show === "none";
-  const val = (m) => blank ? "not started" : verified ? metricText(m, r.ver[m]) : metricText(m, m === "mass_kg" ? r.cand.mass_kg : r.cand[m].value);
+  const evaluated = hasResult(r), blank = r.show === "none";
+  const val = (m) => blank ? "not started" : evaluated ? metricText(m, r.ver[m]) : metricText(m, m === "mass_kg" ? r.cand.mass_kg : r.cand[m].value);
   el.innerHTML = `<div class="ricons">${ic("scene", 22)}${ic("charts", 22)}${ic("monitors", 22)}</div>
     <div class="rname"><b>${esc(r.name)}</b> ${esc(r.id)} ${ic("kebab", 12).replace("<svg", '<svg style="display:inline;vertical-align:-1px"')}</div>
-    <div class="rchips">${blank ? "" : chip(verified ? "verified" : "predicted")}${r.isRec && verified ? chip("recommended") : ""}</div>
+    <div class="rchips">${blank ? "" : chip(...rowProvenance(r))}${r.isRec && evaluated ? chip("recommended") : ""}</div>
     <table>${METRICS.map((m, i) => `<tr><td>${METRIC_LABEL[m]}</td><td${i === 1 ? ' class="und"' : ""}>${val(m)}</td></tr>`).join("")}</table>`;
 }
 // Stage control at the bottom centre; the counts are warnings and variation rows.
 function renderStage() {
-  const solved = S.rows.some(isVerified), col = solved ? "#27b535" : "#8a8a8a";
+  const evaluated = S.rows.some(hasResult), col = evaluated ? "#27b535" : "#8a8a8a";
   const hex = (cx, cy, r) => [[-r, 0], [-r / 2, -r * 0.87], [r / 2, -r * 0.87], [r, 0], [r / 2, r * 0.87], [-r / 2, r * 0.87]].map(([x, y]) => `${cx + x},${cy + y}`).join(" ");
   const power = document.getElementById("power");
-  if (power) power.setAttribute("fill", solved ? "#1fa82c" : "#1d5c9e");
+  if (power) power.setAttribute("fill", evaluated ? "#1fa82c" : "#1d5c9e");
   $("stage").innerHTML = `<div class="scaret"></div><div class="sname">Simulation 1</div>
     <svg viewBox="0 0 170 52" width="170" height="52">
       <polygon points="${hex(47, 14, 14)}" fill="#1c1c1c"/><polygon points="${hex(47, 40, 14)}" fill="#1c1c1c"/><polygon points="${hex(123, 14, 14)}" fill="#1c1c1c" data-tab="variations"/>
@@ -996,21 +1028,21 @@ function niceTicks(lo, hi, n) {
   for (let v = Math.ceil(lo / step - 1e-9) * step; v <= hi + step * 1e-9; v += step) out.push(Number(v.toPrecision(10)));
   return out;
 }
-// Value of one monitor for one row in display units: solver number, or estimate with its band.
+// Value of one monitor for one row in display units: reported value, or estimate with its band.
 function rowVal(r, metric) {
   const k = UNIT_K[metric];
-  if (isVerified(r)) return { v: r.ver[metric] * k };
+  if (hasResult(r)) return { v: r.ver[metric] * k };
   const e = r.cand[metric];
   return metric === "mass_kg" ? { v: e * k } : { v: e.value * k, lo: e.p05 * k, hi: e.p95 * k };
 }
-const rowFeasible = (r) => isVerified(r) ? r.ver.feasible : r.cand.feasible_p95;
-const rowKind = (r) => r.isBase ? "base" : r.isRec && isVerified(r) ? "rec" : rowFeasible(r) ? "ok" : "fail";
+const rowFeasible = (r) => hasResult(r) ? r.ver.feasible : r.cand.feasible_p95;
+const rowKind = (r) => r.isBase ? "base" : r.isRec && hasResult(r) ? "rec" : rowFeasible(r) ? "ok" : "fail";
 function star(cx, cy, R, r) {
   let s = "";
   for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? r : R; s += `${(cx + q * Math.cos(a)).toFixed(1)},${(cy + q * Math.sin(a)).toFixed(1)} `; }
   return s.trim();
 }
-// Marker per state: star, circle, cross, diamond. Filled or heavy means verified, hollow or thin means predicted.
+// Marker per state: star, circle, cross, diamond. Filled or heavy means evaluated, hollow or thin means predicted.
 function mark(kind, x, y, solid) {
   const c = VIZ[kind], ring = `stroke="${VIZ.surface}" stroke-width="3.5" paint-order="stroke"`;
   if (kind === "fail") {
@@ -1028,7 +1060,7 @@ const tipAttr = (t) => `data-tip="${esc(JSON.stringify(t))}"`;
 function scatterChart(metric, rows, idx, bind) {
   const sp = S.res.spec, obj = sp.objective.metric, W = 340, H = 238, m = { l: 50, r: 14, t: 22, b: 40 };
   const cons = sp.constraints.filter((c) => c.metric === metric);
-  const pts = rows.map((r) => { const y = rowVal(r, metric); return { r, kind: rowKind(r), solid: isVerified(r), x: rowVal(r, obj).v, y: y.v, lo: y.lo, hi: y.hi }; });
+  const pts = rows.map((r) => { const y = rowVal(r, metric); return { r, kind: rowKind(r), solid: hasResult(r), x: rowVal(r, obj).v, y: y.v, lo: y.lo, hi: y.hi }; });
   const span = (vals) => { const lo = Math.min(...vals), hi = Math.max(...vals), pad = (hi - lo || Math.abs(hi) || 1) * 0.09; return [lo >= 0 ? Math.max(0, lo - pad) : lo - pad, hi + pad]; };
   const [x0, x1] = span(pts.map((p) => p.x));
   // The y range always includes the requirement, so the gap to it is visible.
@@ -1109,7 +1141,7 @@ function sensChart() {
 // Baseline against the chosen design inside each search range, one row per dimension on its own scale.
 function rangeChart() {
   const res = S.res, refV = res.recommended || res.finalists[0] || null, refRow = refV ? S.rows.find((r) => r.id === refV.design_id) : null;
-  const ref = refRow && isVerified(refRow) ? refRow : null, kind = ref ? rowKind(ref) : "ok";
+  const ref = refRow && hasResult(refRow) ? refRow : null, kind = ref ? rowKind(ref) : "ok";
   const W = 340, rowH = 36, top = 4, pars = res.spec.parameters, H = top + pars.length * rowH, x0 = 118, x1 = W - 16;
   let g = "";
   pars.forEach((p, i) => {
@@ -1126,7 +1158,7 @@ function rangeChart() {
   });
   const svg = `<svg viewBox="0 0 ${W} ${H}" font-size="10" fill="${VIZ.muted}" role="img" aria-label="Baseline and chosen design within each search range">${g}</svg>`;
   const what = ref ? (res.recommended ? `${ref.name}, recommended` : `${ref.name}, top finalist`) : "";
-  return figure("Where the design sits in each search range", ref ? `Baseline to ${what}; a marker at either end is pressing on that bound` : "Baseline only until a design is verified", svg);
+  return figure("Where the design sits in each search range", ref ? `Baseline to ${what}; a marker at either end is pressing on that bound` : "Baseline only until a finalist is evaluated", svg);
 }
 function problemText() {
   const sp = S.res.spec, dir = sp.objective.direction.charAt(0).toUpperCase() + sp.objective.direction.slice(1);
@@ -1145,9 +1177,9 @@ function renderGraphs() {
   CHARTS.length = 0;
   const key = (kind, solid, label) => `<span class="key"><svg viewBox="0 0 20 20" width="17" height="17">${mark(kind, 10, 10, solid)}</svg>${label}</span>`;
   el.innerHTML = `<p class="goal">${esc(problemText())}</p>
-    <div class="legend">${key("rec", true, "Recommended")}${key("ok", true, "Meets every requirement")}${key("fail", true, "Fails a requirement")}${key("base", true, "Baseline")}${key("ok", false, "Hollow or thin: predicted, with its p05 to p95 band")}<span class="key"><i class="wash"></i>Shaded: outside the requirement</span></div>
+    <div class="legend">${key("rec", true, "Recommended")}${key("ok", true, "Meets every requirement")}${key("fail", true, "Fails a requirement")}${key("base", true, "Baseline")}${key("ok", false, "Hollow or thin: shortlist estimates with p05 to p95 bands")}<span class="key"><i class="wash"></i>Shaded: outside the requirement</span></div>
     <div class="charts">${metrics.map((m, i) => scatterChart(m, rows, i, bind)).join("")}${sensChart()}${rangeChart()}</div>
-    <p class="vnote">Each point is a row of the Variations table, which lists the same values. Hover for a point's numbers, click to select it. Axis ticks are scale marks only.</p>`;
+    <p class="vnote">Each point is a row of the Variations table. Hover for the source and values, or click to select it. Axis ticks are scale marks only.</p>`;
 }
 // Tooltip built with textContent, since names and ids come from the data files.
 function showTip(e, t) {
@@ -1165,8 +1197,8 @@ function showTip(e, t) {
 }
 function hideTip() { $("tip").hidden = true; for (const h of document.querySelectorAll("#graphs .hl")) h.setAttribute("visibility", "hidden"); }
 function rowTip(r) {
-  const v = isVerified(r);
-  return { head: r.name, sub: `${r.id}, ${v ? (showingTemplate() ? "evaluation source: " : "verified by ") + r.ver.source : "predicted"}`, rows: METRICS.map((m) => [METRIC_LABEL[m], v ? metricText(m, r.ver[m]) : metricText(m, m === "mass_kg" ? r.cand.mass_kg : r.cand[m].value)]).concat([["Meets every requirement", rowFeasible(r) ? "Yes" : "No"]]) };
+  const v = hasResult(r);
+  return { head: r.name, sub: `${r.id}, ${provenanceText(...rowProvenance(r))}`, rows: METRICS.map((m) => [METRIC_LABEL[m], v ? metricText(m, r.ver[m]) : metricText(m, m === "mass_kg" ? r.cand.mass_kg : r.cand[m].value)]).concat([["Meets every requirement", rowFeasible(r) ? "Yes" : "No"]]) };
 }
 // Nearest point within reach, so the pointer never has to land on an 8 px dot.
 function nearest(e) {
@@ -1273,7 +1305,7 @@ function renderRecs() {
 
   const mech = mechanics(res.spec, res.binding_constraint?.split(" ")[0]);
   S.tex = mech.eqs.concat(mech.derived).map((e) => e.tex);
-  const eqHtml = (e) => `<div class="eq${e.bind ? " bind" : ""}"><div class="cap">${esc(e.cap)}</div>${e.ml.map((m) => `<math display="block">${m}</math>`).join("")}<code>${esc(e.tex)}</code></div>`;
+  const eqHtml = (e) => `<div class="eq${e.bind ? " bind" : ""}"><div class="cap">${esc(e.cap)}${e.bind ? ' <span class="chip bindchip">binding</span>' : ""}</div>${e.ml.map((m) => `<math display="block">${m}</math>`).join("")}<code>${esc(e.tex)}</code></div>`;
   el.insertAdjacentHTML("beforeend", `<details class="rec-study"><summary>Fixture beam equations</summary>
     <h3>First-order beam model <span class="acts"><button type="button" class="lnk" data-act="tex">LaTeX source</button><button type="button" class="lnk" data-act="copytex">Copy LaTeX</button></span></h3>
     ${mech.eqs.map(eqHtml).join("")}
@@ -1351,7 +1383,7 @@ function renderScene() {
   const al = Math.hypot(tip[0] - tail[0], tip[1] - tail[1]) || 1, vx = (tip[0] - tail[0]) / al, vy = (tip[1] - tail[1]) / al;
   let hatch = "";
   for (let y = 0; y <= H; y += 6) hatch += seg(pt(0, y, 0), pt(-5, y - 4, 0));
-  const hot = r.isRec && isVerified(r);
+  const hot = r.isRec && hasResult(r);
   const f = pt(w + rad * 0.29, w + rad * 0.29, 0); // midpoint of the fillet arc
   box.innerHTML = `<svg viewBox="-72 -52 184 100" preserveAspectRatio="xMidYMid meet" role="img" aria-label="L-bracket for ${esc(r.name)}">
     <defs>
@@ -1472,7 +1504,7 @@ async function runDemo() {
       S.shown = i + 1; renderChat();
       const m = S.msgs[i];
       if (m.action === "shortlist") for (const r of S.rows) if (r.cand) { r.show = "predicted"; renderTable(); await wait(70); }
-      if (m.action === "verify") for (const r of S.rows) if (r.ver) { r.show = "verified"; renderTable(); await wait(220); }
+      if (m.action === "evaluate") for (const r of S.rows) if (r.ver) { r.show = "evaluated"; renderTable(); await wait(220); }
     }
     const rec = S.rows.find((r) => r.isRec);
     if (rec) select(rec.id); else { renderScene(); renderReadout(); }
@@ -1530,7 +1562,7 @@ function pydLiveOption(selectIt) {
   if (selectIt) sel.value = PYD_LIVE;
 }
 function pydShowLast() {
-  if (PYD.last) { S.run++; accept(PYD.last.spec, PYD.last.pred, PYD.last.res, PYD_NAMES); return; }
+  if (PYD.last) { S.run++; accept(PYD.last.spec, PYD.last.pred, PYD.last.res, PYD_NAMES, true); return; }
   // Nothing live yet: keep what is on screen, or the normal fixture, and point at the tab.
   if (!S.res) { $("fixture").value = "normal"; loadFixture("normal"); }
   if (PYD.on) { PYD.error = "No live run yet. Open a part, confirm the setup and optimize."; renderPyd(); showATab("pyd"); }
@@ -1542,7 +1574,7 @@ async function pydOptimize() {
   const data = await pydRun("Optimizing", () => pydTool("optimize_design", { objective: "mass_kg", direction: "minimize", constraints }));
   if (!data || data.ok !== true) return;
   S.run++;
-  accept(data.study_spec, data.prediction, data.result, PYD_NAMES);
+  accept(data.study_spec, data.prediction, data.result, PYD_NAMES, true);
   if (S.res !== data.result) return; // accept() showed why it did not pass the contract check
   PYD.last = { spec: data.study_spec, pred: data.prediction, res: data.result }; PYD.saved = "";
   pydLiveOption(true);

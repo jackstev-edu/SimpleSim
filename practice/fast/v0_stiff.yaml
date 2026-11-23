@@ -1,0 +1,52 @@
+id: v0_stiff
+family: l_bracket_v0
+request: I want this steel L-bracket to bend as little as possible under 500 N pushing down at the tip, but it has
+  to weigh less than 0.25 kg. Safety factor 1.5.
+hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
+  the horizontal flange. Load: 500 N straight down. Material: structural steel. Safety factor: 1.5. Goal: the smallest
+  deflection, with a mass of at most 0.25 kg; all dimensions may change. Starting dimensions: the ones already in
+  the part file; if asked, accept them.'
+key:
+  study:
+    force_n: 500.0
+    angle_deg: -90.0
+    material_key: structural_steel
+    safety_factor: 1.5
+    objective:
+      metric: max_disp_mm
+      direction: minimize
+    limits:
+    - metric: mass_kg
+      op: <=
+      value: 0.25
+    vary:
+    - all
+  must_ask:
+  - support
+  - load_face
+  states_setup: false
+  expect_handoff: false
+  model_optimum:
+    design:
+      thickness_mm: 7.828260432224109
+      flange_length_mm: 75.09988070620545
+      arm_width_mm: 32.161278024487174
+      hole_diameter_mm: 9.160222854765692
+      fillet_radius_mm: 5.185533049877372
+    objective_value: 0.2101417954870701
+    safety_factor_worst: 2.082269389186982
+    method: power_law predict, n=400000, seed=0
+    median:
+      design:
+        thickness_mm: 7.828260432224109
+        flange_length_mm: 75.09988070620545
+        arm_width_mm: 32.161278024487174
+        hole_diameter_mm: 9.160222854765692
+        fillet_radius_mm: 5.185533049877372
+      objective_value: 0.21014179548707004
+  sim_optimum:
+    design_id: null
+    design: null
+    objective_value: null
+    max_stress_mpa: null
+    reason: no table row meets the safety factor and limits

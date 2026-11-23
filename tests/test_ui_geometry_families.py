@@ -126,7 +126,7 @@ def test_family_workflow(open_gui, tmp_path, family):
     if is_template:
         assert result.baseline.source == f"power_law_{family}"
         expect(page.locator("#scenebox")).to_contain_text("Geometry preview unavailable")
-        expect(page.locator("#winVar tr.base .chip")).to_have_text("Fitted check")
+        expect(page.locator("#winVar tr.base .chip")).to_have_text("Fitted surrogate check")
         expect(page.locator("#log")).not_to_contain_text("Verified with")
     else:
         expect(page.locator("#scenebox svg")).to_be_visible()
@@ -218,7 +218,7 @@ def test_recommendation_ranking_and_evidence(open_gui):
         "top": ["best", "backend-first"], "more": ["new-1", "new-2"], "reversed": "backend-first", "empty": 0,
     }
     cards = page.locator(".rec-card")
-    expect(cards.nth(0).locator(".rec-source")).to_have_text("Fitted check")
+    expect(cards.nth(0).locator(".rec-source")).to_have_text("Fitted surrogate check")
     expect(cards.nth(1).locator(".rec-source")).to_have_text("CalculiX FEA")
     expect(page.locator(".rec-compact .rec-source").first).to_have_text("Trained prediction")
     expect(page.locator(".rec-compact").first).to_contain_text("Predicted feasible")

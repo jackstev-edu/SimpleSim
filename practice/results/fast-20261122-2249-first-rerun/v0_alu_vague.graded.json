@@ -1,0 +1,65 @@
+{
+  "id": "v0_alu_vague",
+  "checks": {
+    "handoff": {
+      "result": "pass",
+      "detail": "stayed on the fast path"
+    },
+    "asked": {
+      "result": "fail",
+      "detail": "not asked before use: material"
+    },
+    "confirmed": {
+      "result": "pass",
+      "detail": "student agreed before confirm_setup"
+    },
+    "force": {
+      "result": "pass",
+      "detail": "got 400.0, want 400.0"
+    },
+    "direction": {
+      "result": "pass",
+      "detail": "got -90.0, want -90.0"
+    },
+    "material": {
+      "result": "pass",
+      "detail": "got aluminum_6061, want aluminum_6061"
+    },
+    "safety_factor": {
+      "result": "pass",
+      "detail": "got 1.5, want 1.5"
+    },
+    "objective": {
+      "result": "pass",
+      "detail": "got {'metric': 'mass_kg', 'direction': 'minimize'}, want {'metric': 'mass_kg', 'direction': 'minimize'}"
+    },
+    "limits": {
+      "result": "pass",
+      "detail": "got [], want []"
+    },
+    "vary": {
+      "result": "pass",
+      "detail": "got ['arm_width_mm', 'fillet_radius_mm', 'flange_length_mm', 'hole_diameter_mm', 'thickness_mm'], want ['arm_width_mm', 'fillet_radius_mm', 'flange_length_mm', 'hole_diameter_mm', 'thickness_mm']"
+    },
+    "no_silent_default": {
+      "result": "pass",
+      "detail": "got 1.5, want 1.5"
+    },
+    "feasible": {
+      "result": "pass",
+      "detail": "SF at the pessimistic bound 1.692"
+    },
+    "pick_gap": {
+      "result": "fail",
+      "detail": "mass_kg 0.068555 vs model optimum 0.061289 (+11.9%)"
+    },
+    "sim_gap": {
+      "result": "n/a",
+      "detail": "the CalculiX tables are 500 N, -90 deg, steel only"
+    }
+  },
+  "pick": {
+    "gap": 0.11856356308778834,
+    "sim_gap": null
+  }
+}

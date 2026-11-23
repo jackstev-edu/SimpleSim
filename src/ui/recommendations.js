@@ -1,14 +1,6 @@
 // Render the study's existing finalists and shortlist. This view never searches for designs.
 function recommendationSource(option, prediction) {
-  if (option.estimate) {
-    if (prediction.model_name === "fake_formula") return "Formula demo";
-    return prediction.trained_on_runs > 0 ? "Trained prediction" : "Prediction";
-  }
-  if (option.source === "calculix") return "CalculiX FEA";
-  if (option.source === "ansys_mechanical") return "ANSYS Mechanical FEA";
-  if (option.source === "fake_formula" || option.source === "formula_emulator") return "Formula demo";
-  if (/^power_law_(?:v[01]|t\d{2}_[a-z_]+_v1)$/.test(option.source)) return "Fitted check";
-  return "Reported result";
+  return PROVENANCE[option.estimate ? predictionKind(prediction) : resultKind(option.source)].label;
 }
 
 function rankedRecommendations(result, prediction) {
@@ -166,25 +158,10 @@ function isRecommendationFixture(result, prediction) {
 }
 
 function recommendationStudyNotes(result, prediction) {
-  const reference = result.recommended || result.baseline;
-  const label = recommendationSource(reference, prediction);
-  let explanation = result.explanation;
-  if (!label.endsWith("FEA")) {
-    const suffix = `Verified with ${reference.source}.`;
-    if (explanation.endsWith(suffix)) explanation = explanation.slice(0, -suffix.length) + `${label} (${reference.source}).`;
-    explanation = explanation.replace(/^(None of the \d+) verified finalists/, "$1 evaluated finalists");
-  }
-  const warnings = [...new Set([...result.warnings, ...prediction.warnings])].filter(
-    (warning) => !warning.includes("the GUI's beam equations describe the v0 L-bracket;"),
-  );
-  if (isTemplateFamily(result.spec.bracket_family)) warnings.unshift(TEMPLATE_LIMIT);
-  if (label === "Fitted check") warnings.push("Fitted checks use a surrogate. Reusing the shortlist model gives no independent FEA validation.");
-  if (label === "Formula demo") warnings.push("Formula demo values illustrate the workflow.");
-  if (label.endsWith("FEA")) warnings.push("FEA results apply to the modeled geometry, material, supports and load.");
-  if (label === "Reported result") warnings.push("The supplied source does not establish that an FEA solve ran.");
+  const warnings = provenanceWarnings(prediction, result);
   return `<details class="rec-study"><summary>Study explanation and model notes${warnings.length ? ` (${warnings.length} warnings)` : ""}</summary>
-    <p>${esc(explanation)}</p>
-    <p class="mutedp">Shortlist model ${esc(prediction.model_name)} · ${prediction.trained_on_runs} training runs.</p>
+    <p>${esc(resultExplanation(result))}</p>
+    <p class="mutedp">${esc(predictionSummary(prediction))}</p>
     ${warnings.length ? `<ul class="rec-limits">${warnings.map((warning) => `<li>${esc(warning)}</li>`).join("")}</ul>` : ""}
   </details>`;
 }

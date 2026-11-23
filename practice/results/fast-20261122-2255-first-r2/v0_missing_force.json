@@ -1,0 +1,437 @@
+{
+  "id": "v0_missing_force",
+  "events": [
+    {
+      "seq": 0,
+      "type": "path",
+      "path": "fast",
+      "reason": "this is the L-bracket v0, which the team's predictor knows"
+    },
+    {
+      "seq": 1,
+      "type": "tool",
+      "name": "describe_setup",
+      "input": {}
+    },
+    {
+      "seq": 2,
+      "type": "tool_result",
+      "name": "describe_setup",
+      "content": "{\"ok\": true, \"message\": \"Part: v0_missing_force.dsco (discovery file), L-bracket v0. Engine: power_law_v0.\\nFixed: not set\\nLoad: not set\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 12), Fillet radius 4 mm (2 to 8)\\nStill needed: supports; load; material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261122-2255-first-r2\\\\v0_missing_force\\\\v0_missing_force.dsco\", \"file_type\": \"discovery\", \"family\": \"l_bracket_v0\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 12.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}], \"support\": null, \"load\": null, \"material\": null, \"sources\": {\"dimensions\": \"file\"}, \"missing\": [\"supports\", \"load\", \"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 3,
+      "type": "text",
+      "text": "The setup card shows **v0_missing_force.dsco**, an **L-bracket v0**. Its dimensions are Thickness 6 mm, Flange length 80 mm, Arm width 40 mm, Hole diameter 8 mm, and Fillet radius 4 mm. The support, load, and material are not set yet.\n\nWhere is the bracket held or fixed?"
+    },
+    {
+      "seq": 4,
+      "type": "student",
+      "text": "I want the lightest version of this steel L-bracket with a safety factor of 1.5."
+    },
+    {
+      "seq": 5,
+      "type": "tool",
+      "name": "record_study_inputs",
+      "input": {
+        "safety_factor": 1.5,
+        "objective": "mass_kg",
+        "direction": "minimize"
+      }
+    },
+    {
+      "seq": 6,
+      "type": "tool_result",
+      "name": "record_study_inputs",
+      "content": "{\"ok\": true, \"inputs\": {\"safety_factor\": 1.5, \"objective\": \"mass_kg\", \"direction\": \"minimize\", \"limits\": [], \"vary\": null}}",
+      "is_error": false
+    },
+    {
+      "seq": 7,
+      "type": "text",
+      "text": "I\u2019ve recorded **safety factor 1.5** and the objective to **minimize mass**. Where is the bracket held or fixed?"
+    },
+    {
+      "seq": 8,
+      "type": "student",
+      "text": "The back face of the upright leg is bolted flat to a wall."
+    },
+    {
+      "seq": 9,
+      "type": "tool",
+      "name": "describe_setup",
+      "input": {}
+    },
+    {
+      "seq": 10,
+      "type": "tool_result",
+      "name": "describe_setup",
+      "content": "{\"ok\": true, \"message\": \"Part: v0_missing_force.dsco (discovery file), L-bracket v0. Engine: power_law_v0.\\nFixed: not set\\nLoad: not set\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 12), Fillet radius 4 mm (2 to 8)\\nStill needed: supports; load; material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261122-2255-first-r2\\\\v0_missing_force\\\\v0_missing_force.dsco\", \"file_type\": \"discovery\", \"family\": \"l_bracket_v0\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 12.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}], \"support\": null, \"load\": null, \"material\": null, \"sources\": {\"dimensions\": \"file\"}, \"missing\": [\"supports\", \"load\", \"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 11,
+      "type": "tool",
+      "name": "set_support",
+      "input": {
+        "face": "back face at X = 0"
+      }
+    },
+    {
+      "seq": 12,
+      "type": "tool_result",
+      "name": "set_support",
+      "content": "{\"ok\": true, \"message\": \"Part: v0_missing_force.dsco (discovery file), L-bracket v0. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: not set\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 12), Fillet radius 4 mm (2 to 8)\\nStill needed: load; material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261122-2255-first-r2\\\\v0_missing_force\\\\v0_missing_force.dsco\", \"file_type\": \"discovery\", \"family\": \"l_bracket_v0\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 12.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}], \"support\": \"back face at X = 0\", \"load\": null, \"material\": null, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\"}, \"missing\": [\"load\", \"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 13,
+      "type": "text",
+      "text": "I\u2019ve set the support to the back face at X = 0. What load is applied to the bracket, including its magnitude and direction?"
+    },
+    {
+      "seq": 14,
+      "type": "student",
+      "text": "A 350 N load acts straight down on the free end face of the horizontal flange."
+    },
+    {
+      "seq": 15,
+      "type": "tool",
+      "name": "set_load",
+      "input": {
+        "force_n": 350
+      }
+    },
+    {
+      "seq": 16,
+      "type": "tool_result",
+      "name": "set_load",
+      "content": "{\"ok\": true, \"message\": \"Part: v0_missing_force.dsco (discovery file), L-bracket v0. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 350 N along -Y on the free-end face at max X [user]\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 12), Fillet radius 4 mm (2 to 8)\\nStill needed: material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261122-2255-first-r2\\\\v0_missing_force\\\\v0_missing_force.dsco\", \"file_type\": \"discovery\", \"family\": \"l_bracket_v0\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 12.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 350.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": null, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\"}, \"missing\": [\"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 17,
+      "type": "tool",
+      "name": "set_material",
+      "input": {
+        "material": "structural_steel"
+      }
+    },
+    {
+      "seq": 18,
+      "type": "tool_result",
+      "name": "set_material",
+      "content": "{\"ok\": true, \"message\": \"Part: v0_missing_force.dsco (discovery file), L-bracket v0. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 350 N along -Y on the free-end face at max X [user]\\nMaterial: Structural steel, E 200,000 MPa, yield 250 MPa, density 7850 kg/m3 [user]\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 12), Fillet radius 4 mm (2 to 8)\\nStill needed: nothing\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261122-2255-first-r2\\\\v0_missing_force\\\\v0_missing_force.dsco\", \"file_type\": \"discovery\", \"family\": \"l_bracket_v0\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 12.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 350.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": {\"name\": \"Structural steel\", \"youngs_mpa\": 200000.0, \"poisson\": 0.3, \"yield_mpa\": 250.0, \"ultimate_mpa\": null, \"density_kg_m3\": 7849.999999999999}, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\", \"material\": \"user\"}, \"missing\": [], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 19,
+      "type": "text",
+      "text": "I\u2019ve set the material to structural steel, matching your choice of steel. For a lighter design, aluminum 6061 is another fast-search option; the ANSYS search offers more materials.\n\nWhich dimensions may change in the search? The available dimensions are Thickness, Flange length, Arm width, Hole diameter, and Fillet radius."
+    },
+    {
+      "seq": 20,
+      "type": "student",
+      "text": "All dimensions may change."
+    },
+    {
+      "seq": 21,
+      "type": "tool",
+      "name": "record_study_inputs",
+      "input": {
+        "vary": [
+          "Thickness",
+          "Flange length",
+          "Arm width",
+          "Hole diameter",
+          "Fillet radius"
+        ]
+      }
+    },
+    {
+      "seq": 22,
+      "type": "tool_result",
+      "name": "record_study_inputs",
+      "content": "{\"ok\": true, \"inputs\": {\"safety_factor\": 1.5, \"objective\": \"mass_kg\", \"direction\": \"minimize\", \"limits\": [], \"vary\": [\"Thickness\", \"Flange length\", \"Arm width\", \"Hole diameter\", \"Fillet radius\"]}}",
+      "is_error": false
+    },
+    {
+      "seq": 23,
+      "type": "tool",
+      "name": "describe_setup",
+      "input": {}
+    },
+    {
+      "seq": 24,
+      "type": "tool_result",
+      "name": "describe_setup",
+      "content": "{\"ok\": true, \"message\": \"Part: v0_missing_force.dsco (discovery file), L-bracket v0. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 350 N along -Y on the free-end face at max X [user]\\nMaterial: Structural steel, E 200,000 MPa, yield 250 MPa, density 7850 kg/m3 [user]\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 12), Fillet radius 4 mm (2 to 8)\\nStill needed: nothing\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261122-2255-first-r2\\\\v0_missing_force\\\\v0_missing_force.dsco\", \"file_type\": \"discovery\", \"family\": \"l_bracket_v0\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 12.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 350.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": {\"name\": \"Structural steel\", \"youngs_mpa\": 200000.0, \"poisson\": 0.3, \"yield_mpa\": 250.0, \"ultimate_mpa\": null, \"density_kg_m3\": 7849.999999999999}, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\", \"material\": \"user\"}, \"missing\": [], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 25,
+      "type": "text",
+      "text": "Please check the setup:\n\n- **Part:** L-bracket v0\n- **Support:** Back face at X = 0\n- **Load:** 350 N downward on the free-end face\n- **Material:** Structural steel\n- **Current dimensions:** Thickness 6 mm; Flange length 80 mm; Arm width 40 mm; Hole diameter 8 mm; Fillet radius 4 mm\n- **Safety factor:** 1.5\n- **Objective:** Minimize mass\n- **Dimensions allowed to change:** All five listed dimensions\n\nIs this setup correct?"
+    },
+    {
+      "seq": 26,
+      "type": "student",
+      "text": "Yes, that setup is correct."
+    },
+    {
+      "seq": 27,
+      "type": "tool",
+      "name": "confirm_setup",
+      "input": {}
+    },
+    {
+      "seq": 28,
+      "type": "tool_result",
+      "name": "confirm_setup",
+      "content": "{\"ok\": true, \"message\": \"Setup confirmed.\\nPart: v0_missing_force.dsco (discovery file), L-bracket v0. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 350 N along -Y on the free-end face at max X [user]\\nMaterial: Structural steel, E 200,000 MPa, yield 250 MPa, density 7850 kg/m3 [user]\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 12), Fillet radius 4 mm (2 to 8)\\nStill needed: nothing\\nStatus: confirmed by the user\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261122-2255-first-r2\\\\v0_missing_force\\\\v0_missing_force.dsco\", \"file_type\": \"discovery\", \"family\": \"l_bracket_v0\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 12.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 350.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": {\"name\": \"Structural steel\", \"youngs_mpa\": 200000.0, \"poisson\": 0.3, \"yield_mpa\": 250.0, \"ultimate_mpa\": null, \"density_kg_m3\": 7849.999999999999}, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\", \"material\": \"user\"}, \"missing\": [], \"problems\": [], \"confirmed\": true}}",
+      "is_error": false
+    },
+    {
+      "seq": 29,
+      "type": "text",
+      "text": "I\u2019m using the fast L-bracket search: it screens thousands of designs with a predictor, then verifies the best candidates in ANSYS. It supports your structural-steel setup. Say **\u201cuse ANSYS\u201d** to switch."
+    },
+    {
+      "seq": 30,
+      "type": "tool",
+      "name": "optimize_design",
+      "input": {
+        "objective": "mass_kg",
+        "direction": "minimize",
+        "constraints": [
+          {
+            "metric": "safety_factor",
+            "op": ">=",
+            "value": 1.5
+          }
+        ],
+        "vary": [
+          "Thickness",
+          "Flange length",
+          "Arm width",
+          "Hole diameter",
+          "Fillet radius"
+        ],
+        "n_verify": 5
+      }
+    },
+    {
+      "seq": 31,
+      "type": "tool_result",
+      "name": "optimize_design",
+      "content": "Recommended pl-0-01738: mass 0.199 kg (-21% vs baseline), safety factor 1.80, displacement 0.346 mm. Binding constraint: safety_factor >= 1.5. Verified with power_law_v0.\n\nExplanation for the user:\nRecommended design pl-0-01738: it reduces mass by 21% versus the baseline while meeting the safety-factor limit.  \nThe binding constraint is safety factor \u2265 1.5; this is the required minimum, and the recommended design\u2019s safety factor is 1.80.  \nIt trades a little more displacement than the baseline for lower mass.  \nEnter these values in Ansys Discovery: thickness 6.116 mm, flange length 76.953 mm, arm width 32.078 mm, hole diameter 9.279 mm, and fillet radius 4.451 mm.  \nThese values were checked with a fitted model, not a real solver, so verify them with a real analysis.",
+      "is_error": false
+    },
+    {
+      "seq": 32,
+      "type": "text",
+      "text": "The fast search recommends **pl-0-01738**. It predicts a mass of **0.199 kg**\u2014**21% lighter** than the baseline\u2014with a safety factor of **1.80**, above your 1.5 minimum. The safety-factor limit is binding. The design trades a little more displacement than the baseline for lower mass.\n\nRecommended dimensions:\n- Thickness: **6.116 mm**\n- Flange length: **76.953 mm**\n- Arm width: **32.078 mm**\n- Hole diameter: **9.279 mm**\n- Fillet radius: **4.451 mm**\n\nThese values were checked with a fitted model, **not a real solver**, so verify them with a real analysis before relying on them."
+    }
+  ],
+  "result": {
+    "schema_version": "0.2.0",
+    "spec": {
+      "schema_version": "0.2.0",
+      "bracket_family": "l_bracket_v0",
+      "objective": {
+        "metric": "mass_kg",
+        "direction": "minimize"
+      },
+      "constraints": [
+        {
+          "metric": "safety_factor",
+          "op": ">=",
+          "value": 1.5
+        }
+      ],
+      "parameters": [
+        {
+          "name": "thickness_mm",
+          "low_mm": 4.0,
+          "high_mm": 10.0
+        },
+        {
+          "name": "flange_length_mm",
+          "low_mm": 75.0,
+          "high_mm": 120.0
+        },
+        {
+          "name": "arm_width_mm",
+          "low_mm": 32.0,
+          "high_mm": 60.0
+        },
+        {
+          "name": "hole_diameter_mm",
+          "low_mm": 6.0,
+          "high_mm": 12.0
+        },
+        {
+          "name": "fillet_radius_mm",
+          "low_mm": 2.0,
+          "high_mm": 8.0
+        }
+      ],
+      "load": {
+        "force_n": 350.0,
+        "angle_deg": -90.0
+      },
+      "material_key": "structural_steel",
+      "n_candidates": 2000,
+      "n_verify": 5,
+      "assumptions": [
+        "Load 350 N along -Y on the free-end face at max X (user).",
+        "Material Structural steel (user).",
+        "Setup confirmed by the user."
+      ]
+    },
+    "baseline": {
+      "design_id": "baseline",
+      "design": {
+        "thickness_mm": 6.0,
+        "flange_length_mm": 80.0,
+        "arm_width_mm": 40.0,
+        "hole_diameter_mm": 8.0,
+        "fillet_radius_mm": 4.0
+      },
+      "source": "power_law_v0",
+      "mass_kg": 0.251166655403346,
+      "max_stress_mpa": 123.53863409899587,
+      "max_disp_mm": 0.3319583821212477,
+      "safety_factor": 2.0236584435575526,
+      "feasible": true,
+      "violated": []
+    },
+    "recommended": {
+      "design_id": "pl-0-01738",
+      "design": {
+        "thickness_mm": 6.115754857895299,
+        "flange_length_mm": 76.9534294958879,
+        "arm_width_mm": 32.07802924122041,
+        "hole_diameter_mm": 9.27873373986636,
+        "fillet_radius_mm": 4.451404916838734
+      },
+      "source": "power_law_v0",
+      "mass_kg": 0.19931762365305228,
+      "max_stress_mpa": 138.54140603317722,
+      "max_disp_mm": 0.3457330571891177,
+      "safety_factor": 1.804514672964494,
+      "feasible": true,
+      "violated": []
+    },
+    "finalists": [
+      {
+        "design_id": "pl-0-01738",
+        "design": {
+          "thickness_mm": 6.115754857895299,
+          "flange_length_mm": 76.9534294958879,
+          "arm_width_mm": 32.07802924122041,
+          "hole_diameter_mm": 9.27873373986636,
+          "fillet_radius_mm": 4.451404916838734
+        },
+        "source": "power_law_v0",
+        "mass_kg": 0.19931762365305228,
+        "max_stress_mpa": 138.54140603317722,
+        "max_disp_mm": 0.3457330571891177,
+        "safety_factor": 1.804514672964494,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-01650",
+        "design": {
+          "thickness_mm": 5.961569436438155,
+          "flange_length_mm": 75.88652502098181,
+          "arm_width_mm": 32.86728333489767,
+          "hole_diameter_mm": 6.565135374201008,
+          "fillet_radius_mm": 7.591317085857184
+        },
+        "source": "power_law_v0",
+        "mass_kg": 0.2014485662852134,
+        "max_stress_mpa": 125.43686833979365,
+        "max_disp_mm": 0.32949490675504006,
+        "safety_factor": 1.9930344507866662,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-01770",
+        "design": {
+          "thickness_mm": 5.968876550872478,
+          "flange_length_mm": 79.88957993716107,
+          "arm_width_mm": 32.59554139248533,
+          "hole_diameter_mm": 7.501009756174513,
+          "fillet_radius_mm": 3.694906850305567
+        },
+        "source": "power_law_v0",
+        "mass_kg": 0.20321434263212781,
+        "max_stress_mpa": 155.2372529295092,
+        "max_disp_mm": 0.41820924716073044,
+        "safety_factor": 1.6104381859521895,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-00761",
+        "design": {
+          "thickness_mm": 4.928869339962771,
+          "flange_length_mm": 75.16929127726671,
+          "arm_width_mm": 41.75856378902794,
+          "hole_diameter_mm": 11.972245090918781,
+          "fillet_radius_mm": 3.870073646079982
+        },
+        "source": "power_law_v0",
+        "mass_kg": 0.20712824411085148,
+        "max_stress_mpa": 160.27706732201588,
+        "max_disp_mm": 0.4809289387872075,
+        "safety_factor": 1.5597989417769915,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-00104",
+        "design": {
+          "thickness_mm": 5.596781633753755,
+          "flange_length_mm": 75.23800243843226,
+          "arm_width_mm": 36.99081798486574,
+          "hole_diameter_mm": 8.433639903394655,
+          "fillet_radius_mm": 2.437500773120564
+        },
+        "source": "power_law_v0",
+        "mass_kg": 0.20860649537094142,
+        "max_stress_mpa": 156.96964888236124,
+        "max_disp_mm": 0.3822542275043836,
+        "safety_factor": 1.592664580573529,
+        "feasible": true,
+        "violated": []
+      }
+    ],
+    "binding_constraint": "safety_factor >= 1.5",
+    "sensitivities": {
+      "thickness_mm": 0.10401310389220354,
+      "flange_length_mm": 0.5417710080814523,
+      "arm_width_mm": 0.1156977126511473,
+      "hole_diameter_mm": 0.11801129325648858,
+      "fillet_radius_mm": 0.19782533610539654
+    },
+    "explanation": "Recommended pl-0-01738: mass 0.199 kg (-21% vs baseline), safety factor 1.80, displacement 0.346 mm. Binding constraint: safety_factor >= 1.5. Verified with power_law_v0.",
+    "discovery_values": {
+      "thickness_mm": 6.115754857895299,
+      "flange_length_mm": 76.9534294958879,
+      "arm_width_mm": 32.07802924122041,
+      "hole_diameter_mm": 9.27873373986636,
+      "fillet_radius_mm": 4.451404916838734
+    },
+    "warnings": [
+      "power-law surrogate fitted to 200 CalculiX runs of l_bracket_v0; see docs/models.md for its error",
+      "Finalists were checked with the fitted power law, not a real solver. Use the CalculiX engine (Role 1) for a real check."
+    ]
+  },
+  "stopped": null,
+  "seconds": 31.8
+}
