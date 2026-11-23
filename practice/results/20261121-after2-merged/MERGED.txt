@@ -1,0 +1,7 @@
+Merged 2026-11-21 "after2" run (gpt-6-luna, prompt with the direction / faces-from-words / one set_load_case rules).
+- 8 problems from 20261121-1916-after2 (stopped by Claude Code on low memory during sad_clean_auto):
+  jeb_complex lbr_clean_auto lbr_missing_support lbr_named lbr_units nin_bad_sf nin_clean_auto nin_named_holes.
+  These ran before describe_part listed holes.
+- sad_clean_auto sad_missing_force sad_named from 20261121-2001-after2b (with the hole list; first grouping merged coaxial lug bores).
+- jeb_named from 20261121-2018-after2c (hole list with lug bores split).
+Cost: 0.0548 (after2, not in the ledger: the run was killed) + 0.0296 (after2b) + after2c.

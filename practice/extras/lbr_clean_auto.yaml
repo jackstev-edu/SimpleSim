@@ -1,0 +1,125 @@
+problem: lbr_clean_auto
+results: 20261111-2313-before
+built: '2026-11-15'
+reviewed: true
+features:
+- face_id: 0:27
+  action: offset
+  other_face_id: null
+  also_face_ids: []
+  low: -4
+  high: 0
+  label: Part width (side face offset)
+  seen_in:
+  - lbr_missing_support
+  - lbr_units
+  effect: controls_limit
+- face_id: 0:36
+  action: offset
+  other_face_id: null
+  also_face_ids: []
+  low: -10
+  high: 0
+  label: Arm length (end-face offset)
+  seen_in:
+  - lbr_missing_support
+  - lbr_units
+  effect: controls_limit
+evidence:
+- reference:
+    values:
+    - 0.0
+    - 0.0
+    responses:
+      mass_kg: 0.2501
+      max_stress_MPa: 149.65561327676028
+      max_def_mm: 0.513909456899767
+      safety_factor: 1.671
+  features:
+  - index: 1
+    label: Part width (side face offset)
+    low: -4
+    ref: 0.0
+    high: 0
+    responses:
+      mass_kg:
+        low: 0.2248
+        ref: 0.2501
+        high: 0.2501
+        change: 0.02529999999999999
+        basis: high_vs_low
+        change_rel: 0.10115953618552576
+      max_stress_MPa:
+        low: 160.54158893269835
+        ref: 149.65561327676028
+        high: 149.65561327676028
+        change: -10.885975655938068
+        basis: high_vs_low
+        change_rel: -0.07274017604542822
+      max_def_mm:
+        low: 0.5727795194666481
+        ref: 0.513909456899767
+        high: 0.513909456899767
+        change: -0.0588700625668811
+        basis: high_vs_low
+        change_rel: -0.11455337467814516
+      safety_factor:
+        low: 1.557
+        ref: 1.671
+        high: 1.671
+        change: 0.1140000000000001
+        basis: high_vs_low
+        change_rel: 0.06822262118491927
+    feasible:
+      low: true
+      high: true
+  - index: 2
+    label: Arm length (end-face offset)
+    low: -10
+    ref: 0.0
+    high: 0
+    responses:
+      mass_kg:
+        low: 0.2312
+        ref: 0.2501
+        high: 0.2501
+        change: 0.0189
+        basis: high_vs_low
+        change_rel: 0.07556977209116354
+      max_stress_MPa:
+        low: 128.22924276542489
+        ref: 149.65561327676028
+        high: 149.65561327676028
+        change: 21.426370511335392
+        basis: high_vs_low
+        change_rel: 0.14317117842891264
+      max_def_mm:
+        low: 0.3367260353626214
+        ref: 0.513909456899767
+        high: 0.513909456899767
+        change: 0.17718342153714556
+        basis: high_vs_low
+        change_rel: 0.34477556145012417
+      safety_factor:
+        low: 1.95
+        ref: 1.671
+        high: 1.671
+        change: -0.2789999999999999
+        basis: high_vs_low
+        change_rel: -0.16696588868940748
+    feasible:
+      low: true
+      high: true
+  ranking:
+  - 1
+  - 2
+  limit_ranking:
+    safety_factor:
+    - 2
+    - 1
+  best_feasible: look_1_low
+  errors: {}
+  failed: 0
+  stopped: done
+  solves: 5
+  seconds_per_design: 46.4
