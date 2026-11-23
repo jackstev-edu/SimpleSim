@@ -17,7 +17,7 @@ arrows carry the shared contract files.
 **Figure: Inside the assistant.** The front layer asks for supports, loaded faces, force and units, material, safety
 factor and objective, then picks the path. On the slow path the ANSYS agent describes the part and waits for the
 student's OK, solves the baseline, runs a first look to find which features matter, and asks whether to stop or go
-deeper with the optiSLang optimizer. Every solve passes the plausibility checks (reaction balance, mesh refinement,
+deeper with the optiSLang optimizer. Every ANSYS solve passes the plausibility checks (reaction balance, mesh refinement,
 exclusion zones around supports and the load, and the 128K-node Student limit). Colours as in the overview.
 
 ## Not yet connected (as of 2026-11-22)
