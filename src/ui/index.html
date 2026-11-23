@@ -120,6 +120,10 @@
   .wctl { margin-left: auto; display: flex; }
   .wctl button { width: 30px; border: 0; background: none; cursor: pointer; display: grid; place-items: center; padding: 0; }
   .wctl button:hover { background: #3a3a3a; }
+  #winAgent .wtabs { height: auto; min-height: 27px; flex-wrap: wrap; }
+  #winAgent .wtabs .t { min-height: 27px; padding: 0 5px; font-size: 12px; font-variant: normal; letter-spacing: 0; white-space: nowrap; }
+  #winAgent .wctl { flex: none; }
+  #winAgent .wctl button { width: 23px; }
   .wtools { display: flex; gap: 9px; align-items: center; padding: 0 8px; height: 36px; flex: none; }
   .wtools .sep { flex: 1; }
   .pane { flex: 1; overflow: auto; min-height: 0; margin: 0 4px; border: 1px solid #2f6fb5; background: #161616; }
@@ -222,6 +226,22 @@
   .tip .tsub { display: block; color: #898781; font-size: 11.5px; margin-bottom: 3px; }
   .tip div { display: flex; justify-content: space-between; gap: 16px; color: #c3c2b7; }
   .tip strong { color: #f0efec; font-variant-numeric: tabular-nums; }
+  .rec-objective { color: #ccc8bc; }
+  .rec-card, .rec-more { margin: 8px 0; padding: 8px 10px; border: 1px solid #4b4b46; border-radius: 5px; }
+  .rec-card[data-rank="1"] { border-color: #639bd0; background: #202b35; }
+  #recs summary { cursor: pointer; padding: 2px 0; }
+  #recs summary:focus-visible { outline: 2px solid #8ac3ff; outline-offset: 3px; }
+  .rec-card p { margin: 6px 0; }
+  .rec-action { font-weight: 650; color: #fff; }
+  .rec-source { display: inline-block; margin-left: 4px; color: #b9d7f4; font-size: 12px; }
+  .rec-performance { display: flex; flex-wrap: wrap; gap: 5px 15px; margin: 8px 0; }
+  .rec-performance dt { color: #c3c2b7; font-size: 11px; }
+  .rec-performance dd { margin: 0; font-weight: 650; }
+  .rec-limits { margin: 5px 0; padding-left: 17px; font-size: 12px; }
+  .rec-dimensions { margin-top: 7px; overflow-x: auto; }
+  .rec-dimensions summary, .rec-study summary { color: #a9cff3; }
+  .rec-compact { margin-top: 6px; padding: 6px 0; border-top: 1px solid #4b4b46; }
+  .rec-study { margin: 8px 0; }
   #recs > * { max-width: 760px; }
   #recs h3 { margin: 12px 0 5px; font-size: 14.5px; font-weight: 400; font-variant: small-caps; letter-spacing: .04em; color: #fff; border-bottom: 1px solid #2f6fb5; padding-bottom: 2px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   #recs h3:first-child { margin-top: 0; }
@@ -280,7 +300,6 @@
     #winAgent { width: 322px; }
     #winVar { left: 8px; right: 338px; }
     .scenebox { left: 262px; right: 338px; }
-    #winAgent .wtabs .t { padding: 0 6px; font-size: 13.5px; }
     .readout { display: none; }
     .viewwheel, .toolwheel { display: none; }
     .tree { font-size: 12.5px; }
@@ -345,10 +364,10 @@
 
   <section class="win" id="winAgent" aria-label="Agent window">
     <div class="wtabs" role="tablist">
-      <button class="t" role="tab" data-atab="chat" aria-selected="true" type="button">Agent</button>
-      <button class="t" role="tab" data-atab="graphs" aria-selected="false" type="button">Graphs</button>
-      <button class="t" role="tab" data-atab="recs" aria-selected="false" type="button">Recommendations</button>
       <button class="t" role="tab" data-atab="pyd" aria-selected="false" type="button" id="pydTab" hidden>PyDiscovery</button>
+      <button class="t" role="tab" data-atab="recs" aria-selected="false" type="button">Recommendations</button>
+      <button class="t" role="tab" data-atab="graphs" aria-selected="false" type="button">Graphs</button>
+      <button class="t" role="tab" data-atab="chat" aria-selected="true" type="button">Agent</button>
       <span class="wctl"><button type="button" tabindex="-1" data-max="winAgent" aria-label="Maximise window"></button><button type="button" tabindex="-1" data-close="winAgent" aria-label="Close window"></button></span>
     </div>
     <div class="wtools">
@@ -388,17 +407,36 @@
   </div>
 </div>
 
+<script src="recommendations.js"></script>
 <script>
 "use strict";
 // Names mirror contracts/models.py: FAMILY_PARAMS, PARAM_NAMES and MetricName.
 const FAMILY_PARAMS = {
   l_bracket_v0: ["thickness_mm", "flange_length_mm", "arm_width_mm", "hole_diameter_mm", "fillet_radius_mm"],
   l_bracket_gusset_v1: ["thickness_mm", "flange_length_mm", "arm_width_mm", "hole_diameter_mm", "fillet_radius_mm", "vertical_height_mm", "gusset_thickness_mm", "gusset_length_mm"],
+  t01_double_hole_v1: ["thickness_mm", "flange_length_mm", "arm_width_mm", "hole_diameter_mm", "fillet_radius_mm", "vertical_height_mm"],
+  t02_single_slot_v1: ["thickness_mm", "flange_length_mm", "arm_width_mm", "fillet_radius_mm", "vertical_height_mm", "slot_width_mm", "slot_straight_length_mm"],
+  t03_twin_slot_v1: ["thickness_mm", "flange_length_mm", "arm_width_mm", "fillet_radius_mm", "vertical_height_mm", "slot_width_mm", "slot_straight_length_mm"],
+  t04_rounded_window_v1: ["thickness_mm", "flange_length_mm", "arm_width_mm", "fillet_radius_mm", "vertical_height_mm", "window_length_mm", "window_width_mm", "window_radius_mm"],
+  t05_side_notches_v1: ["thickness_mm", "flange_length_mm", "arm_width_mm", "hole_diameter_mm", "fillet_radius_mm", "vertical_height_mm", "notch_radius_mm"],
+  t06_tapered_v1: ["thickness_mm", "flange_length_mm", "arm_width_mm", "hole_diameter_mm", "fillet_radius_mm", "vertical_height_mm", "tip_trim_mm"],
+  t07_stepped_v1: ["thickness_mm", "flange_length_mm", "arm_width_mm", "hole_diameter_mm", "fillet_radius_mm", "vertical_height_mm", "step_trim_mm"],
+  t08_twin_gusset_v1: ["thickness_mm", "flange_length_mm", "arm_width_mm", "hole_diameter_mm", "fillet_radius_mm", "vertical_height_mm", "gusset_thickness_mm", "gusset_length_mm"],
+  t09_perforated_gusset_v1: ["thickness_mm", "flange_length_mm", "arm_width_mm", "hole_diameter_mm", "fillet_radius_mm", "vertical_height_mm", "gusset_thickness_mm", "gusset_length_mm", "rib_hole_diameter_mm"],
+  t10_offset_planform_v1: ["thickness_mm", "flange_length_mm", "arm_width_mm", "hole_diameter_mm", "fillet_radius_mm", "vertical_height_mm", "offset_trim_mm"],
 };
+const isTemplateFamily = (family) => Object.hasOwn(FAMILY_PARAMS, family) && family.startsWith("t");
+const TEMPLATE_LIMIT = "Fitted-model optimization only. CalculiX and ANSYS FEA are unavailable for these templates through the shared GUI.";
 let PARAMS = FAMILY_PARAMS.l_bracket_v0; // the loaded spec's family picks the list (accept)
 const METRICS = ["mass_kg", "max_stress_mpa", "max_disp_mm", "safety_factor"];
-const PARAM_LABEL = { thickness_mm: "Thickness", flange_length_mm: "Flange length", arm_width_mm: "Arm width", hole_diameter_mm: "Hole diameter", fillet_radius_mm: "Fillet radius",
-  vertical_height_mm: "Vertical height", gusset_thickness_mm: "Gusset thickness", gusset_length_mm: "Gusset length" };
+const PARAM_LABEL = {
+  thickness_mm: "Thickness", flange_length_mm: "Flange length", arm_width_mm: "Arm width",
+  hole_diameter_mm: "Hole diameter", fillet_radius_mm: "Fillet radius", vertical_height_mm: "Vertical height",
+  slot_width_mm: "Slot width", slot_straight_length_mm: "Slot straight length", window_length_mm: "Window length",
+  window_width_mm: "Window width", window_radius_mm: "Window corner radius", notch_radius_mm: "Notch radius",
+  tip_trim_mm: "Tip trim", step_trim_mm: "Step trim", gusset_thickness_mm: "Gusset thickness",
+  gusset_length_mm: "Gusset length", rib_hole_diameter_mm: "Rib hole diameter", offset_trim_mm: "Offset trim",
+};
 const METRIC_LABEL = { mass_kg: "Mass", max_stress_mpa: "Max. Von Mises Stress", max_disp_mm: "Max. Displacement", safety_factor: "Factor of Safety" };
 const GOAL_WORD = { mass_kg: "mass", max_stress_mpa: "max stress", max_disp_mm: "max displacement", safety_factor: "safety factor" };
 const GOAL_UNIT = { mass_kg: " kg", max_stress_mpa: " MPa", max_disp_mm: " mm", safety_factor: "" };
@@ -565,6 +603,7 @@ function field(errs, obj, name, test, what, where) {
 function checkDesign(errs, d, where) {
   if (!isObj(d)) { errs.push(`${where}: expected an object of the family's ${PARAMS.length} dimensions`); return; }
   for (const p of PARAMS) field(errs, d, p, isNum, "a number", where);
+  for (const p of Object.keys(d)) if (!PARAMS.includes(p)) errs.push(`${where}: unexpected dimension "${p}"`);
 }
 function checkSpec(errs, s, where) {
   if (!isObj(s)) { errs.push(`${where}: expected a StudySpec object`); return; }
@@ -581,12 +620,20 @@ function checkSpec(errs, s, where) {
     field(errs, c, "op", (v) => v === ">=" || v === "<=", '">=" or "<="', w);
     field(errs, c, "value", isNum, "a number", w);
   });
-  if (field(errs, s, "parameters", Array.isArray, "a list", where)) s.parameters.forEach((p, i) => {
-    const w = `${where}.parameters[${i}]`;
-    field(errs, p, "name", (v) => PARAMS.includes(v), "a parameter name", w);
-    field(errs, p, "low_mm", isNum, "a number", w);
-    field(errs, p, "high_mm", isNum, "a number", w);
-  });
+  if (field(errs, s, "parameters", Array.isArray, "a list", where)) {
+    const names = new Set(s.parameters.map((p) => p?.name));
+    if (s.parameters.length !== PARAMS.length || PARAMS.some((p) => !names.has(p))) {
+      errs.push(`${where}.parameters: expected exactly ${PARAMS.join(", ")}`);
+    }
+    s.parameters.forEach((p, i) => {
+      const w = `${where}.parameters[${i}]`;
+      const positive = (v) => isNum(v) && v > 0;
+      field(errs, p, "name", (v) => PARAMS.includes(v), "a parameter name", w);
+      const low = field(errs, p, "low_mm", positive, "a positive number", w);
+      const high = field(errs, p, "high_mm", positive, "a positive number", w);
+      if (low && high && p.low_mm > p.high_mm) errs.push(`${w}: low_mm exceeds high_mm`);
+    });
+  }
   if (field(errs, s, "load", isObj, "an object", where)) {
     field(errs, s.load, "force_n", isNum, "a number", where + ".load");
     field(errs, s.load, "angle_deg", isNum, "a number", where + ".load");
@@ -675,12 +722,15 @@ function accept(spec, pred, res, names, live = false) {
   const errs = [];
   // The spec's family sets the dimension list the checks and every table use; v0 files keep the five.
   if (isObj(spec) && isStr(spec.bracket_family)) {
-    if (spec.bracket_family in FAMILY_PARAMS) PARAMS = FAMILY_PARAMS[spec.bracket_family];
+    if (Object.hasOwn(FAMILY_PARAMS, spec.bracket_family)) PARAMS = FAMILY_PARAMS[spec.bracket_family];
     else errs.push(`${names[0]}.bracket_family: unknown family "${spec.bracket_family}" (known: ${Object.keys(FAMILY_PARAMS).join(", ")})`);
   }
   checkSpec(errs, spec, names[0]);
   checkPrediction(errs, pred, names[1]);
   checkResult(errs, res, names[2]);
+  if (isObj(spec) && isObj(res?.spec) && spec.bracket_family !== res.spec.bracket_family) {
+    errs.push(`${names[2]}.spec.bracket_family differs from ${names[0]}`);
+  }
   if (errs.length) { clearAll(); showBanner("Fixture does not match the contract", errs, location.protocol === "file:"); return; }
   hideBanner();
   Object.assign(S, { spec, pred, res, live, sel: "baseline" });
@@ -729,11 +779,14 @@ const PROVENANCE = {
   predicted: { label: "Prediction", style: "predicted" },
   fitted: { label: "Fitted surrogate check", style: "predicted", limit: "A fitted model estimates the finalist metrics. Using the same power law for the shortlist and the check gives no independent validation." },
   fea: { label: "CalculiX FEA", style: "verified", limit: "The FEA result applies to the modeled bracket, material, supports and load case." },
+  ansys: { label: "ANSYS Mechanical FEA", style: "verified", limit: "The FEA result applies to the modeled bracket, material, supports and load case." },
   unknown: { label: "Reported result", style: "spec", limit: "The source does not establish that an FEA solve ran." },
 };
 const resultKind = (source) => {
   if (source === "calculix") return "fea";
-  if (source === "power_law_v0" || source === "power_law_v1") return "fitted";
+  if (source === "ansys_mechanical") return "ansys";
+  if (source === "power_law_v0" || source === "power_law_v1"
+    || (source.startsWith("power_law_") && isTemplateFamily(source.slice("power_law_".length)))) return "fitted";
   if (source === "fake_formula" || source === "formula_emulator") return "formula";
   return "unknown";
 };
@@ -751,6 +804,7 @@ function provenanceWarnings(pred, res) {
   const warnings = [...pred.warnings, ...res.warnings].filter(
     (warning) => !warning.includes("the GUI's beam equations describe the v0 L-bracket;"),
   );
+  if (isTemplateFamily(res.spec.bracket_family)) warnings.unshift(TEMPLATE_LIMIT);
   const recommended = pred.shortlist.find((candidate) => candidate.design_id === res.recommended?.design_id);
   if (recommended?.in_training_range === false) warnings.push("The recommended design is outside the training range. Its prediction was extrapolated.");
   return [...new Set([...warnings, ...limitations])];
@@ -759,13 +813,13 @@ const predictionSummary = (pred) => `${provenanceText(predictionKind(pred), pred
 function resultExplanation(res) {
   // The legacy pipeline inserts verification wording for every engine.
   const source = res.recommended?.source;
-  if (source && resultKind(source) !== "fea") {
+  if (source && PROVENANCE[resultKind(source)].style !== "verified") {
     const suffix = `Verified with ${source}.`;
     if (res.explanation.endsWith(suffix)) {
       return res.explanation.slice(0, -suffix.length) + `${provenanceText(resultKind(source), source)}.`;
     }
   }
-  if (!source && (!res.finalists.length || res.finalists.some((f) => resultKind(f.source) !== "fea"))) {
+  if (!source && (!res.finalists.length || res.finalists.some((f) => PROVENANCE[resultKind(f.source)].style !== "verified"))) {
     return res.explanation.replace(/^(None of the \d+) verified finalists met every constraint\./, "$1 evaluated finalists met every constraint.");
   }
   return res.explanation;
@@ -809,6 +863,7 @@ function buildMessages(names) {
 // ---- Rendering
 function renderAll() { renderTree(); renderTable(); renderParams(); renderCases(); renderChat(); renderScene(); renderReadout(); renderGraphs(); renderRecs(); }
 const rowById = (id) => id === "baseline" ? S.baseRow : S.rows.find((r) => r.id === id);
+const showingTemplate = () => isTemplateFamily(S.res?.spec.bracket_family);
 const chip = (kind, source = "") => {
   const { label = kind.charAt(0).toUpperCase() + kind.slice(1), style = kind } = PROVENANCE[kind] || {};
   return `<span class="chip ${style}"${source ? ` title="${esc(source)}"` : ""}>${label}</span>`;
@@ -1238,84 +1293,25 @@ function mechanics(spec, bindMetric) {
   where.push([im(row(sy, mo(","), E, mo(","), mi("ρ"))), `yield strength, Young's modulus and density of ${spec.material_key}`]);
   return { eqs, derived, where };
 }
-// Next steps, each one a template filled with fields of result.json and prediction.json.
-function avenues(refV, refName) {
-  const res = S.res, sp = res.spec, rec = res.recommended, out = [], objWord = GOAL_WORD[sp.objective.metric];
-  const bind = res.binding_constraint, bindMetric = bind ? bind.split(" ")[0] : null;
-  const against = (c, v) => `${SHORT_LABEL[c.metric].toLowerCase()} is ${metricText(c.metric, v[c.metric])} against ${opSym(c.op)} ${metricText(c.metric, c.value)}`;
-  const violates = (c, v) => v.violated.some((s) => s.startsWith(c.metric + " "));
-  if (!rec && refV) {
-    const gaps = sp.constraints.filter((c) => violates(c, refV)).map((c) => against(c, refV));
-    out.push(["Close the gap before optimising", `No design passes. On the top finalist ${refName}, ${gaps.join(" and ") || "a requirement is violated"}. Stress scales with F (L − w) / (t w²) and deflection with F (L − w)³ / (t w³), so nothing inside the current ranges closes it. Raise the upper bounds on thickness and arm width, shorten the flange, choose a higher-yield material than ${sp.material_key}, or revisit the ${U.n(sp.load.force_n)} load case.`]);
-  }
-  if (rec && bindMetric === "max_disp_mm") out.push(["Work on the binding constraint", `${bind} is what stops the plate getting thinner. Deflection falls with w³ and rises with (L − w)³, so a wider arm or a shorter flange buys stiffness that can be taken back out as thickness.`]);
-  else if (rec && bindMetric) out.push(["Work on the binding constraint", `${bind} is what stops the plate getting thinner. Anything that lowers stress at the fillet buys margin that can be taken back out as thickness: a wider arm (stress falls with w²), a shorter flange, or a larger fillet radius (lower K_t).`]);
-  if (refV) {
-    // A design within a tenth of the range from a bound is treated as pressing on it.
-    const ends = sp.parameters.filter((p) => p.high_mm > p.low_mm).map((p) => {
-      const v = refV.design[p.name], pos = (v - p.low_mm) / (p.high_mm - p.low_mm);
-      return pos <= 0.1 ? `${p.name} is at the low end (${U.mm(v)}, bound ${U.mm(p.low_mm)})` : pos >= 0.9 ? `${p.name} is at the high end (${U.mm(v)}, bound ${U.mm(p.high_mm)})` : null;
-    }).filter(Boolean);
-    if (ends.length) out.push(["Widen the bounds the design is pressing on", `On ${refName}, ${ends.join("; ")}. If manufacturing allows, extend ${ends.length > 1 ? "those bounds" : "that bound"} and rerun: the optimum may lie beyond ${ends.length > 1 ? "them" : "it"}.`]);
-  }
-  if (rec) {
-    const parts = sp.constraints.map((c) => against(c, rec) + (c.metric === bindMetric ? " (binding)" : ""));
-    out.push(["Spend the remaining margin", `On ${refName}, ${parts.join("; ")}. The search sampled the ranges at random, so margin is left over. A denser sample around ${refName} can trade it for ${objWord}, and any requirement far from its limit is not shaping the design.`]);
-  }
-  const sens = res.sensitivities || {}, keys = PARAMS.filter((p) => isNum(sens[p])).sort((a, b) => Math.abs(sens[b]) - Math.abs(sens[a]));
-  if (keys.length) {
-    const say = (p) => `${sens[p] >= 0 ? "rises" : "falls"} with ${p} (${sig(sens[p], 2)})`;
-    const weak = keys.filter((p) => Math.abs(sens[p]) < 0.15);
-    out.push(["Focus the next study on the dimensions that matter", `Across the shortlist, ${objWord} ${keys.slice(0, 2).map(say).join(" and ")}.` + (weak.length ? ` ${weak.join(" and ")} barely ${weak.length > 1 ? "move" : "moves"} it (${weak.map((p) => sig(sens[p], 2)).join(", ")}), so hold ${weak.length > 1 ? "them" : "it"} fixed to shrink the search.` : "")]);
-  }
-  const next = S.rows.filter((r) => !r.ver && r.cand.feasible_p95).slice(0, 3).map((r) => r.name);
-  if (next.length) out.push(["Evaluate more candidates", `${next.join(", ")} ${next.length > 1 ? "are" : "is"} next in the shortlist and predicted feasible. ${res.finalists.length} of ${S.rows.length} rows have finalist results.`]);
-  const outside = S.rows.filter((r) => r.cand && !r.cand.in_training_range);
-  if (outside.length) out.push(["Add training data where the model extrapolates", `${outside.length} shortlisted designs sit outside the training range${outside.some((r) => r.isRec) ? ", the recommended one among them" : ""}. Add solver runs there before trusting those predictions.`]);
-  return out;
-}
 function renderRecs() {
   const el = $("recs");
   if (el.hidden) return;
   if (!S.res) { el.innerHTML = '<div class="empty">No result loaded.</div>'; return; }
-  if (S.shown < S.msgs.length) { el.innerHTML = '<div class="empty">The agent is still working. Recommendations appear when the run finishes.</div>'; return; }
-  const res = S.res, sp = res.spec, rec = res.recommended, base = res.baseline;
-  const refV = rec || res.finalists[0] || null, refRow = refV ? S.rows.find((r) => r.id === refV.design_id) : null, refName = refRow ? refRow.name : "";
-  const bindMetric = res.binding_constraint ? res.binding_constraint.split(" ")[0] : null;
-  const need = (m) => sp.constraints.filter((c) => c.metric === m).map((c) => `${opSym(c.op)} ${metricText(m, c.value)}`).concat(sp.objective.metric === m ? [sp.objective.direction] : []).join(", ");
-  const bad = (m, v) => v.violated.some((s) => s.startsWith(m + " "));
-  const refHead = rec ? refName : refName ? refName + " (top finalist)" : "";
-  const monitors = `<table class="rt"><thead><tr><th>Monitor</th><th>Requirement</th><th>Baseline</th>${refV ? `<th>${esc(refHead)}</th>` : ""}</tr></thead><tbody>${METRICS.map((m) =>
-    `<tr${m === bindMetric ? ' class="bindrow"' : ""}><td>${SHORT_LABEL[m]}</td><td>${need(m)}</td><td class="${bad(m, base) ? "no" : ""}">${metricText(m, base[m])}</td>${refV ? `<td class="${bad(m, refV) ? "no" : ""}">${metricText(m, refV[m])}</td>` : ""}</tr>`).join("")}</tbody></table>`;
-  const dims = refV ? `<table class="rt"><thead><tr><th>Dimension</th><th>Baseline</th><th>${esc(refName)}</th><th>Move</th></tr></thead><tbody>${PARAMS.map((p) => {
-    const a = base.design[p], b = refV.design[p];
-    return `<tr><td>${PARAM_LABEL[p]}</td><td>${U.mm(a)}</td><td>${U.mm(b)}</td><td>${b > a ? "▲ increase" : b < a ? "▼ decrease" : "keep"}</td></tr>`;
-  }).join("")}</tbody></table>` : "";
-  const sources = resultSources(res);
-  const warnings = provenanceWarnings(S.pred, res);
+  if (S.shown < S.msgs.length) { el.innerHTML = '<div class="empty">Recommendations appear when the run finishes.</div>'; return; }
+  const { res, pred } = S;
+  el.innerHTML = recommendationOptions(res, pred) + recommendationStudyNotes(res, pred);
   S.tex = [];
-  const showEquations = !S.live && sp.bracket_family === "l_bracket_v0" && S.pred.model_name === "fake_formula"
-    && sources.every((source) => source === "fake_formula");
-  el.innerHTML = `
-    <h3>${rec ? `Recommended design ${esc(refName)}` : "No feasible finalist"} ${rec ? chip("recommended") : ""}</h3>
-    <p>${esc(resultExplanation(res))}</p>
-    <p class="mutedp">${esc(predictionSummary(S.pred))} Baseline: ${esc(provenanceText(resultKind(base.source), base.source))}.${refV ? ` ${esc(refHead)}: ${esc(provenanceText(resultKind(refV.source), refV.source))}.` : ""}</p>
-    ${warnings.length ? `<ul class="vnote">${warnings.map((warning) => `<li>${esc(warning)}</li>`).join("")}</ul>` : ""}
-    ${monitors}${dims}
-    ${res.binding_constraint ? `<p class="mutedp">Highlighted row: the binding constraint, ${esc(res.binding_constraint)}.</p>` : ""}`;
-  if (!showEquations) return;
-  const mech = mechanics(sp, bindMetric);
+  if (!isRecommendationFixture(res, pred) || S.live) return;
+
+  const mech = mechanics(res.spec, res.binding_constraint?.split(" ")[0]);
   S.tex = mech.eqs.concat(mech.derived).map((e) => e.tex);
   const eqHtml = (e) => `<div class="eq${e.bind ? " bind" : ""}"><div class="cap">${esc(e.cap)}${e.bind ? ' <span class="chip bindchip">binding</span>' : ""}</div>${e.ml.map((m) => `<math display="block">${m}</math>`).join("")}<code>${esc(e.tex)}</code></div>`;
-  const steps = avenues(refV, refName);
-  el.insertAdjacentHTML("beforeend", `
-    <h3>Fixture beam equations <span class="acts"><button type="button" class="lnk" data-act="tex">LaTeX source</button><button type="button" class="lnk" data-act="copytex">Copy LaTeX</button></span></h3>
-    <p class="mutedp">The first-order beam equations used to generate this fixture.</p>
+  el.insertAdjacentHTML("beforeend", `<details class="rec-study"><summary>Fixture beam equations</summary>
+    <h3>First-order beam model <span class="acts"><button type="button" class="lnk" data-act="tex">LaTeX source</button><button type="button" class="lnk" data-act="copytex">Copy LaTeX</button></span></h3>
     ${mech.eqs.map(eqHtml).join("")}
-    ${mech.derived.length ? `<h4>From the requirements to the optimum</h4>${mech.derived.map(eqHtml).join("")}` : ""}
-    <table class="where"><tbody>${mech.where.map(([s, d]) => `<tr><td>${s}</td><td>${esc(d)}</td></tr>`).join("")}</tbody></table>
-    <h3>Avenues for the next iteration</h3>
-    <ol class="steps">${steps.map(([h, t]) => `<li><b>${esc(h)}.</b> ${esc(t)}</li>`).join("")}</ol>`);
+    ${mech.derived.map(eqHtml).join("")}
+    <table class="where"><tbody>${mech.where.map(([label, description]) => `<tr><td>${label}</td><td>${esc(description)}</td></tr>`).join("")}</tbody></table>
+  </details>`);
 }
 function showATab(tab) {
   for (const b of document.querySelectorAll("#winAgent .wtabs .t")) b.setAttribute("aria-selected", String(b.dataset.atab === tab));
@@ -1345,6 +1341,10 @@ const poly = (pts) => pts.map((p) => p[0].toFixed(2) + "," + p[1].toFixed(2)).jo
 function renderScene() {
   const box = $("scenebox"), r = S.res ? rowById(S.sel) || S.baseRow : null;
   if (!r) { box.innerHTML = ""; return; }
+  if (showingTemplate()) {
+    box.innerHTML = `<div class="empty"><b>${esc(PYD_FAMILY_LABEL[S.res.spec.bracket_family])}</b><p>Geometry preview unavailable. Select a design to inspect its dimensions and metrics in Variations.</p></div>`;
+    return;
+  }
   const { rot, pt } = camera();
   const d = (r.ver || r.cand).design, load = S.res.spec.load;
   const t = d.thickness_mm, L = d.flange_length_mm, w = d.arm_width_mm, hole = d.hole_diameter_mm;
@@ -1517,8 +1517,22 @@ async function runDemo() {
 const PYD_API = "api/pydiscovery", PYD_LIVE = "pydiscovery_live";
 const PYD_NAMES = ["PyDiscovery study_spec", "PyDiscovery prediction", "PyDiscovery result"];
 const PYD = { on: false, engine: "", predictor: "", note: "", card: null, busy: "", error: "", last: null, saved: "",
+  slotFamily: "",
   form: { force_n: 500, material: "structural_steel", min_sf: 1.5, max_disp_mm: 0.5, family: "l_bracket_v0" } };
-const PYD_FAMILY_LABEL = { l_bracket_v0: "L-bracket v0", l_bracket_gusset_v1: "Gusseted L-bracket v1" };
+const PYD_FAMILY_LABEL = {
+  l_bracket_v0: "L-bracket v0",
+  l_bracket_gusset_v1: "Gusseted L-bracket v1",
+  t01_double_hole_v1: "Double-hole bracket T01",
+  t02_single_slot_v1: "Single-slot bracket T02",
+  t03_twin_slot_v1: "Twin-slot bracket T03",
+  t04_rounded_window_v1: "Rounded-window bracket T04",
+  t05_side_notches_v1: "Side-notch bracket T05",
+  t06_tapered_v1: "Tapered bracket T06",
+  t07_stepped_v1: "Stepped bracket T07",
+  t08_twin_gusset_v1: "Twin-gusset bracket T08",
+  t09_perforated_gusset_v1: "Perforated-gusset bracket T09",
+  t10_offset_planform_v1: "Offset-planform bracket T10",
+};
 async function pydFetch(path, opts) {
   let resp;
   try { resp = await fetch(PYD_API + path, Object.assign({ cache: "no-store" }, opts || {})); }
@@ -1554,6 +1568,7 @@ function pydShowLast() {
   if (PYD.on) { PYD.error = "No live run yet. Open a part, confirm the setup and optimize."; renderPyd(); showATab("pyd"); }
 }
 async function pydOptimize() {
+  if (pydFamilyBlocker(PYD.card?.state)) return;
   const f = PYD.form;
   const constraints = [{ metric: "safety_factor", op: ">=", value: Number(f.min_sf) }, { metric: "max_disp_mm", op: "<=", value: Number(f.max_disp_mm) }];
   const data = await pydRun("Optimizing", () => pydTool("optimize_design", { objective: "mass_kg", direction: "minimize", constraints }));
@@ -1563,12 +1578,30 @@ async function pydOptimize() {
   if (S.res !== data.result) return; // accept() showed why it did not pass the contract check
   PYD.last = { spec: data.study_spec, pred: data.prediction, res: data.result }; PYD.saved = "";
   pydLiveOption(true);
-  showWin("winAgent", true); showTab("variations"); showATab("chat");
+  showWin("winAgent", true); showTab("variations"); showATab("recs");
   renderPyd();
+}
+async function pydOpen(label, request) {
+  PYD.slotFamily = "";
+  const data = await pydRun(label, request);
+  if (data?.ok) { PYD.last = null; PYD.saved = ""; renderPyd(); }
 }
 async function pydUpload(file) {
   if (!file) return;
-  await pydRun("Uploading " + file.name, () => pydFetch("/upload?name=" + encodeURIComponent(file.name), { method: "POST", body: file }));
+  await pydOpen("Uploading " + file.name, () => pydFetch("/upload?name=" + encodeURIComponent(file.name), { method: "POST", body: file }));
+}
+function namedSlotFamily(state) {
+  return state?.sources?.dimensions === "file" && state.family === "t02_single_slot_v1";
+}
+function pydFamilyBlocker(state) {
+  if (namedSlotFamily(state) && !PYD.slotFamily) return "Select the slot geometry before confirming.";
+  if (namedSlotFamily(state) && PYD.slotFamily !== state.family) {
+    return "The uploaded file’s parameter names also match T02. Open a STEP or a file without named parameters to select T03 explicitly.";
+  }
+  if (isTemplateFamily(state?.family) && PYD.engine !== "fitted") {
+    return "Restart the shared GUI with the fitted engine to optimize this template.";
+  }
+  return "";
 }
 function renderPyd() {
   const el = $("pyd");
@@ -1583,14 +1616,34 @@ function renderPyd() {
   if (st) {
     setup = `<pre class="card">${esc(PYD.card.message)}</pre>`;
     const fill = [];
-    if (needs("use_family")) fill.push(`<label>Which bracket? <select data-form="family"${dis}>${Object.keys(FAMILY_PARAMS).map((k) => `<option value="${k}"${f.family === k ? " selected" : ""}>${PYD_FAMILY_LABEL[k] || k}</option>`).join("")}</select> ${btn("family", "Use this bracket", true)}</label>`);
+    if (needs("use_family") || st.sources?.dimensions === "family baseline") fill.push(`<label>Which bracket? <select data-form="family"${dis}>${Object.keys(FAMILY_PARAMS).map((k) => `<option value="${k}"${f.family === k ? " selected" : ""}>${esc(PYD_FAMILY_LABEL[k])}</option>`).join("")}</select> ${btn("family", "Use this bracket", true)}</label>`);
+    if (namedSlotFamily(st)) {
+      fill.push(`<label>Slot geometry <select data-slot-family${dis}>
+        <option value="">Select the actual geometry</option>
+        ${["t02_single_slot_v1", "t03_twin_slot_v1"].map((key) => `<option value="${key}"${PYD.slotFamily === key ? " selected" : ""}>${PYD_FAMILY_LABEL[key]}</option>`).join("")}
+      </select></label>`);
+    }
     if (needs("supports")) fill.push(`<label>Supports ${btn("support", "Fix the back face", true)}</label>`);
     if (needs("load")) fill.push(`<label>Load <input type="number" data-form="force_n" value="${esc(f.force_n)}" min="0" step="10"${dis}> N ${btn("load", "Set load", true)}</label>`);
     if (needs("material")) fill.push(`<label>Material <select data-form="material"${dis}>${["structural_steel", "aluminum_6061"].map((m) => `<option value="${m}"${f.material === m ? " selected" : ""}>${m}</option>`).join("")}</select> ${btn("material", "Set material", true)}</label>`);
     if (fill.length) setup += `<div class="prow">${fill.join("")}</div>`;
+    if (st.family === "l_bracket_gusset_v1" && st.sources?.dimensions === "file") {
+      setup += '<p class="mutedp">If this part has twin gussets, open a STEP or a file without named parameters and select Twin-gusset bracket T08. Both families use the same parameter names.</p>';
+    }
+    if (isTemplateFamily(st.family)) {
+      const dims = st.dimensions.map(({ name, contract_name, value_mm, low_mm, high_mm }) =>
+        `<label>${esc(name)} <input type="number" name="${esc(contract_name)}" value="${esc(value_mm)}"
+          min="${esc(low_mm)}" max="${esc(high_mm)}" step="any" required${dis}> mm (${esc(low_mm)} to ${esc(high_mm)})</label>`).join("");
+      setup += `<p class="mutedp">${TEMPLATE_LIMIT}</p>
+        <form id="pydDimensions" class="prow">${dims}
+          <button type="submit" class="pbtn"${dis}>Apply dimensions</button>
+        </form>`;
+    }
     setup += problems.map((pr) => `<p class="perr">${esc(pr)}</p>`).join("");
   }
-  const canConfirm = !!st && !missing.length && !problems.length, confirmed = !!st && st.confirmed === true;
+  const blocker = pydFamilyBlocker(st);
+  const canConfirm = !!st && !missing.length && !problems.length && !blocker;
+  const confirmed = !!st && st.confirmed === true && !blocker;
   el.innerHTML = `
     <p class="mutedp">Live emulator through launch_gui.py. Engine <b>${esc(PYD.engine)}</b>, predictor <b>${esc(PYD.predictor)}</b>. ${esc(PYD.note)}</p>
     ${status}
@@ -1599,6 +1652,7 @@ function renderPyd() {
       ${st ? `<span class="pname" title="${esc(st.part)}">${esc(String(st.part).split(/[\\/]/).pop())}</span>` : '<span class="mutedp">No part open</span>'}</div>
     <h3>Setup</h3>
     ${setup}
+    ${blocker ? `<p class="perr">${esc(blocker)}</p>` : ""}
     <h3>Confirm</h3>
     <div class="prow">${btn("confirm", "The setup is right", canConfirm)}${confirmed ? '<span class="pok">Confirmed</span>' : '<span class="mutedp">Enabled once nothing is missing and there are no problems</span>'}</div>
     <h3>Goal</h3>
@@ -1614,16 +1668,27 @@ $("pyd").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-pyd]");
   if (!b || b.disabled) return;
   const act = b.dataset.pyd;
-  if (act === "demo") await pydRun("Opening the demo part", () => pydFetch("/demo-part", { method: "POST" }));
-  else if (act === "family") await pydRun("Using the " + (PYD_FAMILY_LABEL[PYD.form.family] || PYD.form.family), () => pydTool("use_family", { family: PYD.form.family }));
-  else if (act === "support") await pydRun("Setting the support", () => pydTool("set_support", {}));
+  if (act === "demo") await pydOpen("Opening the demo part", () => pydFetch("/demo-part", { method: "POST" }));
+  else if (act === "family") {
+    const family = PYD.form.family;
+    await pydOpen("Selecting " + PYD_FAMILY_LABEL[family], () => pydTool("use_family", { family }));
+  } else if (act === "support") await pydRun("Setting the support", () => pydTool("set_support", {}));
   else if (act === "load") await pydRun("Setting the load", () => pydTool("set_load", { force_n: Number(PYD.form.force_n) }));
   else if (act === "material") await pydRun("Setting the material", () => pydTool("set_material", { material: PYD.form.material }));
-  else if (act === "confirm") await pydRun("Confirming", () => pydTool("confirm_setup"));
+  else if (act === "confirm" && !pydFamilyBlocker(PYD.card?.state)) await pydRun("Confirming", () => pydTool("confirm_setup"));
   else if (act === "optimize") await pydOptimize();
   else if (act === "save") { const d = await pydRun("Saving", () => pydTool("save_design", {})); if (d && d.ok === true) { PYD.saved = d.path; renderPyd(); } }
 });
-$("pyd").addEventListener("change", (e) => { if (e.target.id === "pydFile") pydUpload(e.target.files[0]); });
+$("pyd").addEventListener("submit", async (e) => {
+  if (e.target.id !== "pydDimensions") return;
+  e.preventDefault();
+  const values = Object.fromEntries([...new FormData(e.target)].map(([name, value]) => [name, Number(value)]));
+  await pydRun("Applying dimensions", () => pydTool("set_dimensions", { values }));
+});
+$("pyd").addEventListener("change", (e) => {
+  if (e.target.id === "pydFile") pydUpload(e.target.files[0]);
+  if ("slotFamily" in e.target.dataset) { PYD.slotFamily = e.target.value; renderPyd(); }
+});
 $("pyd").addEventListener("input", (e) => { const k = e.target.dataset.form; if (k) PYD.form[k] = e.target.value; });
 (async function pydInit() {
   try {
@@ -1632,6 +1697,9 @@ $("pyd").addEventListener("input", (e) => { const k = e.target.dataset.form; if 
     Object.assign(PYD, { on: true, engine: data.engine, predictor: data.predictor, note: data.predictor_note || "" });
     $("pydTab").hidden = false;
     renderPyd();
+    if (!new URLSearchParams(location.search).has("fixture") && $("log").hidden === false && document.body.dataset.demo !== "running") {
+      showATab("pyd");
+    }
   } catch (e) { /* no API: the page behaves as before */ }
 })();
 

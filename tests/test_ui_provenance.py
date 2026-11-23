@@ -77,12 +77,13 @@ def test_result_provenance(browser, family, source, live, label):
 
         page.locator('[data-atab="recs"]').click()
         recommendations = page.locator("#recs")
+        recommendations.get_by_text("Study explanation and model notes").click()
         text = recommendations.inner_text()
         assert supplied in text and source in text and model in text
         assert "Shortlist warning." in text and "Result warning." in text
         assert ("Verified with" in text) == (source == "calculix")
         assert bool(recommendations.locator("math").count()) == (not live)
-        assert bool(recommendations.get_by_text("Avenues for the next iteration").count()) == (not live)
+        assert bool(recommendations.get_by_text("Fixture beam equations").count()) == (not live)
 
         page.locator('[data-atab="graphs"]').click()
         assert page.locator("#graphs svg[data-ch]").count() > 0
