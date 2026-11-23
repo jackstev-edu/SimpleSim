@@ -2,8 +2,10 @@
 
 A real Discovery backend can resize any part. The emulator only knows families that Role 1's
 solver can regenerate, so a part is solvable here only when its parameters match a family.
-Two families: the v0 L-bracket and the v1 gusseted bracket (three more dimensions and named
-geometry rules from Role 1's spec, so a design that cannot be built is refused by name).
+Twelve families: the v0 L-bracket, the v1 gusseted bracket (three more dimensions and named
+geometry rules from Role 1's spec, so a design that cannot be built is refused by name) and
+Role 1's ten templates T01 to T10 (src/models/template_families.py carries their tables,
+rules and volumes; the fitted engine carries one power law each).
 """
 
 from __future__ import annotations
@@ -13,6 +15,7 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 from contracts.models import FAMILY_PARAMS, PARAM_NAMES
+from src.models import template_families as templates
 
 
 @dataclass(frozen=True)
@@ -120,10 +123,30 @@ L_BRACKET_GUSSET_V1 = Family(
     rules=_gusset_rules,
 )
 
-FAMILIES = {L_BRACKET_V0.key: L_BRACKET_V0, L_BRACKET_GUSSET_V1.key: L_BRACKET_GUSSET_V1}
+def _template_family(key: str) -> Family:
+    """One of Role 1's templates, from the tables in src/models/template_families.py."""
+    title, _, _ = templates.TEMPLATES[key]
+    names = templates.template_params(key)
+    return Family(
+        key=key,
+        title=title,
+        labels={n: templates.LABELS[n] for n in names},
+        ranges_mm=templates.template_ranges(key),
+        baseline_mm=templates.template_baseline(key),
+        force_range_n=(100.0, 1000.0),
+        load_direction=(0.0, -1.0, 0.0),
+        fixed_face="back face at X = 0",
+        load_face="free-end face at max X",
+        rules=lambda design, key=key: templates.failed_rules(key, design),
+    )
+
+
+TEMPLATE_FAMILIES = {key: _template_family(key) for key in templates.TEMPLATES}
+FAMILIES = {L_BRACKET_V0.key: L_BRACKET_V0, L_BRACKET_GUSSET_V1.key: L_BRACKET_GUSSET_V1, **TEMPLATE_FAMILIES}
 for _family in FAMILIES.values():  # stays in step with the contracts
     assert tuple(_family.labels) == FAMILY_PARAMS[_family.key], _family.key
 assert set(L_BRACKET_V0.labels) == set(PARAM_NAMES)
+assert set(FAMILIES) == set(FAMILY_PARAMS), "every contract family has an emulator family"
 
 
 def match_family(parameter_names: list[str]) -> tuple[Family, dict[str, str]] | None:
