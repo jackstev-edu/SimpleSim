@@ -10,8 +10,6 @@ from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
 
-from src.agent.agent import Agent
-from src.agent.tools import Workbench
 from src.assistant.front import FrontAgent
 from src.assistant.path_rule import part_path
 from src.assistant.study import handoff_message
@@ -33,10 +31,12 @@ class _Borrowed:
 
 class AssistantSession:
     def __init__(self, client, out_dir: Path, backend: str = "ansys",
-                 make_workbench=Workbench, make_agent=Agent):
+                 make_workbench=None, make_agent=None):
         self.client = client
         self.out_dir = Path(out_dir)
         self.backend = backend
+        # None means the real Workbench and Agent, imported on first use: src.agent.tools loads the ANSYS
+        # packages, so the fast path (and the GUI server on a laptop without ANSYS) must not import them here.
         self.make_workbench = make_workbench
         self.make_agent = make_agent
         self.path: str | None = None
@@ -48,6 +48,10 @@ class AssistantSession:
 
     def _shared_wb(self):
         if self._wb is None:
+            if self.make_workbench is None:
+                from src.agent.tools import Workbench  # needs the ANSYS packages; callers catch the ImportError
+
+                self.make_workbench = Workbench
             self._wb = self.make_workbench(self.out_dir / "session")
         return self._wb
 
@@ -134,6 +138,10 @@ class AssistantSession:
         try:
             self.workbench = self._shared_wb()
             self.workbench.load_part(self.part_path)
+            if self.make_agent is None:
+                from src.agent.agent import Agent  # same: imported only when the ANSYS agent takes over
+
+                self.make_agent = Agent
             self.agent = self.make_agent(self.workbench, self.client)
         except Exception as e:  # noqa: BLE001 - no ANSYS, licence limit, unreadable file
             self.path, self.front, self.workbench, self.agent = None, None, None, None
