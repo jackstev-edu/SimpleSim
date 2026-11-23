@@ -28,8 +28,15 @@ contracts/      shared models, fakes, examples (the team agreement)
 src/
   data/         Role 1: solver backends, runs.csv generator
   models/       Role 2: GP and AutoGluon predictors, benchmarks
-  agent/        Role 3: goal parsing, tool loop, explanations
+  agent/        Role 3: ANSYS design agent (tool loop, prompt)
+  assistant/    Role 3: request to spec, explanation with number check, decision log
+  eval/         Role 3: practice-set runner support (simulated user, grader)
+  sim/          SpaceClaim geometry edits and Mechanical solves (PyAnsys)
   ui/           Role 4: interface on result.json fixtures
+scripts/        runnable checks, e.g. smoke_loop.py (edit -> solve -> plausibility checks)
+practice/       practice problems, answer keys and graded results
+examples/       sample parts for development
+outputs/        generated part and result files (not committed)
 tests/          contract and smoke tests
 data/
   raw/          raw simulation outputs (not committed)
@@ -50,6 +57,26 @@ source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 python -m pytest tests -q          # contract checks, should pass on a fresh clone
 ```
+
+The `src/sim` tools, the ANSYS agent, the assistant front layer, the practice set and `app.py` need their own packages and a local ANSYS 2026 R1 install (Mechanical and SpaceClaim; the Student version works), with Python 3.12+. Without them their tests skip. Install the packages and check the whole chain with:
+
+```bash
+pip install -r src/sim/requirements.txt
+python -m scripts.smoke_loop     # geometry edit -> solve -> plausibility checks
+python -m scripts.smoke_tools    # the agent's tools, scripted, no LLM (no API cost)
+```
+
+Run the chat app (needs `OPENAI_API_KEY` set as an environment variable; never put the key in code):
+
+```bash
+python app.py                    # opens http://127.0.0.1:7860
+```
+
+Upload a part (`.scdocx`, `.stp`, `.step`; try `examples/l_bracket.scdocx`), then describe the load case and the objective in the chat.
+
+Each app session has a spending cap: $0.20 in `debug`/`demo` mode and $2.00 in `deploy` mode, set with `SIMPLESIM_MODE`. Every mode uses `gpt-6-luna` for now; `deploy` moves to `gpt-6.1-sol` before submission. Override it with `SIMPLESIM_SESSION_BUDGET_USD`. When the app closes, its cost is added to `practice/spend.csv`.
+
+Student licence note: SpaceClaim can only save `.scdocx` and `.pmdb` (STEP/IGES/Parasolid export is blocked), but STEP import works.
 
 ## Team
 

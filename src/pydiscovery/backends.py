@@ -3,7 +3,7 @@
 fitted     default; Role 2's power law fitted to Role 1's CalculiX runs (v0 and the gusseted v1), instant
 formula    the contracts' beam formula; v0 only, a different bracket's theory, far off for this one
 calculix   Role 1's CalculiX solver through its family registry (v0 and v1); needs src/data's packages
-ansys      Role 3 wraps src/sim (Mechanical, SpaceClaim) here; not wired yet
+ansys      Role 3's SpaceClaim + Mechanical pipeline (src/sim/ansys_engine.py); v0 and v1, needs a local licensed ANSYS
 discovery  the real PyDiscovery, once Ansys releases it
 """
 
@@ -106,12 +106,35 @@ class CalculixBackend:
 
 
 class AnsysBackend:
-    """Placeholder for Role 3: wrap src/sim (SpaceClaim edits, Mechanical solve) behind solve()."""
+    """Role 3's SpaceClaim + Mechanical pipeline (src/sim/ansys_engine.py), imported only when used."""
 
     name = "ansys_mechanical"
 
+    def __init__(self, mesh_check: bool = False):
+        self.mesh_check = mesh_check
+        self._engine = None
+
+    @property
+    def last_details(self) -> dict:
+        """Raw peak, zone fields, locations and notes of the last solve (Verified drops extra keys)."""
+        return self._engine.last_details if self._engine is not None else {}
+
     def solve(self, family, design_mm, force_n, material):
-        raise BackendUnavailable("The Ansys engine isn't wired yet. Role 3 wraps src/sim here; see docs/pydiscovery.md.")
+        if self._engine is None:
+            try:  # lazy so CI and teammates without ANSYS never import it
+                from src.sim.ansys_engine import AnsysEngine
+            except ImportError as exc:
+                raise BackendUnavailable(
+                    "The Ansys engine needs a licensed ANSYS 2026 R1 with PyMechanical and PyAnsys Geometry "
+                    f"(Role 3, src/sim). Import failed: {exc}"
+                ) from exc
+            self._engine = AnsysEngine(mesh_check=self.mesh_check)
+        return self._engine.solve(family, design_mm, force_n, material)
+
+    def close(self) -> None:
+        if self._engine is not None:
+            self._engine.close()
+            self._engine = None
 
 
 class DiscoveryBackend:
