@@ -1,16 +1,20 @@
-"""Power-law surrogates (Role 2): log-linear in the log of a family's inputs, built in for v0 and v1.
+"""Power-law surrogates (Role 2): log-linear in the log of a family's inputs, built in for v0, v1
+and Role 1's ten bracket templates (T01 to T10).
 
 log(stress) and log(deflection) are linear in the log of the dimensions and of Poisson's ratio
 at the reference load. For a linear elastic part, load and material scale exactly: stress with
 force, deflection with force over E. Mass needs no model: closed-form volumes match Role 1's
-meshes to 1e-15 (v0) and 0.012% (v1, four tip blends of the junction fillet left out).
+meshes to 1e-15 (v0), 0.012% (v1, four tip blends of the junction fillet left out) and 0.02%
+(the templates, src/models/template_families.py).
 
 v0: fitted to Role 1's 200 CalculiX runs (data/processed/formal_v0), five dimensions, no
 Poisson term. Those labels come from v0's uniform 1 to 2 mm mesh, which under-reads peak
 stress at the fillet; V0_STRESS_CORRECTION (from src/models/v0_mesh_bias.py, 48 re-solves on
 the v1 mesh rule) lifts predictions and widens the band. v1: fitted to the 2,048-run gusseted
-dataset with eight dimensions plus Poisson's ratio, band calibrated on held-out rows. Numbers
-and protocol in docs/models.md; refit with `python -m src.models.benchmark`.
+dataset with eight dimensions plus Poisson's ratio, band calibrated on held-out rows. The
+templates: one fit each on its 80 rows of data/processed/formal_multifamily_v1, constants in
+template_fits.json (refit with `python -m src.models.multifamily --fit`). Numbers and protocol
+in docs/models.md; refit v1 with `python -m src.models.benchmark`.
 """
 
 from __future__ import annotations
@@ -25,6 +29,7 @@ from contracts.fakes import MATERIALS
 from contracts.models import PARAM_NAMES, Candidate, Estimate, Prediction, StudySpec
 
 from .datasets import DEFAULT_POISSON, FAMILY_GEOMETRY, METRICS, REF_E_MPA, REF_FORCE_N, V0, V1, ModelData, load_model_dataset
+from .template_families import TEMPLATE_VOLUME, TEMPLATES, load_fits
 
 # ---------------------------------------------------------------- v0, built in (unchanged since the 200-run fit)
 # log(y) = intercept + sum(exponent * log(dimension_mm)) at the reference load and stiffness.
@@ -92,7 +97,7 @@ def volume_v1_mm3(X: np.ndarray) -> np.ndarray:
     return legs + gusset + junction
 
 
-FAMILY_VOLUME = {V0: volume_mm3, V1: volume_v1_mm3}
+FAMILY_VOLUME = {V0: volume_mm3, V1: volume_v1_mm3, **TEMPLATE_VOLUME}
 
 
 # ---------------------------------------------------------------- the fitted model
@@ -188,7 +193,21 @@ def builtin_fit(family: str = V0) -> PowerLawFit:
     if family == V1 and COEF_V1:
         return PowerLawFit(V1, INPUTS_V1, COEF_V1, SIGMA_LOG_V1, band_scale=dict(BAND_SCALE_V1), ranges=dict(TRAIN_RANGES_V1),
                            trained_on_runs=TRAINED_ON_RUNS_V1)
-    raise ValueError(f"No built-in power law for {family!r}; known: {[V0] + ([V1] if COEF_V1 else [])}")
+    fits = load_fits()
+    if family in fits:  # Role 1's templates, from template_fits.json
+        c = fits[family]
+        return PowerLawFit(family, tuple(c["inputs"]), {m: tuple(v) for m, v in c["coef"].items()}, dict(c["sigma"]),
+                           band_scale=dict(c["band_scale"]), ranges={k: tuple(v) for k, v in c["ranges"].items()}, trained_on_runs=c["trained_on_runs"])
+    raise ValueError(f"No built-in power law for {family!r}; known: {builtin_families()}")
+
+
+def builtin_families() -> list[str]:
+    """Every family with shipped coefficients: v0, v1 and the templates that template_fits.json carries."""
+    return [V0] + ([V1] if COEF_V1 else []) + [k for k in TEMPLATES if k in load_fits()]
+
+
+def model_name_for(family: str) -> str:
+    return f"power_law_{'v0' if family == V0 else 'v1' if family == V1 else family}"
 
 
 # ---------------------------------------------------------------- v0 module API, kept for callers and tests
@@ -281,7 +300,7 @@ class PowerLawPredictor:
         """valid: an optional design dict -> bool from the family's geometry rules (PyDiscovery passes Family.valid)."""
         self.fit = builtin_fit(family)
         self.family, self.poisson, self.valid = family, poisson, valid
-        self.model_name = f"power_law_{'v0' if family == V0 else 'v1'}"
+        self.model_name = model_name_for(family)
         self.override = {"E_mpa": e_mpa, "yield_mpa": yield_mpa, "rho_kg_mm3": density_kg_m3 * 1e-9 if density_kg_m3 else None}
 
     def predict(self, spec: StudySpec, n: int | None = None, seed: int = 0) -> Prediction:
@@ -305,13 +324,13 @@ class PowerLawBackend:
 
     def source(self, family) -> str:
         """What Verified.source says for a solve of this family."""
-        return "power_law_v0" if family.key == V0 else "power_law_v1"
+        return model_name_for(family.key)
 
     def solve(self, family, design_mm, force_n, material):
         try:
             fit = builtin_fit(family.key)
         except ValueError as exc:
-            raise ValueError(f"the power law is fitted to {V0} and {V1} only, not {family.key}") from exc
+            raise ValueError(f"the power law is fitted to {', '.join(builtin_families())} only, not {family.key}") from exc
         X = with_poisson(np.array([[design_mm[p] for p in fit.geometry]]), fit.inputs, getattr(material, "poisson", None))
         med, _ = fit.predict_arrays(X, force_n, material.youngs_mpa)
         return {"max_stress_mpa": float(med["max_stress_mpa"][0]), "max_disp_mm": float(med["max_disp_mm"][0]),

@@ -1,0 +1,900 @@
+{
+ "t01_double_hole_v1": {
+  "inputs": [
+   "thickness_mm",
+   "flange_length_mm",
+   "arm_width_mm",
+   "hole_diameter_mm",
+   "fillet_radius_mm",
+   "vertical_height_mm",
+   "poissons_ratio"
+  ],
+  "coef": {
+   "max_stress_mpa": [
+    7.88989,
+    -1.883719,
+    1.095578,
+    -1.03985,
+    -0.019465,
+    -0.22372,
+    0.034204,
+    0.014973
+   ],
+   "max_disp_mm": [
+    -5.266914,
+    -3.068866,
+    3.172022,
+    -1.05415,
+    0.046085,
+    -0.089655,
+    -0.001649,
+    -0.062058
+   ]
+  },
+  "sigma": {
+   "max_stress_mpa": 0.030187,
+   "max_disp_mm": 0.009097
+  },
+  "band_scale": {
+   "max_stress_mpa": 1.0,
+   "max_disp_mm": 1.0
+  },
+  "trained_on_runs": 80,
+  "ranges": {
+   "thickness_mm": [
+    4.0,
+    10.0
+   ],
+   "flange_length_mm": [
+    75.0,
+    120.0
+   ],
+   "arm_width_mm": [
+    32.0,
+    60.0
+   ],
+   "hole_diameter_mm": [
+    6.0,
+    10.0
+   ],
+   "fillet_radius_mm": [
+    2.0,
+    8.0
+   ],
+   "vertical_height_mm": [
+    50.0,
+    90.0
+   ],
+   "poissons_ratio": [
+    0.25,
+    0.35
+   ]
+  },
+  "family": "t01_double_hole_v1",
+  "validation": {
+   "train_rows": 64,
+   "rows": 16,
+   "max_stress_mpa_median": 0.02971131476182942,
+   "max_stress_mpa_p90": 0.03772335519917802,
+   "max_disp_mm_median": 0.006452667078864938,
+   "max_disp_mm_p90": 0.012884736704151023
+  }
+ },
+ "t02_single_slot_v1": {
+  "inputs": [
+   "thickness_mm",
+   "flange_length_mm",
+   "arm_width_mm",
+   "fillet_radius_mm",
+   "vertical_height_mm",
+   "slot_width_mm",
+   "slot_straight_length_mm",
+   "poissons_ratio"
+  ],
+  "coef": {
+   "max_stress_mpa": [
+    7.731487,
+    -1.87478,
+    1.139855,
+    -0.984056,
+    -0.30163,
+    -0.006024,
+    0.004982,
+    -0.007749,
+    0.050308
+   ],
+   "max_disp_mm": [
+    -5.318915,
+    -3.064945,
+    3.166604,
+    -1.065517,
+    -0.085655,
+    0.0092,
+    0.053346,
+    0.018273,
+    -0.059456
+   ]
+  },
+  "sigma": {
+   "max_stress_mpa": 0.016076,
+   "max_disp_mm": 0.009539
+  },
+  "band_scale": {
+   "max_stress_mpa": 1.0,
+   "max_disp_mm": 1.0
+  },
+  "trained_on_runs": 80,
+  "ranges": {
+   "thickness_mm": [
+    4.0,
+    10.0
+   ],
+   "flange_length_mm": [
+    75.0,
+    120.0
+   ],
+   "arm_width_mm": [
+    32.0,
+    60.0
+   ],
+   "fillet_radius_mm": [
+    2.0,
+    8.0
+   ],
+   "vertical_height_mm": [
+    50.0,
+    90.0
+   ],
+   "slot_width_mm": [
+    6.0,
+    10.0
+   ],
+   "slot_straight_length_mm": [
+    8.0,
+    18.0
+   ],
+   "poissons_ratio": [
+    0.25,
+    0.35
+   ]
+  },
+  "family": "t02_single_slot_v1",
+  "validation": {
+   "train_rows": 64,
+   "rows": 16,
+   "max_stress_mpa_median": 0.007721629535779706,
+   "max_stress_mpa_p90": 0.027000161728128025,
+   "max_disp_mm_median": 0.008154321846549406,
+   "max_disp_mm_p90": 0.012065462560104212
+  }
+ },
+ "t03_twin_slot_v1": {
+  "inputs": [
+   "thickness_mm",
+   "flange_length_mm",
+   "arm_width_mm",
+   "fillet_radius_mm",
+   "vertical_height_mm",
+   "slot_width_mm",
+   "slot_straight_length_mm",
+   "poissons_ratio"
+  ],
+  "coef": {
+   "max_stress_mpa": [
+    7.953314,
+    -1.861126,
+    1.061486,
+    -1.027356,
+    -0.286316,
+    0.005434,
+    0.063445,
+    0.001926,
+    0.01536
+   ],
+   "max_disp_mm": [
+    -5.105215,
+    -3.060241,
+    3.127072,
+    -1.115859,
+    -0.083211,
+    0.003231,
+    0.120573,
+    0.046496,
+    -0.056522
+   ]
+  },
+  "sigma": {
+   "max_stress_mpa": 0.032389,
+   "max_disp_mm": 0.011127
+  },
+  "band_scale": {
+   "max_stress_mpa": 1.0,
+   "max_disp_mm": 1.0
+  },
+  "trained_on_runs": 80,
+  "ranges": {
+   "thickness_mm": [
+    4.0,
+    10.0
+   ],
+   "flange_length_mm": [
+    75.0,
+    120.0
+   ],
+   "arm_width_mm": [
+    32.0,
+    60.0
+   ],
+   "fillet_radius_mm": [
+    2.0,
+    8.0
+   ],
+   "vertical_height_mm": [
+    50.0,
+    90.0
+   ],
+   "slot_width_mm": [
+    6.0,
+    10.0
+   ],
+   "slot_straight_length_mm": [
+    8.0,
+    18.0
+   ],
+   "poissons_ratio": [
+    0.25,
+    0.35
+   ]
+  },
+  "family": "t03_twin_slot_v1",
+  "validation": {
+   "train_rows": 64,
+   "rows": 16,
+   "max_stress_mpa_median": 0.01775205668032287,
+   "max_stress_mpa_p90": 0.040321347169120836,
+   "max_disp_mm_median": 0.0065600344385378095,
+   "max_disp_mm_p90": 0.013065731432787553
+  }
+ },
+ "t04_rounded_window_v1": {
+  "inputs": [
+   "thickness_mm",
+   "flange_length_mm",
+   "arm_width_mm",
+   "fillet_radius_mm",
+   "vertical_height_mm",
+   "window_length_mm",
+   "window_width_mm",
+   "window_radius_mm",
+   "poissons_ratio"
+  ],
+  "coef": {
+   "max_stress_mpa": [
+    8.155907,
+    -1.882173,
+    0.847473,
+    -1.271631,
+    -0.090172,
+    0.112419,
+    0.175625,
+    0.404128,
+    -0.254689,
+    0.127195
+   ],
+   "max_disp_mm": [
+    -4.935286,
+    -3.055117,
+    3.050424,
+    -1.14211,
+    -0.073298,
+    0.020354,
+    0.044875,
+    0.167556,
+    -0.021928,
+    -0.058306
+   ]
+  },
+  "sigma": {
+   "max_stress_mpa": 0.053701,
+   "max_disp_mm": 0.011795
+  },
+  "band_scale": {
+   "max_stress_mpa": 1.0,
+   "max_disp_mm": 1.0
+  },
+  "trained_on_runs": 80,
+  "ranges": {
+   "thickness_mm": [
+    4.0,
+    10.0
+   ],
+   "flange_length_mm": [
+    75.0,
+    120.0
+   ],
+   "arm_width_mm": [
+    32.0,
+    60.0
+   ],
+   "fillet_radius_mm": [
+    2.0,
+    8.0
+   ],
+   "vertical_height_mm": [
+    50.0,
+    90.0
+   ],
+   "window_length_mm": [
+    18.0,
+    30.0
+   ],
+   "window_width_mm": [
+    12.0,
+    20.0
+   ],
+   "window_radius_mm": [
+    2.0,
+    4.0
+   ],
+   "poissons_ratio": [
+    0.25,
+    0.35
+   ]
+  },
+  "family": "t04_rounded_window_v1",
+  "validation": {
+   "train_rows": 64,
+   "rows": 16,
+   "max_stress_mpa_median": 0.04168775533770913,
+   "max_stress_mpa_p90": 0.06293316833209839,
+   "max_disp_mm_median": 0.007751784540120821,
+   "max_disp_mm_p90": 0.016483781428871636
+  }
+ },
+ "t05_side_notches_v1": {
+  "inputs": [
+   "thickness_mm",
+   "flange_length_mm",
+   "arm_width_mm",
+   "hole_diameter_mm",
+   "fillet_radius_mm",
+   "vertical_height_mm",
+   "notch_radius_mm",
+   "poissons_ratio"
+  ],
+  "coef": {
+   "max_stress_mpa": [
+    8.491375,
+    -1.868929,
+    1.012721,
+    -1.05599,
+    -0.077728,
+    -0.151109,
+    0.013256,
+    -0.014542,
+    0.052141
+   ],
+   "max_disp_mm": [
+    -5.170355,
+    -3.057326,
+    3.137668,
+    -1.075947,
+    0.046759,
+    -0.078224,
+    0.001377,
+    0.071923,
+    -0.058514
+   ]
+  },
+  "sigma": {
+   "max_stress_mpa": 0.031914,
+   "max_disp_mm": 0.010903
+  },
+  "band_scale": {
+   "max_stress_mpa": 1.0,
+   "max_disp_mm": 1.0
+  },
+  "trained_on_runs": 80,
+  "ranges": {
+   "thickness_mm": [
+    4.0,
+    10.0
+   ],
+   "flange_length_mm": [
+    75.0,
+    120.0
+   ],
+   "arm_width_mm": [
+    32.0,
+    60.0
+   ],
+   "hole_diameter_mm": [
+    6.0,
+    10.0
+   ],
+   "fillet_radius_mm": [
+    2.0,
+    8.0
+   ],
+   "vertical_height_mm": [
+    50.0,
+    90.0
+   ],
+   "notch_radius_mm": [
+    3.0,
+    6.0
+   ],
+   "poissons_ratio": [
+    0.25,
+    0.35
+   ]
+  },
+  "family": "t05_side_notches_v1",
+  "validation": {
+   "train_rows": 64,
+   "rows": 16,
+   "max_stress_mpa_median": 0.022467056112478956,
+   "max_stress_mpa_p90": 0.06203046742298357,
+   "max_disp_mm_median": 0.010509162667016347,
+   "max_disp_mm_p90": 0.023537037025082586
+  }
+ },
+ "t06_tapered_v1": {
+  "inputs": [
+   "thickness_mm",
+   "flange_length_mm",
+   "arm_width_mm",
+   "hole_diameter_mm",
+   "fillet_radius_mm",
+   "vertical_height_mm",
+   "tip_trim_mm",
+   "poissons_ratio"
+  ],
+  "coef": {
+   "max_stress_mpa": [
+    7.561267,
+    -1.862526,
+    1.134509,
+    -0.966079,
+    -0.015233,
+    -0.301402,
+    0.007322,
+    -0.002633,
+    0.008445
+   ],
+   "max_disp_mm": [
+    -5.327264,
+    -3.067281,
+    3.187471,
+    -1.055814,
+    0.018998,
+    -0.086699,
+    -0.003192,
+    0.011968,
+    -0.08036
+   ]
+  },
+  "sigma": {
+   "max_stress_mpa": 0.02187,
+   "max_disp_mm": 0.010386
+  },
+  "band_scale": {
+   "max_stress_mpa": 1.0,
+   "max_disp_mm": 1.0
+  },
+  "trained_on_runs": 80,
+  "ranges": {
+   "thickness_mm": [
+    4.0,
+    10.0
+   ],
+   "flange_length_mm": [
+    75.0,
+    120.0
+   ],
+   "arm_width_mm": [
+    32.0,
+    60.0
+   ],
+   "hole_diameter_mm": [
+    6.0,
+    10.0
+   ],
+   "fillet_radius_mm": [
+    2.0,
+    8.0
+   ],
+   "vertical_height_mm": [
+    50.0,
+    90.0
+   ],
+   "tip_trim_mm": [
+    3.0,
+    6.0
+   ],
+   "poissons_ratio": [
+    0.25,
+    0.35
+   ]
+  },
+  "family": "t06_tapered_v1",
+  "validation": {
+   "train_rows": 64,
+   "rows": 16,
+   "max_stress_mpa_median": 0.01579075447866557,
+   "max_stress_mpa_p90": 0.03280092785925348,
+   "max_disp_mm_median": 0.00828999124980434,
+   "max_disp_mm_p90": 0.018731956400662386
+  }
+ },
+ "t07_stepped_v1": {
+  "inputs": [
+   "thickness_mm",
+   "flange_length_mm",
+   "arm_width_mm",
+   "hole_diameter_mm",
+   "fillet_radius_mm",
+   "vertical_height_mm",
+   "step_trim_mm",
+   "poissons_ratio"
+  ],
+  "coef": {
+   "max_stress_mpa": [
+    8.072369,
+    -1.874812,
+    0.945736,
+    -1.08919,
+    -0.01076,
+    -0.011189,
+    0.026868,
+    0.334188,
+    -0.034466
+   ],
+   "max_disp_mm": [
+    -5.244748,
+    -3.06139,
+    3.172072,
+    -1.112396,
+    0.037853,
+    -0.077338,
+    0.021408,
+    0.081704,
+    -0.060044
+   ]
+  },
+  "sigma": {
+   "max_stress_mpa": 0.022957,
+   "max_disp_mm": 0.009763
+  },
+  "band_scale": {
+   "max_stress_mpa": 1.0,
+   "max_disp_mm": 1.0
+  },
+  "trained_on_runs": 80,
+  "ranges": {
+   "thickness_mm": [
+    4.0,
+    10.0
+   ],
+   "flange_length_mm": [
+    75.0,
+    120.0
+   ],
+   "arm_width_mm": [
+    32.0,
+    60.0
+   ],
+   "hole_diameter_mm": [
+    6.0,
+    10.0
+   ],
+   "fillet_radius_mm": [
+    2.0,
+    8.0
+   ],
+   "vertical_height_mm": [
+    50.0,
+    90.0
+   ],
+   "step_trim_mm": [
+    3.0,
+    6.0
+   ],
+   "poissons_ratio": [
+    0.25,
+    0.35
+   ]
+  },
+  "family": "t07_stepped_v1",
+  "validation": {
+   "train_rows": 0,
+   "rows": 0,
+   "note": "held out as a whole family by Role 1; the fit uses its 80 rows"
+  }
+ },
+ "t08_twin_gusset_v1": {
+  "inputs": [
+   "thickness_mm",
+   "flange_length_mm",
+   "arm_width_mm",
+   "hole_diameter_mm",
+   "fillet_radius_mm",
+   "vertical_height_mm",
+   "gusset_thickness_mm",
+   "gusset_length_mm",
+   "poissons_ratio"
+  ],
+  "coef": {
+   "max_stress_mpa": [
+    6.358208,
+    -1.825796,
+    1.387632,
+    -0.724398,
+    -0.004538,
+    -0.012516,
+    -0.011438,
+    -0.104784,
+    -0.27897,
+    -0.001624
+   ],
+   "max_disp_mm": [
+    -6.554153,
+    -2.872814,
+    3.699123,
+    -0.889129,
+    -0.035018,
+    -0.014281,
+    -0.030514,
+    -0.103303,
+    -0.743429,
+    -0.062317
+   ]
+  },
+  "sigma": {
+   "max_stress_mpa": 0.023109,
+   "max_disp_mm": 0.031557
+  },
+  "band_scale": {
+   "max_stress_mpa": 1.0,
+   "max_disp_mm": 1.0
+  },
+  "trained_on_runs": 80,
+  "ranges": {
+   "thickness_mm": [
+    4.0,
+    10.0
+   ],
+   "flange_length_mm": [
+    75.0,
+    120.0
+   ],
+   "arm_width_mm": [
+    32.0,
+    60.0
+   ],
+   "hole_diameter_mm": [
+    6.0,
+    10.0
+   ],
+   "fillet_radius_mm": [
+    2.5,
+    8.0
+   ],
+   "vertical_height_mm": [
+    50.0,
+    90.0
+   ],
+   "gusset_thickness_mm": [
+    3.0,
+    5.0
+   ],
+   "gusset_length_mm": [
+    16.0,
+    28.0
+   ],
+   "poissons_ratio": [
+    0.25,
+    0.35
+   ]
+  },
+  "family": "t08_twin_gusset_v1",
+  "validation": {
+   "train_rows": 64,
+   "rows": 16,
+   "max_stress_mpa_median": 0.020296332195508526,
+   "max_stress_mpa_p90": 0.04007742226636679,
+   "max_disp_mm_median": 0.022291012477927807,
+   "max_disp_mm_p90": 0.0787012957667248
+  }
+ },
+ "t09_perforated_gusset_v1": {
+  "inputs": [
+   "thickness_mm",
+   "flange_length_mm",
+   "arm_width_mm",
+   "hole_diameter_mm",
+   "fillet_radius_mm",
+   "vertical_height_mm",
+   "gusset_thickness_mm",
+   "gusset_length_mm",
+   "rib_hole_diameter_mm",
+   "poissons_ratio"
+  ],
+  "coef": {
+   "max_stress_mpa": [
+    6.252433,
+    -1.877494,
+    1.57569,
+    -0.649397,
+    -0.040469,
+    -0.000489,
+    0.012514,
+    -0.189648,
+    -0.461847,
+    -0.014554,
+    0.001168
+   ],
+   "max_disp_mm": [
+    -7.123186,
+    -2.77878,
+    4.019352,
+    -0.814488,
+    0.071267,
+    -0.003434,
+    0.016846,
+    -0.154835,
+    -1.242605,
+    0.03887,
+    -0.055609
+   ]
+  },
+  "sigma": {
+   "max_stress_mpa": 0.020487,
+   "max_disp_mm": 0.02136
+  },
+  "band_scale": {
+   "max_stress_mpa": 1.0,
+   "max_disp_mm": 1.0
+  },
+  "trained_on_runs": 80,
+  "ranges": {
+   "thickness_mm": [
+    4.0,
+    10.0
+   ],
+   "flange_length_mm": [
+    75.0,
+    120.0
+   ],
+   "arm_width_mm": [
+    32.0,
+    60.0
+   ],
+   "hole_diameter_mm": [
+    6.0,
+    10.0
+   ],
+   "fillet_radius_mm": [
+    2.5,
+    8.0
+   ],
+   "vertical_height_mm": [
+    50.0,
+    90.0
+   ],
+   "gusset_thickness_mm": [
+    5.0,
+    9.0
+   ],
+   "gusset_length_mm": [
+    28.0,
+    35.0
+   ],
+   "rib_hole_diameter_mm": [
+    5.0,
+    8.0
+   ],
+   "poissons_ratio": [
+    0.25,
+    0.35
+   ]
+  },
+  "family": "t09_perforated_gusset_v1",
+  "validation": {
+   "train_rows": 64,
+   "rows": 16,
+   "max_stress_mpa_median": 0.01589469402215854,
+   "max_stress_mpa_p90": 0.038746810605255644,
+   "max_disp_mm_median": 0.015786534557076404,
+   "max_disp_mm_p90": 0.03123118568753236
+  }
+ },
+ "t10_offset_planform_v1": {
+  "inputs": [
+   "thickness_mm",
+   "flange_length_mm",
+   "arm_width_mm",
+   "hole_diameter_mm",
+   "fillet_radius_mm",
+   "vertical_height_mm",
+   "offset_trim_mm",
+   "poissons_ratio"
+  ],
+  "coef": {
+   "max_stress_mpa": [
+    8.074417,
+    -1.886507,
+    0.909301,
+    -1.071665,
+    0.01696,
+    0.000184,
+    0.0063,
+    0.402927,
+    0.006293
+   ],
+   "max_disp_mm": [
+    -5.091922,
+    -3.05298,
+    3.143838,
+    -1.113905,
+    0.011796,
+    -0.086689,
+    -0.003158,
+    0.107379,
+    -0.099559
+   ]
+  },
+  "sigma": {
+   "max_stress_mpa": 0.010951,
+   "max_disp_mm": 0.011196
+  },
+  "band_scale": {
+   "max_stress_mpa": 1.0,
+   "max_disp_mm": 1.0
+  },
+  "trained_on_runs": 80,
+  "ranges": {
+   "thickness_mm": [
+    4.0,
+    10.0
+   ],
+   "flange_length_mm": [
+    75.0,
+    120.0
+   ],
+   "arm_width_mm": [
+    32.0,
+    60.0
+   ],
+   "hole_diameter_mm": [
+    6.0,
+    10.0
+   ],
+   "fillet_radius_mm": [
+    2.0,
+    8.0
+   ],
+   "vertical_height_mm": [
+    50.0,
+    90.0
+   ],
+   "offset_trim_mm": [
+    6.0,
+    12.0
+   ],
+   "poissons_ratio": [
+    0.25,
+    0.35
+   ]
+  },
+  "family": "t10_offset_planform_v1",
+  "validation": {
+   "train_rows": 64,
+   "rows": 16,
+   "max_stress_mpa_median": 0.004351388949103807,
+   "max_stress_mpa_p90": 0.01518772779912686,
+   "max_disp_mm_median": 0.005830850409977273,
+   "max_disp_mm_p90": 0.0196733502655706
+  }
+ }
+}

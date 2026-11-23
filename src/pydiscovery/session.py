@@ -14,6 +14,7 @@ from pathlib import Path
 from contracts.fakes import MATERIALS, FakePredictor, run_pipeline
 from contracts.models import Constraint, Load, Objective, ParameterRange, Result, StudySpec, Verified
 
+from src.models.datasets import FAMILY_DIRS
 from src.models.power_law import PowerLawPredictor
 
 from .backends import Backend, get_backend
@@ -70,11 +71,11 @@ class App:
 
     def _predictor_for(self, m: Material, family: Family = L_BRACKET_V0):
         """The shortlisting model for a part's material and family."""
-        if self.predictor == "gp":
+        source = self.runs.get(family.key) if self.runs else None
+        if self.predictor == "gp" and (source or family.key in FAMILY_DIRS):  # the templates have no GP dataset: power law
             if family.key not in self._gp:
                 from src.models.gp import GPPredictor, trained_gp  # needs scikit-learn and Role 1's data
 
-                source = self.runs.get(family.key) if self.runs else None
                 self._gp[family.key] = GPPredictor(source, family=family.key) if source else trained_gp(family.key)
             return self._gp[family.key].for_material(m.youngs_mpa, m.yield_mpa, m.density_kg_m3, poisson=m.poisson, valid=family.valid)
         return PowerLawPredictor(e_mpa=m.youngs_mpa, yield_mpa=m.yield_mpa, density_kg_m3=m.density_kg_m3, family=family.key,

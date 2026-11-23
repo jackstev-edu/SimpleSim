@@ -22,14 +22,31 @@ PARAM_NAMES = ("thickness_mm", "flange_length_mm", "arm_width_mm", "hole_diamete
 
 # Every family's dimensions, in model order. A StudySpec's parameters and every design in a Result
 # use exactly its family's set. v1 is the gusseted bracket (docs/bracket_family_v1_l_bracket_gusset_v1.md).
+# T01 to T10 are Role 1's templates (docs/role1_multifamily_handoff.md): the v0 frame with a variable
+# leg height, a hole only where the template has one, then the template's own cut or rib dimensions.
+_PLATE = ("thickness_mm", "flange_length_mm", "arm_width_mm")
+_HOLED = PARAM_NAMES + ("vertical_height_mm",)  # the five v0 names plus the leg height
+_SLOTTED = _PLATE + ("fillet_radius_mm", "vertical_height_mm")  # no plain hole
 FAMILY_PARAMS: dict[str, tuple[str, ...]] = {
     "l_bracket_v0": PARAM_NAMES,
     "l_bracket_gusset_v1": PARAM_NAMES + ("vertical_height_mm", "gusset_thickness_mm", "gusset_length_mm"),
+    "t01_double_hole_v1": _HOLED,
+    "t02_single_slot_v1": _SLOTTED + ("slot_width_mm", "slot_straight_length_mm"),
+    "t03_twin_slot_v1": _SLOTTED + ("slot_width_mm", "slot_straight_length_mm"),
+    "t04_rounded_window_v1": _SLOTTED + ("window_length_mm", "window_width_mm", "window_radius_mm"),
+    "t05_side_notches_v1": _HOLED + ("notch_radius_mm",),
+    "t06_tapered_v1": _HOLED + ("tip_trim_mm",),
+    "t07_stepped_v1": _HOLED + ("step_trim_mm",),
+    "t08_twin_gusset_v1": _HOLED + ("gusset_thickness_mm", "gusset_length_mm"),
+    "t09_perforated_gusset_v1": _HOLED + ("gusset_thickness_mm", "gusset_length_mm", "rib_hole_diameter_mm"),
+    "t10_offset_planform_v1": _HOLED + ("offset_trim_mm",),
 }
 
 MetricName = Literal["mass_kg", "max_stress_mpa", "max_disp_mm", "safety_factor"]
 ParamName = Literal["thickness_mm", "flange_length_mm", "arm_width_mm", "hole_diameter_mm", "fillet_radius_mm",
-                    "vertical_height_mm", "gusset_thickness_mm", "gusset_length_mm"]
+                    "vertical_height_mm", "gusset_thickness_mm", "gusset_length_mm",
+                    "slot_width_mm", "slot_straight_length_mm", "window_length_mm", "window_width_mm", "window_radius_mm",
+                    "notch_radius_mm", "tip_trim_mm", "step_trim_mm", "rib_hole_diameter_mm", "offset_trim_mm"]
 
 
 def family_params(bracket_family: str) -> tuple[str, ...]:

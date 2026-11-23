@@ -94,7 +94,7 @@ def test_spaceclaim_part_can_be_declared_a_gusset_bracket(tmp_path):
 
 def test_agent_tools_offer_both_families(tmp_path, dsco):
     spec = next(s for s in TOOL_SPECS if s["name"] == "use_family")
-    assert spec["parameters"]["properties"]["family"]["enum"] == ["l_bracket_v0", V1]
+    assert spec["parameters"]["properties"]["family"]["enum"][:2] == ["l_bracket_v0", V1]  # the templates follow
     tools = PyDiscoveryTools()
     assert tools.call("open_part", {"path": str(dsco)})["state"]["family"] == V1
     assert tools.call("confirm_setup")["ok"]

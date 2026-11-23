@@ -35,8 +35,9 @@ part.save("data/processed/l_bracket_opt.dsco", result.recommended.design)
 | --- | --- | --- |
 | `l_bracket_v0`, "L-bracket v0" | thickness, flange length, arm width, hole diameter, fillet radius | `docs/bracket_family_v0.md` |
 | `l_bracket_gusset_v1`, "Gusseted L-bracket v1" | the five above plus vertical height, gusset thickness, gusset length | `docs/bracket_family_v1_l_bracket_gusset_v1.md` |
+| `t01_double_hole_v1` to `t10_offset_planform_v1`, "Double-hole bracket T01" to "Offset-planform bracket T10" | thickness, flange length, arm width, fillet radius, vertical height, a hole diameter where the template has a plain hole, then the template's own cut or rib dimensions (slot, window, notch, tip trim, step trim, gusset, rib hole, offset trim) | `docs/role1_multifamily_handoff.md`; tables, rules and volumes in `src/models/template_families.py` |
 
-A part file is matched to the largest family whose every dimension it names, so a gusset file is never mistaken for a v0 one. The v1 family carries Role 1's named geometry rules (the gusset must clear the hole, the top of the leg, the side faces and the inside fillet): `set_dimensions` refuses a design that breaks one, the confirmation card lists a broken rule as a problem, and the predictors drop such designs from the shortlist before anything is solved. The contracts' `FAMILY_PARAMS` is the source of truth for each family's dimension names; a `StudySpec` and every design in a `Result` use exactly its family's set.
+A part file is matched to the largest family whose every dimension it names, so a gusset file is never mistaken for a v0 one. The v1 family carries Role 1's named geometry rules (the gusset must clear the hole, the top of the leg, the side faces and the inside fillet), and each template carries the clearance checks from Role 1's builders under the same names (`opening_clearance`, `rib_reach`, `tip_hole_clearance` and so on): `set_dimensions` refuses a design that breaks one, the confirmation card lists a broken rule as a problem, and the predictors drop such designs from the shortlist before anything is solved. The contracts' `FAMILY_PARAMS` is the source of truth for each family's dimension names; a `StudySpec` and every design in a `Result` use exactly its family's set. A template's six common names overlap v0's five and v1's eight, so a file that names a vertical height but no gusset is the double-hole template T01, and one that names a gusset is v1.
 
 ## What each file type gives
 
@@ -53,7 +54,7 @@ A part file is matched to the largest family whose every dimension it names, so 
 
 | Engine | What it is | Status |
 | --- | --- | --- |
-| `fitted` (default) | Power laws fitted to Role 1's CalculiX runs (`src/models/power_law.py`): v0 about 1% median error, v1 about 3.5% | ready for both families; checking its own shortlist is circular, so the result says so |
+| `fitted` (default) | Power laws fitted to Role 1's CalculiX runs (`src/models/power_law.py`): v0 about 1% median error, v1 about 3.5%, the templates 0.4 to 4.2% on stress and under 2.3% on deflection (`docs/models.md`) | ready for all twelve families; checking its own shortlist is circular, so the result says so |
 | `calculix` | Role 1's CadQuery, gmsh and CalculiX pipeline through its family registry: 10 to 40 s per v0 solve, 1 to 3 min per v1 solve | needs `src/data/requirements.txt` |
 | `formula` | the contracts' beam formula | v0 only (a clear error otherwise); parity with the fakes, far off for this bracket |
 | `ansys` | Role 3 wraps `src/sim` (SpaceClaim edits, Mechanical solve) | placeholder |
