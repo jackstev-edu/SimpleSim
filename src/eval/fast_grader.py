@@ -14,7 +14,7 @@ from src.pydiscovery.families import FAMILIES
 PICK_GAP_PASS = 0.05  # provisional pass line (user decision 2026-11-22), recalibrated after the first run
 FORCE_REL = 0.005
 ANGLE_DEG = 1.0
-STUDY_CHECKS = ("force", "direction", "material", "safety_factor", "objective", "limits", "vary",
+STUDY_CHECKS = ("force", "direction", "material", "safety_factor", "objective", "limits", "vary", "family",
                 "asked", "confirmed", "no_silent_default", "feasible", "pick_gap", "dense_gap", "sim_gap")
 ASK_PATTERNS = {
     "support": re.compile(r"support|fix|bolt|wall|back face|mount|held|hold|attach|clamp", re.I),
@@ -109,7 +109,7 @@ def grade_fast(problem: FastProblem, log: dict) -> dict:
 
     if not result:
         why = f"no optimize result ({log.get('stopped') or 'run ended'})"
-        for c in ("force", "direction", "material", "safety_factor", "objective", "limits", "vary",
+        for c in ("force", "direction", "material", "safety_factor", "objective", "limits", "vary", "family",
                   "no_silent_default", "feasible", "pick_gap"):
             checks[c] = _r("fail", why)
         checks["dense_gap"] = _r("n/a", why)
@@ -136,6 +136,8 @@ def grade_fast(problem: FastProblem, log: dict) -> dict:
     cmp("limits", lims == want_lims, lims, want_lims)
     want_vary = _vary_names(problem.family, study.get("vary") or ["all"])
     cmp("vary", varied == want_vary, sorted(varied), sorted(want_vary))
+    # the assistant must search the problem's own family; match_family can pick a look-alike (2026-11-27)
+    cmp("family", spec.get("bracket_family") == problem.family, spec.get("bracket_family"), problem.family)
     cmp("no_silent_default", sf is not None and math.isclose(sf, study["safety_factor"]), sf, study["safety_factor"])
 
     rec = (result.get("recommended") or {}).get("design")

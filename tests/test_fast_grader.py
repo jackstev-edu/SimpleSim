@@ -199,6 +199,23 @@ def test_dense_gap_is_info_only():
     assert out["checks"]["pick_gap"]["result"] == "pass"
 
 
+def test_family_check_passes_on_own_family():
+    assert checks(problem(), log())["family"] == "pass"
+
+
+def test_family_check_fails_on_other_family():
+    # 2026-11-27: match_family reads T03 as T02, so a study on the wrong model must not pass
+    out = grade_fast(problem(), log(result_spec={**spec(), "bracket_family": "t02_single_slot_v1"}))
+    assert out["checks"]["family"]["result"] == "fail"
+    assert "t02_single_slot_v1" in out["checks"]["family"]["detail"] and FAM in out["checks"]["family"]["detail"]
+
+
+def test_family_check_na_on_handoff_and_fail_without_result():
+    p = problem(handoff=True)
+    assert checks(p, log(events=[{"type": "path", "path": "slow", "reason": "titanium"}], result=False))["family"] == "n/a"
+    assert checks(problem(), {**log(result=False), "stopped": "reply cap"})["family"] == "fail"
+
+
 def test_support_question_with_held():
     # real log 2026-11-23: "Which face is the bracket held by?" is a support question
     events = [{"type": "text", "text": "Which face is the bracket held by?"},
