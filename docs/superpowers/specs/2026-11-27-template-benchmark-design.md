@@ -1,6 +1,6 @@
 # Template-family problems for the fast-path benchmark: design
 
-Date: 2026-11-27. Status: draft, awaiting the user's approval.
+Date: 2026-11-27. Status: approved by the user 2026-11-27.
 Builds on `2026-11-22-fast-path-benchmark-design.md` (the existing ten problems in `practice/fast/`).
 
 ## Intent
