@@ -1,0 +1,79 @@
+id: t07_clean_mass
+family: t07_stepped_v1
+request: This is a stepped steel bracket, bolted to a wall by the back face of its upright leg. 500 N acts straight
+  down on the free end of the flange. Safety factor 1.5. Make it as light as possible.
+hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
+  the horizontal flange. Load: 500 N straight down. Material: structural steel. Safety factor: 1.5. Goal: as light
+  as possible; all dimensions may change. Starting dimensions: the ones already in the part file; if asked, accept
+  them.'
+key:
+  study:
+    force_n: 500.0
+    angle_deg: -90.0
+    material_key: structural_steel
+    safety_factor: 1.5
+    objective:
+      metric: mass_kg
+      direction: minimize
+    limits: []
+    vary:
+    - all
+  must_ask: []
+  states_setup: true
+  expect_handoff: false
+  model_optimum:
+    design:
+      thickness_mm: 8.381032140102416
+      flange_length_mm: 81.51461496669168
+      arm_width_mm: 32.94495124377386
+      hole_diameter_mm: 8.675865517042372
+      fillet_radius_mm: 4.944621829020378
+      vertical_height_mm: 53.419746083763556
+      step_trim_mm: 4.825902681155124
+    objective_value: 0.24588892136671567
+    safety_factor_worst: 1.504447736219096
+    method: power_law predict, n=2000, seed=0
+    median:
+      design:
+        thickness_mm: 8.381032140102416
+        flange_length_mm: 81.51461496669168
+        arm_width_mm: 32.94495124377386
+        hole_diameter_mm: 8.675865517042372
+        fillet_radius_mm: 4.944621829020378
+        vertical_height_mm: 53.419746083763556
+        step_trim_mm: 4.825902681155124
+      objective_value: 0.24588892136671567
+  dense_optimum:
+    design:
+      thickness_mm: 7.657287616763876
+      flange_length_mm: 75.12104588151212
+      arm_width_mm: 33.29069754894908
+      hole_diameter_mm: 9.95826859198423
+      fillet_radius_mm: 6.675140297563218
+      vertical_height_mm: 52.2032647168579
+      step_trim_mm: 3.182956328232788
+    objective_value: 0.22290952463154928
+    safety_factor_worst: 1.6036313278705785
+    method: power_law predict, n=400000, seed=0
+    median:
+      design:
+        thickness_mm: 7.968012411231383
+        flange_length_mm: 75.04076003517356
+        arm_width_mm: 33.17486212957965
+        hole_diameter_mm: 9.639443283811941
+        fillet_radius_mm: 6.672586399800625
+        vertical_height_mm: 50.28172990425833
+        step_trim_mm: 5.178181448338313
+      objective_value: 0.2171351896265322
+  sim_optimum:
+    design_id: T07_lhs_004_thin
+    design:
+      thickness_mm: 6.723086944121826
+      flange_length_mm: 76.83339553328469
+      arm_width_mm: 41.92016207485509
+      hole_diameter_mm: 6.866016157703196
+      fillet_radius_mm: 6.163645207599685
+      vertical_height_mm: 68.3560451805316
+      step_trim_mm: 3.1388501573613095
+    objective_value: 0.29434218468033285
+    max_stress_mpa: 151.37823398921358

@@ -1,0 +1,89 @@
+id: t09_clean_mass
+family: t09_perforated_gusset_v1
+request: This is a perforated-gusset steel bracket, bolted to a wall by the back face of its upright leg. 500 N
+  acts straight down on the free end of the flange. Safety factor 1.5. Make it as light as possible.
+hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
+  the horizontal flange. Load: 500 N straight down. Material: structural steel. Safety factor: 1.5. Goal: as light
+  as possible; all dimensions may change. Starting dimensions: the ones already in the part file; if asked, accept
+  them.'
+key:
+  study:
+    force_n: 500.0
+    angle_deg: -90.0
+    material_key: structural_steel
+    safety_factor: 1.5
+    objective:
+      metric: mass_kg
+      direction: minimize
+    limits: []
+    vary:
+    - all
+  must_ask: []
+  states_setup: true
+  expect_handoff: false
+  model_optimum:
+    design:
+      thickness_mm: 7.623217946444516
+      flange_length_mm: 78.89715216252321
+      arm_width_mm: 32.422075192345744
+      hole_diameter_mm: 8.227920459556437
+      fillet_radius_mm: 4.181814939953667
+      vertical_height_mm: 56.649344672553006
+      gusset_thickness_mm: 8.029197023498542
+      gusset_length_mm: 28.140780203135034
+      rib_hole_diameter_mm: 6.529922853480261
+    objective_value: 0.26932572053485065
+    safety_factor_worst: 1.5306924752028157
+    method: power_law predict, n=2000, seed=0
+    median:
+      design:
+        thickness_mm: 7.623217946444516
+        flange_length_mm: 78.89715216252321
+        arm_width_mm: 32.422075192345744
+        hole_diameter_mm: 8.227920459556437
+        fillet_radius_mm: 4.181814939953667
+        vertical_height_mm: 56.649344672553006
+        gusset_thickness_mm: 8.029197023498542
+        gusset_length_mm: 28.140780203135034
+        rib_hole_diameter_mm: 6.529922853480261
+      objective_value: 0.26932572053485065
+  dense_optimum:
+    design:
+      thickness_mm: 7.372339601030321
+      flange_length_mm: 75.40947804802413
+      arm_width_mm: 32.4626151305691
+      hole_diameter_mm: 7.3267879332333345
+      fillet_radius_mm: 6.132666190344835
+      vertical_height_mm: 51.66695564930971
+      gusset_thickness_mm: 7.576140294875998
+      gusset_length_mm: 28.574773840298846
+      rib_hole_diameter_mm: 6.85132263954815
+    objective_value: 0.24685801286904932
+    safety_factor_worst: 1.534711437313281
+    method: power_law predict, n=400000, seed=0
+    median:
+      design:
+        thickness_mm: 7.372339601030321
+        flange_length_mm: 75.40947804802413
+        arm_width_mm: 32.4626151305691
+        hole_diameter_mm: 7.3267879332333345
+        fillet_radius_mm: 6.132666190344835
+        vertical_height_mm: 51.66695564930971
+        gusset_thickness_mm: 7.576140294875998
+        gusset_length_mm: 28.574773840298846
+        rib_hole_diameter_mm: 6.85132263954815
+      objective_value: 0.24685801286904932
+  sim_optimum:
+    design_id: T09_lhs_048
+    design:
+      thickness_mm: 9.231087155404232
+      flange_length_mm: 75.70040486198086
+      arm_width_mm: 40.4952944116023
+      hole_diameter_mm: 8.789622811444515
+      fillet_radius_mm: 6.935081639498863
+      vertical_height_mm: 58.580299642985395
+      gusset_thickness_mm: 7.550411358529742
+      gusset_length_mm: 30.344771382488876
+      rib_hole_diameter_mm: 7.35230189530372
+    objective_value: 0.39076674020610186
+    max_stress_mpa: 85.07653020337457

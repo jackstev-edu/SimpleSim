@@ -1,0 +1,84 @@
+id: t04_clean_mass
+family: t04_rounded_window_v1
+request: This is a rounded-window steel bracket, bolted to a wall by the back face of its upright leg. 500 N acts
+  straight down on the free end of the flange. Safety factor 1.5. Make it as light as possible.
+hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
+  the horizontal flange. Load: 500 N straight down. Material: structural steel. Safety factor: 1.5. Goal: as light
+  as possible; all dimensions may change. Starting dimensions: the ones already in the part file; if asked, accept
+  them.'
+key:
+  study:
+    force_n: 500.0
+    angle_deg: -90.0
+    material_key: structural_steel
+    safety_factor: 1.5
+    objective:
+      metric: mass_kg
+      direction: minimize
+    limits: []
+    vary:
+    - all
+  must_ask: []
+  states_setup: true
+  expect_handoff: false
+  model_optimum:
+    design:
+      thickness_mm: 8.059626779467477
+      flange_length_mm: 75.34726019084835
+      arm_width_mm: 36.515901107230675
+      fillet_radius_mm: 5.9916254897431775
+      vertical_height_mm: 51.279010562074255
+      window_length_mm: 29.120006644409635
+      window_width_mm: 19.90355569408476
+      window_radius_mm: 3.2442271339709414
+    objective_value: 0.24003374987465712
+    safety_factor_worst: 1.629183703432979
+    method: power_law predict, n=2000, seed=0
+    median:
+      design:
+        thickness_mm: 7.4631876939195445
+        flange_length_mm: 75.62774219855599
+        arm_width_mm: 32.531987023804106
+        fillet_radius_mm: 4.968777719447011
+        vertical_height_mm: 64.11915176537414
+        window_length_mm: 25.144826470780632
+        window_width_mm: 12.836499649944496
+        window_radius_mm: 3.8229367058004975
+      objective_value: 0.23530026402282975
+  dense_optimum:
+    design:
+      thickness_mm: 8.19649792985904
+      flange_length_mm: 75.13508264831749
+      arm_width_mm: 33.02072157882386
+      fillet_radius_mm: 7.246713129716957
+      vertical_height_mm: 50.19524183611842
+      window_length_mm: 27.91702280651202
+      window_width_mm: 17.56489506169791
+      window_radius_mm: 3.830314499394456
+    objective_value: 0.22104738482902572
+    safety_factor_worst: 1.6719539874520064
+    method: power_law predict, n=400000, seed=0
+    median:
+      design:
+        thickness_mm: 6.981805304246028
+        flange_length_mm: 75.89144692473394
+        arm_width_mm: 34.124016518255715
+        fillet_radius_mm: 4.651688964968294
+        vertical_height_mm: 50.63893942370977
+        window_length_mm: 23.624102052317678
+        window_width_mm: 13.077697193319255
+        window_radius_mm: 3.663283818739728
+      objective_value: 0.20852727465287804
+  sim_optimum:
+    design_id: T04_lhs_025
+    design:
+      thickness_mm: 7.3462409976750305
+      flange_length_mm: 78.65810938297655
+      arm_width_mm: 45.15318361707759
+      fillet_radius_mm: 2.2580274580653743
+      vertical_height_mm: 51.75304661078241
+      window_length_mm: 18.068199104684794
+      window_width_mm: 14.815845617874187
+      window_radius_mm: 2.239882507946243
+    objective_value: 0.30564664833638416
+    max_stress_mpa: 133.16432637686557

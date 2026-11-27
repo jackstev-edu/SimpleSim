@@ -1,0 +1,74 @@
+id: t01_clean_mass
+family: t01_double_hole_v1
+request: This is a double-hole steel bracket, bolted to a wall by the back face of its upright leg. 500 N acts straight
+  down on the free end of the flange. Safety factor 1.5. Make it as light as possible.
+hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
+  the horizontal flange. Load: 500 N straight down. Material: structural steel. Safety factor: 1.5. Goal: as light
+  as possible; all dimensions may change. Starting dimensions: the ones already in the part file; if asked, accept
+  them.'
+key:
+  study:
+    force_n: 500.0
+    angle_deg: -90.0
+    material_key: structural_steel
+    safety_factor: 1.5
+    objective:
+      metric: mass_kg
+      direction: minimize
+    limits: []
+    vary:
+    - all
+  must_ask: []
+  states_setup: true
+  expect_handoff: false
+  model_optimum:
+    design:
+      thickness_mm: 6.638196699793188
+      flange_length_mm: 77.91436538330674
+      arm_width_mm: 35.24200114255919
+      hole_diameter_mm: 7.239788596568778
+      fillet_radius_mm: 7.292700819830219
+      vertical_height_mm: 50.03914548855597
+    objective_value: 0.22165727942651886
+    safety_factor_worst: 1.5636224795033653
+    method: power_law predict, n=2000, seed=0
+    median:
+      design:
+        thickness_mm: 6.638196699793188
+        flange_length_mm: 77.91436538330674
+        arm_width_mm: 35.24200114255919
+        hole_diameter_mm: 7.239788596568778
+        fillet_radius_mm: 7.292700819830219
+        vertical_height_mm: 50.03914548855597
+      objective_value: 0.22165727942651886
+  dense_optimum:
+    design:
+      thickness_mm: 6.66409516353633
+      flange_length_mm: 75.71625117945393
+      arm_width_mm: 33.44527674988031
+      hole_diameter_mm: 8.061820764842967
+      fillet_radius_mm: 7.676700797905071
+      vertical_height_mm: 51.09182744464527
+    objective_value: 0.20818692844645972
+    safety_factor_worst: 1.5591507732813359
+    method: power_law predict, n=400000, seed=0
+    median:
+      design:
+        thickness_mm: 6.564502356770211
+        flange_length_mm: 76.24534505491783
+        arm_width_mm: 32.34731787862867
+        hole_diameter_mm: 8.10746589157662
+        fillet_radius_mm: 7.704094232908689
+        vertical_height_mm: 50.45874168695014
+      objective_value: 0.1981744825961009
+  sim_optimum:
+    design_id: T01_lhs_050
+    design:
+      thickness_mm: 7.604391914021099
+      flange_length_mm: 87.46464599599098
+      arm_width_mm: 36.9434339997314
+      hole_diameter_mm: 6.725051586698656
+      fillet_radius_mm: 3.6823783991665553
+      vertical_height_mm: 51.584079821999765
+    objective_value: 0.28647981761105784
+    max_stress_mpa: 145.47207756971093

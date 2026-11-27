@@ -1,0 +1,84 @@
+id: t08_clean_mass
+family: t08_twin_gusset_v1
+request: This is a twin-gusset steel bracket, bolted to a wall by the back face of its upright leg. 500 N acts straight
+  down on the free end of the flange. Safety factor 1.5. Make it as light as possible.
+hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
+  the horizontal flange. Load: 500 N straight down. Material: structural steel. Safety factor: 1.5. Goal: as light
+  as possible; all dimensions may change. Starting dimensions: the ones already in the part file; if asked, accept
+  them.'
+key:
+  study:
+    force_n: 500.0
+    angle_deg: -90.0
+    material_key: structural_steel
+    safety_factor: 1.5
+    objective:
+      metric: mass_kg
+      direction: minimize
+    limits: []
+    vary:
+    - all
+  must_ask: []
+  states_setup: true
+  expect_handoff: false
+  model_optimum:
+    design:
+      thickness_mm: 7.553213750799937
+      flange_length_mm: 76.55158395766271
+      arm_width_mm: 33.019634062270555
+      hole_diameter_mm: 7.72967512218727
+      fillet_radius_mm: 4.930887653126482
+      vertical_height_mm: 60.47509402140445
+      gusset_thickness_mm: 4.9175217215967075
+      gusset_length_mm: 21.04549329140068
+    objective_value: 0.26984186722807535
+    safety_factor_worst: 1.5246957821153089
+    method: power_law predict, n=2000, seed=0
+    median:
+      design:
+        thickness_mm: 7.553213750799937
+        flange_length_mm: 76.55158395766271
+        arm_width_mm: 33.019634062270555
+        hole_diameter_mm: 7.72967512218727
+        fillet_radius_mm: 4.930887653126482
+        vertical_height_mm: 60.47509402140445
+        gusset_thickness_mm: 4.9175217215967075
+        gusset_length_mm: 21.04549329140068
+      objective_value: 0.26984186722807535
+  dense_optimum:
+    design:
+      thickness_mm: 7.77903238889005
+      flange_length_mm: 75.30920914154538
+      arm_width_mm: 33.41156956616456
+      hole_diameter_mm: 7.531690058231129
+      fillet_radius_mm: 5.994167379149649
+      vertical_height_mm: 50.209621338201714
+      gusset_thickness_mm: 3.847542521925787
+      gusset_length_mm: 16.734427705164883
+    objective_value: 0.24836071094187098
+    safety_factor_worst: 1.5179732695570998
+    method: power_law predict, n=400000, seed=0
+    median:
+      design:
+        thickness_mm: 7.435954467268251
+        flange_length_mm: 75.36783175793151
+        arm_width_mm: 32.690639063887375
+        hole_diameter_mm: 6.597940036143207
+        fillet_radius_mm: 3.9928655554059804
+        vertical_height_mm: 50.79640707964963
+        gusset_thickness_mm: 4.283022776459135
+        gusset_length_mm: 21.271554806974486
+      objective_value: 0.24153775938768338
+  sim_optimum:
+    design_id: T08_lhs_003_cut
+    design:
+      thickness_mm: 8.318684924704094
+      flange_length_mm: 88.28765893833513
+      arm_width_mm: 36.742475845175385
+      hole_diameter_mm: 8.288625475812184
+      fillet_radius_mm: 6.2145648097801285
+      vertical_height_mm: 55.27685891999895
+      gusset_thickness_mm: 3.845573500274592
+      gusset_length_mm: 19.735424124470246
+    objective_value: 0.3355926885154816
+    max_stress_mpa: 158.933940502729

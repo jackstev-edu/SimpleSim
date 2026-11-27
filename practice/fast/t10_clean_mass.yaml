@@ -1,0 +1,79 @@
+id: t10_clean_mass
+family: t10_offset_planform_v1
+request: This is a offset-planform steel bracket, bolted to a wall by the back face of its upright leg. 500 N acts
+  straight down on the free end of the flange. Safety factor 1.5. Make it as light as possible.
+hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
+  the horizontal flange. Load: 500 N straight down. Material: structural steel. Safety factor: 1.5. Goal: as light
+  as possible; all dimensions may change. Starting dimensions: the ones already in the part file; if asked, accept
+  them.'
+key:
+  study:
+    force_n: 500.0
+    angle_deg: -90.0
+    material_key: structural_steel
+    safety_factor: 1.5
+    objective:
+      metric: mass_kg
+      direction: minimize
+    limits: []
+    vary:
+    - all
+  must_ask: []
+  states_setup: true
+  expect_handoff: false
+  model_optimum:
+    design:
+      thickness_mm: 8.978823911668616
+      flange_length_mm: 77.32994967306078
+      arm_width_mm: 37.36113861196186
+      hole_diameter_mm: 6.396413553519385
+      fillet_radius_mm: 4.710578082147306
+      vertical_height_mm: 55.950475538963815
+      offset_trim_mm: 11.34504578794516
+    objective_value: 0.2955436575751309
+    safety_factor_worst: 1.596632108378676
+    method: power_law predict, n=2000, seed=0
+    median:
+      design:
+        thickness_mm: 8.978823911668616
+        flange_length_mm: 77.32994967306078
+        arm_width_mm: 37.36113861196186
+        hole_diameter_mm: 6.396413553519385
+        fillet_radius_mm: 4.710578082147306
+        vertical_height_mm: 55.950475538963815
+        offset_trim_mm: 11.34504578794516
+      objective_value: 0.2955436575751309
+  dense_optimum:
+    design:
+      thickness_mm: 8.812657478867749
+      flange_length_mm: 75.82773712909457
+      arm_width_mm: 32.289266147460715
+      hole_diameter_mm: 9.256418844942528
+      fillet_radius_mm: 3.9832927792324506
+      vertical_height_mm: 52.66135546170716
+      offset_trim_mm: 8.407524115059564
+    objective_value: 0.2414833166408274
+    safety_factor_worst: 1.5053508817174155
+    method: power_law predict, n=400000, seed=0
+    median:
+      design:
+        thickness_mm: 8.812657478867749
+        flange_length_mm: 75.82773712909457
+        arm_width_mm: 32.289266147460715
+        hole_diameter_mm: 9.256418844942528
+        fillet_radius_mm: 3.9832927792324506
+        vertical_height_mm: 52.66135546170716
+        offset_trim_mm: 8.407524115059564
+      objective_value: 0.2414833166408274
+  sim_optimum:
+    design_id: T10_lhs_034
+    design:
+      thickness_mm: 7.0822677880493385
+      flange_length_mm: 79.2520225417574
+      arm_width_mm: 50.135810093362956
+      hole_diameter_mm: 7.730385987224778
+      fillet_radius_mm: 4.111147131835351
+      vertical_height_mm: 58.10606246756658
+      offset_trim_mm: 7.25411248559234
+    objective_value: 0.3459601145550014
+    max_stress_mpa: 149.8483736059441

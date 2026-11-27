@@ -1,14 +1,15 @@
-"""The 10 fast-path benchmark problems: present, keyed, and consistent with the fast path's limits."""
+"""The 20 fast-path benchmark problems: present, keyed, and consistent with the fast path's limits."""
 import pytest
 
 pytest.importorskip("yaml")  # Role 3 package (src/sim/requirements.txt); skip on a root-only install
 from src.eval.fast_keys import load_fast_problems
 
 IDS = ["v0_clean_mass", "v0_missing_sf", "v0_missing_force", "v0_alu_vague", "v0_kn_units", "v0_stiff",
-       "v1_clean_mass", "v1_named_dims", "v1_sf2_lbf", "fast_refuse_titanium"]
+       "v1_clean_mass", "v1_named_dims", "v1_sf2_lbf", "fast_refuse_titanium",
+       *(f"t{i:02d}_clean_mass" for i in range(1, 11))]
 
 
-def test_ten_problems_load_with_keys():
+def test_problems_load_with_keys():
     assert sorted(p.id for p in load_fast_problems()) == sorted(IDS)
 
 
@@ -40,3 +41,17 @@ def test_unstated_support_and_load_face_are_asked():
     for p in load_fast_problems():
         if not p.key["expect_handoff"] and not p.key.get("states_setup"):
             assert {"support", "load_face"} <= set(p.key["must_ask"]), p.id
+
+
+TEMPLATES = ["t01_double_hole_v1", "t02_single_slot_v1", "t03_twin_slot_v1", "t04_rounded_window_v1",
+             "t05_side_notches_v1", "t06_tapered_v1", "t07_stepped_v1", "t08_twin_gusset_v1",
+             "t09_perforated_gusset_v1", "t10_offset_planform_v1"]
+
+
+def test_template_problems_cover_every_template():
+    ps = {p.id: p for p in load_fast_problems()}
+    for i, fam in enumerate(TEMPLATES, 1):
+        p = ps[f"t{i:02d}_clean_mass"]
+        assert p.family == fam and p.key["must_ask"] == [] and p.key["states_setup"] is True
+        assert p.key["study"]["force_n"] == 500.0 and p.key["study"]["safety_factor"] == 1.5
+        assert p.key["sim_optimum"]["design_id"]  # Can's table has safe rows for every template

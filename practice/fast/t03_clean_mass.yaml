@@ -1,0 +1,79 @@
+id: t03_clean_mass
+family: t03_twin_slot_v1
+request: This is a twin-slot steel bracket, bolted to a wall by the back face of its upright leg. 500 N acts straight
+  down on the free end of the flange. Safety factor 1.5. Make it as light as possible.
+hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
+  the horizontal flange. Load: 500 N straight down. Material: structural steel. Safety factor: 1.5. Goal: as light
+  as possible; all dimensions may change. Starting dimensions: the ones already in the part file; if asked, accept
+  them.'
+key:
+  study:
+    force_n: 500.0
+    angle_deg: -90.0
+    material_key: structural_steel
+    safety_factor: 1.5
+    objective:
+      metric: mass_kg
+      direction: minimize
+    limits: []
+    vary:
+    - all
+  must_ask: []
+  states_setup: true
+  expect_handoff: false
+  model_optimum:
+    design:
+      thickness_mm: 7.257493971576581
+      flange_length_mm: 77.30665293602078
+      arm_width_mm: 32.715102072881635
+      fillet_radius_mm: 4.686323217380076
+      vertical_height_mm: 60.60226704956454
+      slot_width_mm: 8.8597921480224
+      slot_straight_length_mm: 12.858083858796135
+    objective_value: 0.2247165013619776
+    safety_factor_worst: 1.5951176179970288
+    method: power_law predict, n=2000, seed=0
+    median:
+      design:
+        thickness_mm: 6.59988001592224
+        flange_length_mm: 79.9113957419992
+        arm_width_mm: 32.37920801051628
+        fillet_radius_mm: 7.224233295901327
+        vertical_height_mm: 72.01016897322005
+        slot_width_mm: 9.979999127988696
+        slot_straight_length_mm: 15.261798321635371
+      objective_value: 0.22274118494124265
+  dense_optimum:
+    design:
+      thickness_mm: 6.7298126809600385
+      flange_length_mm: 75.63562495053517
+      arm_width_mm: 32.51201428574722
+      fillet_radius_mm: 7.185399810907319
+      vertical_height_mm: 50.8208327844108
+      slot_width_mm: 9.730341636701445
+      slot_straight_length_mm: 12.772402916035327
+    objective_value: 0.1874796509411828
+    safety_factor_worst: 1.5851042407832008
+    method: power_law predict, n=400000, seed=0
+    median:
+      design:
+        thickness_mm: 6.596752433120752
+        flange_length_mm: 76.26633110240287
+        arm_width_mm: 32.53272754842186
+        fillet_radius_mm: 6.562312440176161
+        vertical_height_mm: 51.33603901870784
+        slot_width_mm: 8.811461646746325
+        slot_straight_length_mm: 15.946971382324483
+      objective_value: 0.18534851119619153
+  sim_optimum:
+    design_id: T03_lhs_016
+    design:
+      thickness_mm: 7.5967532312577015
+      flange_length_mm: 80.14140933312194
+      arm_width_mm: 32.751445835623954
+      fillet_radius_mm: 6.907402499004864
+      vertical_height_mm: 54.658002166318525
+      slot_width_mm: 6.263191734436868
+      slot_straight_length_mm: 11.285418044595248
+    objective_value: 0.23896922912757312
+    max_stress_mpa: 124.01158550604012

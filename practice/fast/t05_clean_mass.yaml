@@ -1,0 +1,79 @@
+id: t05_clean_mass
+family: t05_side_notches_v1
+request: This is a side-notch steel bracket, bolted to a wall by the back face of its upright leg. 500 N acts straight
+  down on the free end of the flange. Safety factor 1.5. Make it as light as possible.
+hidden_facts: 'The back face of the upright leg is bolted flat to a wall. The load acts on the free end face of
+  the horizontal flange. Load: 500 N straight down. Material: structural steel. Safety factor: 1.5. Goal: as light
+  as possible; all dimensions may change. Starting dimensions: the ones already in the part file; if asked, accept
+  them.'
+key:
+  study:
+    force_n: 500.0
+    angle_deg: -90.0
+    material_key: structural_steel
+    safety_factor: 1.5
+    objective:
+      metric: mass_kg
+      direction: minimize
+    limits: []
+    vary:
+    - all
+  must_ask: []
+  states_setup: true
+  expect_handoff: false
+  model_optimum:
+    design:
+      thickness_mm: 7.623217946444516
+      flange_length_mm: 78.89715216252321
+      arm_width_mm: 32.422075192345744
+      hole_diameter_mm: 8.227920459556437
+      fillet_radius_mm: 3.8347072072221824
+      vertical_height_mm: 56.649344672553006
+      notch_radius_mm: 5.271897767623906
+    objective_value: 0.24056145197759163
+    safety_factor_worst: 1.5280885146736467
+    method: power_law predict, n=2000, seed=0
+    median:
+      design:
+        thickness_mm: 6.638196699793188
+        flange_length_mm: 77.91436538330674
+        arm_width_mm: 35.24200114255919
+        hole_diameter_mm: 7.239788596568778
+        fillet_radius_mm: 7.292700819830219
+        vertical_height_mm: 50.03914548855597
+        notch_radius_mm: 5.45996214839111
+      objective_value: 0.2188934929864926
+  dense_optimum:
+    design:
+      thickness_mm: 7.372339601030321
+      flange_length_mm: 75.40947804802413
+      arm_width_mm: 32.4626151305691
+      hole_diameter_mm: 7.3267879332333345
+      fillet_radius_mm: 5.962908571285275
+      vertical_height_mm: 51.66695564930971
+      notch_radius_mm: 4.9321052211569985
+    objective_value: 0.21993857821361382
+    safety_factor_worst: 1.5944492501289216
+    method: power_law predict, n=400000, seed=0
+    median:
+      design:
+        thickness_mm: 7.214784304674332
+        flange_length_mm: 75.97164979984642
+        arm_width_mm: 32.509168258571535
+        hole_diameter_mm: 8.595186304616576
+        fillet_radius_mm: 3.5620469379866666
+        vertical_height_mm: 51.284506798240784
+        notch_radius_mm: 5.262258598675096
+      objective_value: 0.21346961961823693
+  sim_optimum:
+    design_id: T05_lhs_052
+    design:
+      thickness_mm: 5.632571676187267
+      flange_length_mm: 86.96387920158858
+      arm_width_mm: 57.62234281262158
+      hole_diameter_mm: 6.272722440532213
+      fillet_radius_mm: 7.035010048785431
+      vertical_height_mm: 52.05982651328854
+      notch_radius_mm: 4.866350326659646
+    objective_value: 0.3399844563043336
+    max_stress_mpa: 153.6674024258906
