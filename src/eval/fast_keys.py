@@ -6,6 +6,7 @@ The median optimum and the best CalculiX row (500 N steel only) are recorded for
 """
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -22,6 +23,8 @@ REPO = Path(__file__).resolve().parents[2]
 FAST_DIR = REPO / "practice" / "fast"
 RUNS = {"l_bracket_v0": REPO / "data" / "processed" / "formal_v0" / "runs.csv",
         "l_bracket_gusset_v1": REPO / "data" / "processed" / "formal_v1_l_bracket_gusset_v1" / "runs.csv"}
+_MF = REPO / "data" / "processed" / "formal_multifamily_v1"
+MULTIFAMILY = {"dataset": _MF / "model_dataset_1000.csv", "manifest": _MF / "design_manifest.csv"}  # Can's T01-T10 runs
 SIM_YIELD_MPA = 250.0  # Role 1's reference steel
 FAST_PATH_CANDIDATES = 2000  # Part.optimize's sample, seed 0: the scoring key (user decision 2026-11-23)
 DENSE_CANDIDATES = 400_000  # the much denser search, reported as information only
@@ -138,15 +141,33 @@ def model_optimum(study: dict, family: str, n: int = 400_000, seed: int = 0) -> 
                        "objective_value": float(abs(score[i]))}}
 
 
+def _template_table(family: str) -> pd.DataFrame | None:
+    """Can's multi-family rows of one family, in the RUNS column names; None when the files are missing."""
+    if not all(Path(p).exists() for p in MULTIFAMILY.values()):
+        return None
+    data = pd.read_csv(MULTIFAMILY["dataset"])
+    man = pd.read_csv(MULTIFAMILY["manifest"])[["design_id", "params_json"]]
+    df = data[data["bracket_family"] == family].merge(man, on="design_id")
+    dims = pd.DataFrame([json.loads(s) for s in df["params_json"]], index=df.index)
+    out = df[["design_id"]].join(dims[[k for k in FAMILIES[family].ranges_mm]])
+    for col in ("max_stress_mpa", "max_disp_mm", "mass_kg"):
+        out[col] = df[f"reference_{col}"]
+    return out.reset_index(drop=True)
+
+
 def sim_optimum(study: dict, family: str) -> dict:
     none = {"design_id": None, "design": None, "objective_value": None, "max_stress_mpa": None}
     if not (study["force_n"] == 500.0 and study.get("angle_deg", -90.0) == -90.0
             and study["material_key"] == "structural_steel"):
         return {**none, "reason": "the CalculiX tables are 500 N, -90 deg, steel only"}
-    path = RUNS[family]
-    if not path.exists():
-        return {**none, "reason": f"{path.name} not in this checkout"}
-    df = pd.read_csv(path)
+    if family in RUNS:
+        path = RUNS[family]
+        df = pd.read_csv(path) if path.exists() else None
+    else:  # template families live in the multi-family table
+        path = MULTIFAMILY["dataset"]
+        df = _template_table(family)
+    if df is None:
+        return {**none, "reason": f"{Path(path).name} not in this checkout"}
     fam, varied = FAMILIES[family], _varied(study, family)
     ok = SIM_YIELD_MPA / df["max_stress_mpa"] >= study["safety_factor"]
     for lim in study.get("limits") or []:

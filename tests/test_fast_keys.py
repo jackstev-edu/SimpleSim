@@ -67,3 +67,37 @@ def test_key_reproduces_the_fast_path_search():
     from src.pydiscovery.session import Part
     import inspect
     assert FAST_PATH_CANDIDATES == inspect.signature(Part.optimize).parameters["n_candidates"].default
+
+
+def _write_tables(folder: Path) -> dict:
+    """Four rows in Can's multi-family layout: two T01, one T02, one v0, each at its baseline."""
+    import json
+
+    import pandas as pd
+    rows = [("T01_safe", "t01_double_hole_v1", 150.0, 0.25), ("T01_unsafe", "t01_double_hole_v1", 200.0, 0.20),
+            ("T02_light", "t02_single_slot_v1", 100.0, 0.10), ("V0_light", "l_bracket_v0", 100.0, 0.10)]
+    pd.DataFrame([{"design_id": d, "bracket_family": f, "reference_max_stress_mpa": s, "reference_max_disp_mm": 0.1,
+                   "reference_mass_kg": m} for d, f, s, m in rows]).to_csv(folder / "data.csv", index=False)
+    pd.DataFrame([{"design_id": d, "bracket_family": f, "params_json": json.dumps(dict(FAMILIES[f].baseline_mm))}
+                  for d, f, _, _ in rows]).to_csv(folder / "manifest.csv", index=False)
+    return {"dataset": folder / "data.csv", "manifest": folder / "manifest.csv"}
+
+
+@pytest.fixture
+def fixture_tables(monkeypatch, tmp_path):
+    from src.eval import fast_keys
+    monkeypatch.setattr(fast_keys, "MULTIFAMILY", _write_tables(tmp_path))
+
+
+def test_sim_optimum_template_picks_safe_row_of_own_family(fixture_tables):
+    # the unsafe T01 row and the lighter rows of other families must not win
+    out = sim_optimum(STUDY_500, "t01_double_hole_v1")
+    assert out["design_id"] == "T01_safe" and out["max_stress_mpa"] == 150.0
+    assert set(out["design"]) == set(FAMILIES["t01_double_hole_v1"].ranges_mm)
+
+
+def test_sim_optimum_template_missing_table_gives_reason(monkeypatch, tmp_path):
+    from src.eval import fast_keys
+    monkeypatch.setattr(fast_keys, "MULTIFAMILY", {"dataset": tmp_path / "no.csv", "manifest": tmp_path / "no2.csv"})
+    out = sim_optimum(STUDY_500, "t01_double_hole_v1")
+    assert out["design_id"] is None and "not in this checkout" in out["reason"]
