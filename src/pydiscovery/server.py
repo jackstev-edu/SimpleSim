@@ -123,7 +123,12 @@ class PyDiscoveryAPI:
             return 400, {"ok": False, "message": "Tool arguments must be a JSON object."}
         if name == "save_design" and not args.get("path"):
             args = {**args, "path": str(self.default_save_path())}
-        return 200, self.tools.call(name, args)
+        out = self.tools.call(name, args)
+        if name == "optimize_design" and out.get("ok") and isinstance(out.get("result"), dict):
+            from src.assistant.verdict import template_verdict  # the GUI tab has no model: the template verdict only
+
+            out["verdict"] = {"text": template_verdict(out["result"], out.get("prediction")), "source": "template", "warnings": []}
+        return 200, out
 
     def default_save_path(self) -> Path:
         """data/processed/pydiscovery_gui/<part stem>_optimized.dsco for Discovery parts, .json otherwise."""

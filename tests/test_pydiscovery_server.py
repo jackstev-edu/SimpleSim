@@ -65,6 +65,13 @@ def test_confirm_then_optimize_returns_the_three_contract_files(api):
     assert res.recommended is not None and res.recommended.design_id.startswith("pl-0-")
     assert res.recommended.mass_kg == pytest.approx(0.23, abs=0.02)
     assert res.spec == spec and {f.design_id for f in res.finalists} <= {c.design_id for c in pred.shortlist}
+    # The GUI tab has no model, so the verdict is the template; every number in it is in the result.
+    from src.assistant.numbers import unknown_numbers
+
+    v = out["verdict"]
+    assert v["source"] == "template" and v["warnings"] == [] and v["text"].startswith("Adopt it")
+    assert "fitted model only" in v["text"] and "Next step:" in v["text"]
+    assert unknown_numbers(v["text"], out["result"]) == []
 
 
 def test_save_without_a_path_lands_in_the_gui_folder(api, tmp_path):

@@ -88,6 +88,12 @@ Every event has a `type`. The first six come from Role 3's session unchanged; `d
 {"type": "text", "text": "I see an L-bracket with a 500 N load. What safety factor do you want? 1.5 is a common choice."}
 ```
 
+A `text` event may carry an optional `options` list: short answers the user can pick with one click. The session does not send one today; the GUI guesses the likely answers from the question itself (a safety factor question offers "Use 1.5" and "Use 2.0", a setup card offers "Yes, the setup is right", and so on) and shows the four follow-ups "Why this design?", "Compare to baseline", "Lighter but less safe" and "Try aluminum" after a result. When the session starts sending `options`, the GUI uses them instead and nothing else changes. The server passes session events through unchanged, so no server change is needed.
+
+```json
+{"type": "text", "text": "What safety factor do you want? 1.5 is a common choice.", "options": ["Use 1.5", "Use 2.0"]}
+```
+
 **`tool`**: the assistant is calling a tool. `name` is the tool, `input` its arguments. Show it as a collapsed step, pending until its `tool_result`.
 
 ```json
@@ -117,12 +123,18 @@ Every event has a `type`. The first six come from Role 3's session unchanged; `d
 
 ```json
 {"type": "done", "path": "fast", "part": "l_bracket.dsco", "spent_usd": 0.0135, "budget_left_usd": 0.1865, "table": []}
-{"type": "done", "path": "fast", "part": "l_bracket.dsco", "spent_usd": 0.0212, "budget_left_usd": 0.1788, "table": [], "run": {"study_spec": {...}, "prediction": {...}, "result": {...}}}
+{"type": "done", "path": "fast", "part": "l_bracket.dsco", "spent_usd": 0.0212, "budget_left_usd": 0.1788, "table": [], "run": {"study_spec": {...}, "prediction": {...}, "result": {...}, "verdict": {...}}}
+```
+
+`run.verdict` is the judgement call on the result (`src/assistant/verdict.py`): 3 to 5 plain sentences on whether the recommended design is worth adopting, the main trade-off, the binding requirement, how far to trust the numbers (solver checked or a model estimate, inside or outside the training range) and one next step. It is written by the model in one extra call under the budget cap and held to the same number check as the explanation (`src/assistant/numbers.py`): every number must be in `result.json` or be a percent change against the baseline. When the text fails the check twice, or the budget is spent, `text` is a template built from `result.json` and `warnings` says so. The GUI pins it at the top of **Recommendations** and posts it in the chat. The PyDiscovery tab's own `optimize_design` answer carries the template verdict under the same key, since no model runs there.
+
+```json
+{"text": "Adopt it. pl-0-01069 has a mass of 0.231 kg, 8% lighter than the baseline. ...", "source": "model", "warnings": []}
 ```
 
 ## In the team GUI
 
-`src/ui/index.html` wires all of this into the **Agent** tab: a chat bar with the status line, **Upload part**, a message box, **Send**, **Stop** and **Reset**. Messages and tool steps stream into the log, and a `run` in the `done` event goes through the page's contract checks and into Variations, Graphs and Recommendations. The bar only appears when `GET /api/assistant` answers, so a page served without the launcher looks as before. `tests/test_ui_assistant_chat.py` drives it in a browser with a fake model when `SIMPLESIM_CHROME` is set.
+`src/ui/index.html` wires all of this into the **Agent** tab: a chat bar with the status line, **Upload part**, a message box, **Send**, **Stop**, **Reset** and a row of quick replies under the box (a click sends that text as an ordinary message). Messages and tool steps stream into the log, and a `run` in the `done` event goes through the page's contract checks and into Variations, Graphs and Recommendations. The bar only appears when `GET /api/assistant` answers, so a page served without the launcher looks as before. `tests/test_ui_assistant_chat.py` drives it in a browser with a fake model when `SIMPLESIM_CHROME` is set.
 
 ## What the fitted engine changes
 

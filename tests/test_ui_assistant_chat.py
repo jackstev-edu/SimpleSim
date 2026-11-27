@@ -93,7 +93,7 @@ def test_upload_then_optimize_lands_in_the_variations_table(open_gui, tmp_path):
     expect(page.locator("#pane-variations")).to_be_visible()
     assert page.locator("#pane-variations tbody tr").count() > 1
     assert page.evaluate("() => S.res.spec.bracket_family") == "l_bracket_v0"
-    assert len(client.sent) == 5 and errors == []
+    assert len(client.sent) == 6 and errors == []  # the sixth call writes the verdict that rides with the run
     page.get_by_role("tab", name="Agent", exact=True).click()
     page.click("#astReset")
     expect(page.locator("#astStatus")).to_contain_text("No part uploaded yet")

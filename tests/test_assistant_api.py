@@ -173,11 +173,12 @@ def test_fast_path_optimize_comes_back_in_the_done_event_once(make, tmp_path):
     """The front agent runs optimize_design through its own tools; the done event carries the three contract files."""
     from contracts.models import Prediction, Result, StudySpec
 
-    api, _ = make(reply(say("ok")),
+    api, client = make(reply(say("ok")),
                   reply(call("record_study_inputs", {"safety_factor": 1.5, "objective": "mass_kg", "direction": "minimize"}, "a")),
                   reply(call("confirm_setup", {}, "b"), call("optimize_design", {}, "c")),
                   reply(say("The recommended design is lighter than the baseline and sits on the deflection limit.")),  # the explanation step's call
-                  reply(say("Here is the lighter design.")))
+                  reply(say("Here is the lighter design.")),
+                  reply(say("Adopt it: it is lighter and meets every limit. The numbers are a fitted estimate. Next, solve it once in Ansys.")))  # the verdict's call
     upload(api, tmp_path)
     events = list(post(api, "send", {"text": "safety factor 1.5, minimize mass, the setup is right, go"})[1])  # the loop runs on after each tool
     tools = [e["name"] for e in events if e["type"] == "tool"]
@@ -190,8 +191,28 @@ def test_fast_path_optimize_comes_back_in_the_done_event_once(make, tmp_path):
     spec, pred, res = StudySpec.model_validate(done["run"]["study_spec"]), Prediction.model_validate(done["run"]["prediction"]), Result.model_validate(done["run"]["result"])
     assert res.recommended is not None and res.recommended.feasible and res.spec == spec and len(pred.shortlist) > 0
     assert [c.value for c in spec.constraints if c.metric == "safety_factor"] == [1.5]  # the user's safety factor, never a default
+    verdict = done["run"]["verdict"]
+    assert verdict["source"] == "model" and verdict["text"].startswith("Adopt it:") and verdict["warnings"] == []
+    assert '"finalist_numbers": "estimated by the fitted model only' in client.sent[-1]["input"][0]["content"]
     events = list(post(api, "send", {"text": "thanks"})[1])
     assert "run" not in events[-1]  # the same result is not sent twice
+
+
+def test_verdict_with_invented_numbers_falls_back_to_the_template(make, tmp_path):
+    from src.assistant.numbers import unknown_numbers
+
+    api, client = make(reply(say("ok")),
+                       reply(call("record_study_inputs", {"safety_factor": 1.5, "objective": "mass_kg", "direction": "minimize"}, "a")),
+                       reply(call("confirm_setup", {}, "b"), call("optimize_design", {}, "c")),
+                       reply(say("Lighter than the baseline.")),  # explanation
+                       reply(say("Done.")),
+                       reply(say("Adopt it: 73% lighter.")), reply(say("It holds 9000 N.")))  # the verdict twice invents a number
+    upload(api, tmp_path)
+    done = list(post(api, "send", {"text": "safety factor 1.5, minimize mass, the setup is right, go"})[1])[-1]
+    v = done["run"]["verdict"]
+    assert v["source"] == "template" and "9000" in v["warnings"][0] and v["text"].startswith("Adopt it")
+    assert unknown_numbers(v["text"], done["run"]["result"]) == []
+    assert len(client.sent) == 7  # one retry, then the template: no third call
 
 
 def test_send_before_upload_and_bad_bodies(make):
