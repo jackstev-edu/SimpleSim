@@ -86,3 +86,62 @@ def test_no_client_means_the_template_and_a_bad_result_is_refused():
     assert verdict(R, None) == (template_verdict(R), "template", [])
     with pytest.raises(ResultContractError):
         verdict({k: v for k, v in R.items() if k != "explanation"}, ScriptClient("unused"))
+
+
+# ---------------------------------------------------------------- review fixes (PR #14 follow-up, 2026-11-26)
+
+def _copy():
+    return json.loads(json.dumps(R))
+
+
+def test_template_keeps_the_baseline_when_it_passes_and_the_pick_is_worse():
+    r = _copy()
+    r["baseline"]["feasible"], r["baseline"]["violated"] = True, []
+    r["recommended"]["mass_kg"] = r["baseline"]["mass_kg"] * 1.08  # heavier than a baseline that already passes
+    t = template_verdict(r, P)
+    assert t.startswith("Keep the baseline") and "Adopt it" not in t
+    assert unknown_numbers(t, r) == []
+
+
+def test_mass_shows_up_as_a_trade_off_when_it_is_not_the_objective():
+    r = _copy()
+    r["spec"]["objective"] = {"metric": "safety_factor", "direction": "maximize"}
+    r["recommended"]["mass_kg"] = r["baseline"]["mass_kg"] * 1.3
+    r["recommended"]["safety_factor"] = r["baseline"]["safety_factor"] * 1.2
+    t = template_verdict(r, P)
+    assert "30% more mass" in t and "gives nothing up" not in t
+    assert unknown_numbers(t, r) == []
+
+
+@pytest.mark.parametrize("factor", [0.9993, 0.99637, 1.00412])
+def test_small_changes_pass_the_number_check(factor):
+    r = _copy()
+    r["recommended"]["max_stress_mpa"] = r["baseline"]["max_stress_mpa"] * factor  # -0.07 %, -0.4 %, +0.4 %
+    t = template_verdict(r, P)
+    assert unknown_numbers(t, r) == [], t
+
+
+def test_a_value_that_rounds_to_one_figure_still_passes():
+    r = _copy()
+    r["recommended"]["mass_kg"] = 0.29981  # .3g would print "0.3", which the check only accepts as exact
+    t = template_verdict(r, P)
+    assert unknown_numbers(t, r) == [], t
+
+
+def test_discovery_is_a_solver_and_an_unknown_source_is_not_called_a_formula():
+    r = _copy()
+    r["recommended"]["source"] = "ansys_discovery"
+    assert "solver checked in Ansys Discovery" in trust(r)[0]
+    r["recommended"]["source"] = "something_new"
+    how = trust(r)[0]
+    assert "formula" not in how and "unknown" in how
+
+
+def test_nothing_feasible_names_the_limit_the_finalists_failed():
+    r = _copy()
+    r["baseline"]["feasible"], r["baseline"]["violated"] = True, []
+    r["recommended"], r["binding_constraint"] = None, None
+    for f in r["finalists"]:
+        f["feasible"], f["violated"] = False, ["max_disp_mm <= 1"]
+    t = template_verdict(r, P)
+    assert "max_disp_mm <= 1" in t and t.startswith("Do not adopt")

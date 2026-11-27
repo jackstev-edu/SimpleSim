@@ -384,3 +384,32 @@ def test_launch_gui_main_takes_the_assistant_engine_flag(monkeypatch, tmp_path):
 
 def test_ndjson_is_one_line_per_event():
     assert ndjson({"type": "text", "text": "a\nb"}) == b'{"type": "text", "text": "a\\nb"}\n'
+
+
+def _optimize_turn(make, tmp_path, *verdict_replies):
+    api, client = make(reply(say("ok")),
+                       reply(call("record_study_inputs", {"safety_factor": 1.5, "objective": "mass_kg", "direction": "minimize"}, "a")),
+                       reply(call("confirm_setup", {}, "b"), call("optimize_design", {}, "c")),
+                       reply(say("Lighter than the baseline.")), reply(say("Done.")), *verdict_replies)
+    upload(api, tmp_path)
+    return api, list(post(api, "send", {"text": "safety factor 1.5, minimize mass, the setup is right, go"})[1])[-1]
+
+
+def test_done_spend_includes_the_verdict_call(make, tmp_path):
+    from src.llm import cost
+
+    api, done = _optimize_turn(make, tmp_path, reply(say("Adopt it: it is lighter."), tokens=(5000, 0, 2000)))
+    assert done["run"]["verdict"]["source"] == "model"
+    assert done["spent_usd"] == round(cost(api.usage), 6)  # counted after the verdict's paid call, not before
+
+
+def test_a_failing_verdict_never_loses_the_run(make, tmp_path, monkeypatch):
+    import src.assistant.verdict as V
+
+    def boom(*a, **k):
+        raise KeyError("binding")
+    monkeypatch.setattr(V, "verdict", boom)
+    monkeypatch.setattr(V, "template_verdict", boom)  # the fallback fails too
+    _, done = _optimize_turn(make, tmp_path)
+    assert done["type"] == "done" and done["run"]["result"]["recommended"] is not None
+    assert "verdict" not in done["run"]  # the GUI shows the run without a verdict box

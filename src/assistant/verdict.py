@@ -8,6 +8,7 @@ built from result.json, which passes the same check by construction.
 from __future__ import annotations
 
 import json
+from collections import Counter
 
 from src.assistant.contract_adapter import load_result
 from src.assistant.numbers import percent_changes, unknown_numbers
@@ -30,14 +31,15 @@ Use only numbers that appear in the result, rounded for reading, or the percent 
 recommended design against the baseline. Never compute or invent any other number. No headings,
 no bullet points, no bold."""
 
-SOLVERS = {"calculix": "CalculiX", "ansys_mechanical": "ANSYS Mechanical"}
+SOLVERS = {"calculix": "CalculiX", "ansys_mechanical": "ANSYS Mechanical", "ansys_discovery": "Ansys Discovery"}
+FORMULAS = ("fake_formula", "formula_emulator")
 METRIC_WORDS = {"mass_kg": "mass", "max_stress_mpa": "peak stress", "max_disp_mm": "deflection", "safety_factor": "safety factor"}
 UNITS = {"mass_kg": " kg", "max_stress_mpa": " MPa", "max_disp_mm": " mm", "safety_factor": ""}
 
 
 def _fmt(metric: str, value: float) -> str:
     """A reading of the value that still matches the result under the number check (3 significant figures)."""
-    text = f"{value:.3g}"
+    text = f"{value:#.3g}".rstrip(".")  # keep trailing zeros: "0.300", since one figure ("0.3") needs an exact match
     if "e" in text:  # very small or large: plain decimals, enough digits that the check sees at least two
         text = f"{value:.6f}".rstrip("0").rstrip(".")
     return text + UNITS[metric]
@@ -46,16 +48,20 @@ def _fmt(metric: str, value: float) -> str:
 BETTER_WHEN_LOWER = {"mass_kg": True, "max_stress_mpa": True, "max_disp_mm": True, "safety_factor": False}
 
 
-def _pct(changes: dict, metric: str) -> tuple[str, bool] | None:
-    """('45% lighter', improved?) for one metric, or None when there is no change to report."""
+def _pct(changes: dict, metric: str, as_noun: bool = False) -> tuple[str, bool] | None:
+    """('45% lighter', improved?) for one metric, or None when there is no change to report.
+
+    as_noun gives '30% more mass' instead of '30% heavier', for the trade-off sentence."""
     v = changes.get(metric)
-    if v is None or abs(v) < 0.05:
+    if v is None or abs(v) < 0.1:
         return None
-    words = {"mass_kg": ("lighter", "heavier"), "max_stress_mpa": ("lower", "higher"),
+    words = {"mass_kg": ("less", "more") if as_noun else ("lighter", "heavier"), "max_stress_mpa": ("lower", "higher"),
              "max_disp_mm": ("less", "more"), "safety_factor": ("lower", "higher")}[metric]
     size = abs(v)
-    shown = f"{size:.1f}" if size < 10 else f"{size:.0f}"  # one significant figure needs an exact match
-    noun = {"mass_kg": "", "max_stress_mpa": " peak stress", "max_disp_mm": " deflection", "safety_factor": " safety factor"}[metric]
+    # at least two significant figures: the number check accepts a one-figure number only as an exact match
+    shown = f"{size:.2f}" if size < 1 else f"{size:.1f}" if size < 10 else f"{size:.0f}"
+    noun = {"mass_kg": " mass" if as_noun else "", "max_stress_mpa": " peak stress", "max_disp_mm": " deflection",
+            "safety_factor": " safety factor"}[metric]
     return f"{shown}% {words[0] if v < 0 else words[1]}{noun}", (v < 0) == BETTER_WHEN_LOWER[metric]
 
 
@@ -67,8 +73,10 @@ def trust(result: dict, prediction: dict | None = None) -> tuple[str, bool | Non
         how = f"solver checked in {SOLVERS[source]}"
     elif source.startswith("power_law"):
         how = "estimated by the fitted model only, not solved"
-    else:
+    elif source in FORMULAS:
         how = "a formula demo value, not a solve"
+    else:  # a source this module does not know: say so rather than guess
+        how = f"from an unknown source ({source or 'not given'}), so treat them as unverified"
     in_range = None
     if prediction and result.get("recommended"):
         hit = next((c for c in prediction.get("shortlist", []) if c.get("design_id") == rec.get("design_id")), None)
@@ -84,15 +92,22 @@ def template_verdict(result: dict, prediction: dict | None = None) -> str:
     obj = spec["objective"]["metric"]
     how, in_range = trust(result, prediction)
     if rec is None:
-        limits = ", ".join(base.get("violated") or [f"{c['metric']} {c['op']} {c['value']}" for c in spec["constraints"]])
+        failed = Counter(v for f in result.get("finalists", []) for v in f.get("violated", []))  # what the finalists missed
+        limits = (failed.most_common(1)[0][0] if failed else
+                  ", ".join(base.get("violated") or [f"{c['metric']} {c['op']} {c['value']}" for c in spec["constraints"]]))
         return ("Do not adopt a design from this search: none of the finalists met every limit. "
                 f"The limit that could not be met is {limits}. The finalist numbers are {how}. "
                 "Next step: relax that limit a little or widen the dimension ranges, then search again.")
     changes = percent_changes(result)
     gain = _pct(changes, obj)
+    if base.get("feasible") and gain is not None and not gain[1]:  # the baseline passes and the pick is worse on the goal
+        return (f"Keep the baseline: it already meets every limit, and {rec['design_id']} is {gain[0]} than it, "
+                f"with a {METRIC_WORDS[obj]} of {_fmt(obj, rec[obj])}. The finalist numbers are {how}. "
+                "Next step: keep the baseline dimensions, or widen the dimension ranges and search again.")
     verdict = ("Adopt it" if base.get("feasible") else "Adopt it: the baseline fails a limit, so this is the price of meeting it")
     s1 = f"{verdict}. {rec['design_id']} has a {METRIC_WORDS[obj]} of {_fmt(obj, rec[obj])}" + (f", {gain[0]} than the baseline" if gain else "") + "."
-    others = [p for m in ("max_disp_mm", "max_stress_mpa", "safety_factor") if m != obj for p in [_pct(changes, m)] if p]
+    others = [p for m in ("mass_kg", "max_disp_mm", "max_stress_mpa", "safety_factor") if m != obj
+              for p in [_pct(changes, m, as_noun=True)] if p]  # mass counts as a cost when it is not the goal
     worse = [t for t, ok in others if not ok]
     better = [t for t, ok in others if ok]
     if worse:

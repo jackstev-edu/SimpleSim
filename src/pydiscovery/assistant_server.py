@@ -176,11 +176,11 @@ class AssistantAPI:
 
     def _done(self) -> dict:
         s = self.session
+        run = self._new_run()  # first: the verdict inside it makes paid model calls that the spend below must count
         spent = cost(self.usage)
         done = {"type": "done", "path": s.path if s is not None else None, "part": self.part_name,
                 "spent_usd": round(spent, 6), "budget_left_usd": round(max(self.budget_usd - spent, 0.0), 6),
                 "table": s.table() if s is not None else []}
-        run = self._new_run()
         if run is not None:
             done["run"] = run  # the three contract files of a fast-path optimize, once, so the GUI can show them
         return done
@@ -197,20 +197,26 @@ class AssistantAPI:
         run = {"study_spec": result.spec.model_dump(mode="json"),
                "prediction": prediction.model_dump(mode="json") if prediction is not None else None,
                "result": result.model_dump(mode="json")}
-        run["verdict"] = self._verdict(run["result"], run["prediction"])
+        verdict = self._verdict(run["result"], run["prediction"])
+        if verdict is not None:  # None: even the template failed; the run still goes out, without a verdict box
+            run["verdict"] = verdict
         return run
 
-    def _verdict(self, result: dict, prediction: dict | None) -> dict:
+    def _verdict(self, result: dict, prediction: dict | None) -> dict | None:
         """The judgement call on the run (src/assistant/verdict.py): one model call under the budget cap, else the template."""
         from src.assistant.verdict import template_verdict, verdict
 
         try:
             text, source, warnings = verdict(result, self.session.client, prediction=prediction)
-        except BudgetExceeded as exc:
-            text, source, warnings = template_verdict(result, prediction), "template", [f"Verdict used the template: the {exc}."]
         except Exception as exc:  # noqa: BLE001 - a paid search result must never be lost over its summary
-            traceback.print_exc()
-            text, source, warnings = template_verdict(result, prediction), "template", [f"Verdict used the template: {type(exc).__name__}: {str(exc)[:120]}."]
+            if not isinstance(exc, BudgetExceeded):
+                traceback.print_exc()
+            note = f"the {exc}" if isinstance(exc, BudgetExceeded) else f"{type(exc).__name__}: {str(exc)[:120]}"
+            try:
+                text, source, warnings = template_verdict(result, prediction), "template", [f"Verdict used the template: {note}."]
+            except Exception:  # noqa: BLE001 - the template failed too
+                traceback.print_exc()
+                return None
         return {"text": text, "source": source, "warnings": warnings}
 
     # ------------------------------------------------------------ the session

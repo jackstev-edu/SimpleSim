@@ -127,7 +127,10 @@ class PyDiscoveryAPI:
         if name == "optimize_design" and out.get("ok") and isinstance(out.get("result"), dict):
             from src.assistant.verdict import template_verdict  # the GUI tab has no model: the template verdict only
 
-            out["verdict"] = {"text": template_verdict(out["result"], out.get("prediction")), "source": "template", "warnings": []}
+            try:
+                out["verdict"] = {"text": template_verdict(out["result"], out.get("prediction")), "source": "template", "warnings": []}
+            except Exception:  # noqa: BLE001 - the optimize result must never be lost over its summary; the GUI shows none
+                traceback.print_exc()
         return 200, out
 
     def default_save_path(self) -> Path:

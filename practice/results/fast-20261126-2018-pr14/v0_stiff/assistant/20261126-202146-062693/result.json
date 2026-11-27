@@ -1,0 +1,206 @@
+{
+ "schema_version": "0.2.0",
+ "spec": {
+  "schema_version": "0.2.0",
+  "bracket_family": "l_bracket_v0",
+  "objective": {
+   "metric": "max_disp_mm",
+   "direction": "minimize"
+  },
+  "constraints": [
+   {
+    "metric": "safety_factor",
+    "op": ">=",
+    "value": 1.5
+   },
+   {
+    "metric": "mass_kg",
+    "op": "<=",
+    "value": 0.25
+   }
+  ],
+  "parameters": [
+   {
+    "name": "thickness_mm",
+    "low_mm": 4.0,
+    "high_mm": 10.0
+   },
+   {
+    "name": "flange_length_mm",
+    "low_mm": 75.0,
+    "high_mm": 120.0
+   },
+   {
+    "name": "arm_width_mm",
+    "low_mm": 32.0,
+    "high_mm": 60.0
+   },
+   {
+    "name": "hole_diameter_mm",
+    "low_mm": 6.0,
+    "high_mm": 12.0
+   },
+   {
+    "name": "fillet_radius_mm",
+    "low_mm": 2.0,
+    "high_mm": 8.0
+   }
+  ],
+  "load": {
+   "force_n": 500.0,
+   "angle_deg": -90.0
+  },
+  "material_key": "structural_steel",
+  "n_candidates": 2000,
+  "n_verify": 5,
+  "assumptions": [
+   "Load 500 N along -Y on the free-end face at max X (user).",
+   "Material Structural steel (user).",
+   "Setup confirmed by the user."
+  ]
+ },
+ "baseline": {
+  "design_id": "baseline",
+  "design": {
+   "thickness_mm": 6.0,
+   "flange_length_mm": 80.0,
+   "arm_width_mm": 40.0,
+   "hole_diameter_mm": 8.0,
+   "fillet_radius_mm": 4.0
+  },
+  "source": "power_law_v0",
+  "mass_kg": 0.251166655403346,
+  "max_stress_mpa": 176.48376299856554,
+  "max_disp_mm": 0.47422626017321096,
+  "safety_factor": 1.416560910490287,
+  "feasible": false,
+  "violated": [
+   "safety_factor >= 1.5",
+   "mass_kg <= 0.25"
+  ]
+ },
+ "recommended": {
+  "design_id": "pl-0-00424",
+  "design": {
+   "thickness_mm": 7.4631876939195445,
+   "flange_length_mm": 75.62774219855599,
+   "arm_width_mm": 32.531987023804106,
+   "hole_diameter_mm": 8.968777719447012,
+   "fillet_radius_mm": 4.117872764806123
+  },
+  "source": "power_law_v0",
+  "mass_kg": 0.24149939667107198,
+  "max_stress_mpa": 133.39348943194756,
+  "max_disp_mm": 0.2508794151564835,
+  "safety_factor": 1.8741544363568117,
+  "feasible": true,
+  "violated": []
+ },
+ "finalists": [
+  {
+   "design_id": "pl-0-00424",
+   "design": {
+    "thickness_mm": 7.4631876939195445,
+    "flange_length_mm": 75.62774219855599,
+    "arm_width_mm": 32.531987023804106,
+    "hole_diameter_mm": 8.968777719447012,
+    "fillet_radius_mm": 4.117872764806123
+   },
+   "source": "power_law_v0",
+   "mass_kg": 0.24149939667107198,
+   "max_stress_mpa": 133.39348943194756,
+   "max_disp_mm": 0.2508794151564835,
+   "safety_factor": 1.8741544363568117,
+   "feasible": true,
+   "violated": []
+  },
+  {
+   "design_id": "pl-0-01983",
+   "design": {
+    "thickness_mm": 7.257493971576581,
+    "flange_length_mm": 77.30665293602078,
+    "arm_width_mm": 32.715102072881635,
+    "hole_diameter_mm": 8.686323217380076,
+    "fillet_radius_mm": 3.5903400574346804
+   },
+   "source": "power_law_v0",
+   "mass_kg": 0.23972289719042847,
+   "max_stress_mpa": 147.62579786644045,
+   "max_disp_mm": 0.2951532846239287,
+   "safety_factor": 1.693470948933866,
+   "feasible": true,
+   "violated": []
+  },
+  {
+   "design_id": "pl-0-01381",
+   "design": {
+    "thickness_mm": 6.884066446714456,
+    "flange_length_mm": 76.28820950759102,
+    "arm_width_mm": 35.72704330091651,
+    "hole_diameter_mm": 6.914172396241842,
+    "fillet_radius_mm": 3.522315115273236
+   },
+   "source": "power_law_v0",
+   "mass_kg": 0.24855655161665002,
+   "max_stress_mpa": 148.03708662840899,
+   "max_disp_mm": 0.3019623105602615,
+   "safety_factor": 1.6887660092063976,
+   "feasible": true,
+   "violated": []
+  },
+  {
+   "design_id": "pl-0-01480",
+   "design": {
+    "thickness_mm": 6.8244062048227185,
+    "flange_length_mm": 78.17015593782638,
+    "arm_width_mm": 35.12902210844026,
+    "hole_diameter_mm": 7.790090561407317,
+    "fillet_radius_mm": 4.956269459132022
+   },
+   "source": "power_law_v0",
+   "mass_kg": 0.2460822375979203,
+   "max_stress_mpa": 146.60159837508408,
+   "max_disp_mm": 0.3326726578546467,
+   "safety_factor": 1.7053020074199217,
+   "feasible": true,
+   "violated": []
+  },
+  {
+   "design_id": "pl-0-01723",
+   "design": {
+    "thickness_mm": 6.581912500721653,
+    "flange_length_mm": 76.40743091917145,
+    "arm_width_mm": 35.860203676107595,
+    "hole_diameter_mm": 6.162580565823292,
+    "fillet_radius_mm": 5.3903966951261015
+   },
+   "source": "power_law_v0",
+   "mass_kg": 0.2407582303406096,
+   "max_stress_mpa": 147.48157947575987,
+   "max_disp_mm": 0.3333561111843643,
+   "safety_factor": 1.6951269500140531,
+   "feasible": true,
+   "violated": []
+  }
+ ],
+ "binding_constraint": "mass_kg <= 0.25",
+ "sensitivities": {
+  "thickness_mm": -0.6988155078663648,
+  "flange_length_mm": 0.9223521276944423,
+  "arm_width_mm": -0.031860660300197116,
+  "hole_diameter_mm": 0.465604046502828,
+  "fillet_radius_mm": 0.8051718076959511
+ },
+ "explanation": "Recommended pl-0-00424: mass 0.241 kg (-4% vs baseline), safety factor 1.87, displacement 0.251 mm. Binding constraint: mass_kg <= 0.25. Verified with power_law_v0.",
+ "discovery_values": {
+  "thickness_mm": 7.4631876939195445,
+  "flange_length_mm": 75.62774219855599,
+  "arm_width_mm": 32.531987023804106,
+  "hole_diameter_mm": 8.968777719447012,
+  "fillet_radius_mm": 4.117872764806123
+ },
+ "warnings": [
+  "power-law surrogate fitted to 200 CalculiX runs of l_bracket_v0; see docs/models.md for its error",
+  "Finalists were checked with the fitted power law, not a real solver. Use the CalculiX engine (Role 1) for a real check."
+ ]
+}

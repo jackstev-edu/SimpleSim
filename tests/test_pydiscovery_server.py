@@ -206,3 +206,15 @@ def test_spaceclaim_upload_can_pick_the_gusset_family(api, tmp_path):
     post(api, "/api/pydiscovery/upload", raw, query={"name": ["shape.scdocx"]})
     status, out = tool(api, "use_family", {"family": "l_bracket_gusset_v1"})
     assert out["ok"] is True and out["state"]["family"] == "l_bracket_gusset_v1" and len(out["state"]["dimensions"]) == 8
+
+
+def test_optimize_answer_survives_a_failing_template_verdict(api, monkeypatch):
+    import src.assistant.verdict as V
+
+    def boom(*a, **k):
+        raise KeyError("binding")
+    monkeypatch.setattr(V, "template_verdict", boom)
+    post(api, "/api/pydiscovery/demo-part")
+    tool(api, "confirm_setup")
+    status, out = tool(api, "optimize_design", {"constraints": LIMITS})
+    assert status == 200 and out["ok"] is True and "result" in out and "verdict" not in out
