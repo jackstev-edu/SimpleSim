@@ -192,3 +192,20 @@ def test_repeat_run_stops_all_repeats_on_budget(tmp_path, monkeypatch):
     rfp._run_repeats({"p": problem()}, None, tmp_path, {}, 3)
     md = (tmp_path / "summary.md").read_text(encoding="utf-8")
     assert calls == ["r1", "r2"] and "r3 p: not run" in md and "3 repeats" in md
+    assert json.loads((tmp_path / "repeats.json").read_text(encoding="utf-8")) == {"repeat": 3, "ids": ["p"]}
+
+
+def test_combined_problem_never_run_fails():
+    # review 2026-11-27: a problem no repeat reached must count as failed, not vanish from the total
+    md = fast_runner.combined_summary([[g("p", force="pass")], []], ["p", "q"])
+    assert "| q | **fail** (0/2) |" in md and "0 / 2" in md  # p ran in r1 only, so it fails too
+
+
+def test_regrade_folder_uses_requested_repeats(tmp_path):
+    # review 2026-11-27: a run stopped in r2 of 3 has no r3/ folder; regrade must still judge over 3 repeats
+    for r in ("r1", "r2"):
+        (tmp_path / r).mkdir()
+        (tmp_path / r / "p.json").write_text(json.dumps(run(problem(), tmp_path / r)), encoding="utf-8")
+    (tmp_path / "repeats.json").write_text(json.dumps({"repeat": 3, "ids": ["p", "q"]}), encoding="utf-8")
+    md = fast_runner.regrade_folder(tmp_path, {"p": problem(), "q": problem()})
+    assert "3 repeats" in md and "(2/3)" in md and "| q | **fail** (0/3)" in md

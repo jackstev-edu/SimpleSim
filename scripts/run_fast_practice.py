@@ -52,6 +52,8 @@ def main() -> None:
 
 def _run_repeats(problems, client, out, usage, n: int) -> None:
     repeats: list[list[dict]] = []
+    meta = {"repeat": n, "ids": list(problems)}  # lets --regrade judge over all N even after an early stop
+    (out / "repeats.json").write_text(json.dumps(meta), encoding="utf-8")
     write = lambda: (out / "summary.md").write_text(combined_summary(repeats, list(problems)), encoding="utf-8")
     for i in range(1, n + 1):
         sub = out / f"r{i}"

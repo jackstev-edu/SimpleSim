@@ -170,7 +170,8 @@ def combined_summary(repeats: list[list[dict]], ids: list[str]) -> str:
         cells = []
         for c in names:
             res = [b[pid]["checks"].get(c, {}).get("result") if pid in b else None for b in by]
-            if any(r in ("pass", "fail") for r in res):  # scored check: every repeat must pass
+            never_ran = all(r is None for r in res) and not any(pid in b for b in by)
+            if never_ran or any(r in ("pass", "fail") for r in res):  # scored; a problem no repeat reached fails
                 k = sum(r == "pass" for r in res)
                 counted += 1
                 passed += k == n
@@ -203,7 +204,10 @@ def regrade_folder(folder: Path, problems: dict[str, FastProblem]) -> str:
             graded = regrade(sub, problems)
             (sub / "summary.md").write_text(summary_markdown(graded), encoding="utf-8")
             repeats.append(graded)
+        meta = folder / "repeats.json"  # the requested N and problem list; a stopped run lacks later r*/ folders
+        want = json.loads(meta.read_text(encoding="utf-8")) if meta.exists() else {}
+        repeats += [[] for _ in range(want.get("repeat", 0) - len(repeats))]
         seen = {g["id"] for rep in repeats for g in rep}
-        md = combined_summary(repeats, [pid for pid in problems if pid in seen])
+        md = combined_summary(repeats, want.get("ids") or [pid for pid in problems if pid in seen])
     (folder / "summary.md").write_text(md, encoding="utf-8")
     return md
