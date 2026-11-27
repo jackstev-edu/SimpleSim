@@ -154,3 +154,56 @@ def regrade(folder: Path, problems: dict[str, FastProblem]) -> list[dict]:
         (path.parent / f"{path.stem}.graded.json").write_text(json.dumps(g, indent=2), encoding="utf-8")
         graded.append(g)
     return graded
+
+
+def combined_summary(repeats: list[list[dict]], ids: list[str]) -> str:
+    """One table over N repeats: a check passes only when every repeat passes it (spec 2026-11-27)."""
+    n = len(repeats)
+    by = [{g["id"]: g for g in rep} for rep in repeats]
+    names = list(dict.fromkeys(c for rep in repeats for g in rep for c in g["checks"]))
+    mark = {"pass": "pass", "fail": "**fail**", "n/a": "n/a", "info": "info"}
+    lines = [f"# Fast-path benchmark, {n} repeats", "", "A check passes only when all repeats pass it; "
+             "`fail (k/N)` gives the passing repeats. A repeat that never reached a problem counts as not passing.", "",
+             "| problem | " + " | ".join(names) + " |", "|" + " --- |" * (len(names) + 1)]
+    passed = counted = 0
+    for pid in ids:
+        cells = []
+        for c in names:
+            res = [b[pid]["checks"].get(c, {}).get("result") if pid in b else None for b in by]
+            if any(r in ("pass", "fail") for r in res):  # scored check: every repeat must pass
+                k = sum(r == "pass" for r in res)
+                counted += 1
+                passed += k == n
+                cells.append("pass" if k == n else f"**fail** ({k}/{n})")
+            else:  # info / n/a: the first repeat that has the problem
+                first = next((r for r in res if r), None)
+                cells.append(mark.get(first, ""))
+        lines.append(f"| {pid} | " + " | ".join(cells) + " |")
+    pct = lambda v: "" if v is None else f"{v:+.1%}"
+    lines += ["", f"**{passed} / {counted} combined checks pass** (n/a and info not counted).", "",
+              "## Pick (gap to the fast path's own best, per repeat)", "",
+              "| problem | " + " | ".join(f"r{i + 1}" for i in range(n)) + " |", "|" + " --- |" * (n + 1)]
+    lines += [f"| {pid} | " + " | ".join(pct(b[pid]["pick"]["gap"]) if pid in b else "not run" for b in by) + " |"
+              for pid in ids]
+    fails = [f"- r{i + 1} {pid} `{c}`: {chk['detail']}" for i, b in enumerate(by) for pid in ids if pid in b
+             for c, chk in b[pid]["checks"].items() if chk["result"] == "fail"]
+    missing = [f"- r{i + 1} {pid}: not run" for i, b in enumerate(by) for pid in ids if pid not in b]
+    return "\n".join(lines + ["", "## Failures", "", *(fails + missing or ["none"])]) + "\n"
+
+
+def regrade_folder(folder: Path, problems: dict[str, FastProblem]) -> str:
+    """Regrade a run folder; a repeat run (r1/ .. rN/) also gets its combined summary rebuilt."""
+    folder = Path(folder)
+    subs = sorted((p for p in folder.glob("r*") if p.is_dir() and p.name[1:].isdigit()), key=lambda p: int(p.name[1:]))
+    if not subs:
+        md = summary_markdown(regrade(folder, problems))
+    else:
+        repeats = []
+        for sub in subs:
+            graded = regrade(sub, problems)
+            (sub / "summary.md").write_text(summary_markdown(graded), encoding="utf-8")
+            repeats.append(graded)
+        seen = {g["id"] for rep in repeats for g in rep}
+        md = combined_summary(repeats, [pid for pid in problems if pid in seen])
+    (folder / "summary.md").write_text(md, encoding="utf-8")
+    return md

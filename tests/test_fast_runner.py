@@ -137,3 +137,58 @@ def test_error_ends_problem_without_crashing(tmp_path):
             self.finish_after = 10_000
     log = fast_runner.run_fast_problem(problem(), client=None, out_dir=tmp_path, session_factory=Never, student_factory=Mute)
     assert log["stopped"].startswith("error: RuntimeError")
+
+
+def g(pid, **res):  # graded dict with the given check results
+    return {"id": pid, "checks": {k: {"result": v, "detail": k} for k, v in res.items()},
+            "pick": {"gap": 0.01, "dense_gap": None, "sim_gap": None}}
+
+
+def test_combined_all_pass_is_pass():
+    md = fast_runner.combined_summary([[g("p", force="pass")]] * 3, ["p"])
+    assert "| p | pass |" in md and "1 / 1" in md
+
+
+def test_combined_counts_failing_repeats():
+    md = fast_runner.combined_summary([[g("p", force="pass")], [g("p", force="fail")], [g("p", force="pass")]], ["p"])
+    assert "**fail** (2/3)" in md and "0 / 1" in md
+
+
+def test_combined_missing_repeat_is_not_a_pass():
+    # a repeat that never reached the problem (budget stop) must not count as passing
+    md = fast_runner.combined_summary([[g("p", force="pass")], [], [g("p", force="pass")]], ["p"])
+    assert "**fail** (2/3)" in md
+
+
+def test_combined_info_from_first_repeat_with_problem():
+    md = fast_runner.combined_summary([[], [g("p", dense_gap="info")], [g("p", dense_gap="n/a")]], ["p"])
+    assert "| p | info |" in md
+
+
+def test_regrade_folder_with_repeats(tmp_path):
+    for r in ("r1", "r2"):
+        (tmp_path / r).mkdir()
+        (tmp_path / r / "p.json").write_text(json.dumps(run(problem(), tmp_path / r)), encoding="utf-8")
+    md = fast_runner.regrade_folder(tmp_path, {"p": problem()})
+    assert (tmp_path / "r1" / "summary.md").exists()
+    assert (tmp_path / "summary.md").read_text(encoding="utf-8") == md
+
+
+def test_regrade_folder_single_run_unchanged(tmp_path):
+    (tmp_path / "p.json").write_text(json.dumps(run(problem(), tmp_path)), encoding="utf-8")
+    graded = fast_runner.regrade(tmp_path, {"p": problem()})
+    assert fast_runner.regrade_folder(tmp_path, {"p": problem()}) == fast_runner.summary_markdown(graded)
+
+
+def test_repeat_run_stops_all_repeats_on_budget(tmp_path, monkeypatch):
+    # the script's repeat loop: a budget stop in r2 ends the run, and r3 is reported as not run
+    from scripts import run_fast_practice as rfp
+    calls = []
+
+    def fake_run(p, client, out):
+        calls.append(out.name)
+        return {"id": p.id, "events": [], "result": None, "stopped": "budget" if len(calls) == 2 else "reply cap"}
+    monkeypatch.setattr(rfp, "run_fast_problem", fake_run)
+    rfp._run_repeats({"p": problem()}, None, tmp_path, {}, 3)
+    md = (tmp_path / "summary.md").read_text(encoding="utf-8")
+    assert calls == ["r1", "r2"] and "r3 p: not run" in md and "3 repeats" in md
