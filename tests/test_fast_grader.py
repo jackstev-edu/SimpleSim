@@ -169,6 +169,26 @@ def test_confirmed_setup_card_counts_as_asking_load_face():
     assert checks(problem(must_ask=("support", "load_face")), log(events=events))["asked"] == "pass"
 
 
+def test_student_stated_load_point_counts_as_asked():
+    # user decision 2026-11-27 (v1_sf2_lbf): the student named the tip unprompted, so the load face was not assumed
+    events = [{"type": "text", "text": "Where is the bracket held?"},
+              {"type": "student", "text": "Steel bracket carrying 150 lbf straight down at the tip."},
+              {"type": "student", "text": "The back face is bolted to a wall."},
+              {"type": "text", "text": "Please confirm this setup: back face fixed, load at the free end. Say yes to proceed."},
+              {"type": "student", "text": "Yes."},
+              {"type": "tool", "name": "confirm_setup", "input": {}},
+              {"type": "tool", "name": "optimize_design", "input": {}}]
+    assert checks(problem(must_ask=("load_face",)), log(events=events))["asked"] == "pass"
+
+
+def test_student_stated_rule_is_load_face_only():
+    # "held" in a student remark must not count as the support being asked
+    events = [{"type": "student", "text": "I held it in my hand, it feels heavy."},
+              {"type": "tool", "name": "set_support", "input": {}},
+              {"type": "tool", "name": "optimize_design", "input": {}}]
+    assert checks(problem(must_ask=("support",)), log(events=events))["asked"] == "fail"
+
+
 def test_dense_gap_is_info_only():
     # user decision 2026-11-23: the key is the fast path's own 2,000-design search; the 400,000-design best is info
     p = problem()

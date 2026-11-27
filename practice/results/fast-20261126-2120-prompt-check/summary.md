@@ -11,9 +11,9 @@
 | v0_stiff | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | info | n/a | pass |
 | v1_clean_mass | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | info | info | pass |
 | v1_named_dims | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | info | n/a | pass |
-| v1_sf2_lbf | pass | pass | pass | pass | pass | pass | pass | **fail** | pass | pass | pass | pass | info | n/a | pass |
+| v1_sf2_lbf | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass | info | n/a | pass |
 
-**117 / 118 checks pass** (n/a and info not counted).
+**118 / 118 checks pass** (n/a and info not counted).
 
 ## Pick
 
@@ -32,4 +32,4 @@
 
 ## Failures
 
-- v1_sf2_lbf `asked`: not asked before use: load_face
+none

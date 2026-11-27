@@ -63,6 +63,9 @@ def _asked(events, item: str) -> bool:
             and (any(pat.search(q) for q in QUESTION.findall(e["text"]))
                  or (item in CARD_ITEMS and pat.search(e["text"])  # a setup card the student is asked to confirm
                      and any(CARD_QUESTION.search(q) for q in QUESTION.findall(e["text"]))))]
+    if item == "load_face" and any(e["type"] == "student" and e["seq"] < before and pat.search(e["text"])
+                                   for e in events):
+        return True  # the student named the load point unprompted (user decision 2026-11-27)
     return bool(asks) and any(e["type"] == "student" and min(asks) < e["seq"] < before for e in events)
 
 
