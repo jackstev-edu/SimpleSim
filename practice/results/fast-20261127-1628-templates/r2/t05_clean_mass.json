@@ -1,0 +1,448 @@
+{
+  "id": "t05_clean_mass",
+  "events": [
+    {
+      "seq": 0,
+      "type": "path",
+      "path": "fast",
+      "reason": "this is the Side-notch bracket T05, which the team's predictor knows"
+    },
+    {
+      "seq": 1,
+      "type": "tool",
+      "name": "describe_setup",
+      "input": {}
+    },
+    {
+      "seq": 2,
+      "type": "tool_result",
+      "name": "describe_setup",
+      "content": "{\"ok\": true, \"message\": \"Part: t05_clean_mass.dsco (discovery file), Side-notch bracket T05. Engine: power_law_v0.\\nFixed: not set\\nLoad: not set\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 10), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Notch radius 4.5 mm (3 to 6)\\nStill needed: supports; load; material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t05_clean_mass\\\\t05_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t05_side_notches_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Notch radius\", \"contract_name\": \"notch_radius_mm\", \"value_mm\": 4.5, \"low_mm\": 3.0, \"high_mm\": 6.0}], \"support\": null, \"load\": null, \"material\": null, \"sources\": {\"dimensions\": \"file\"}, \"missing\": [\"supports\", \"load\", \"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 3,
+      "type": "text",
+      "text": "I see a side-notch bracket (T05) in the open Discovery file. Its dimensions are: thickness 6 mm, flange length 80 mm, arm width 40 mm, hole diameter 8 mm, fillet radius 4 mm, vertical height 60 mm, and notch radius 4.5 mm. The support, load, and material haven\u2019t been set.\n\nWhere is the bracket held or fixed?"
+    },
+    {
+      "seq": 4,
+      "type": "student",
+      "text": "This is a side-notch steel bracket, bolted to a wall by the back face of its upright leg. 500 N acts straight down on the free end of the flange. Safety factor 1.5. Make it as light as possible."
+    },
+    {
+      "seq": 5,
+      "type": "tool",
+      "name": "set_support",
+      "input": {
+        "face": "back face at X = 0"
+      }
+    },
+    {
+      "seq": 6,
+      "type": "tool_result",
+      "name": "set_support",
+      "content": "{\"ok\": true, \"message\": \"Part: t05_clean_mass.dsco (discovery file), Side-notch bracket T05. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: not set\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 10), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Notch radius 4.5 mm (3 to 6)\\nStill needed: load; material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t05_clean_mass\\\\t05_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t05_side_notches_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Notch radius\", \"contract_name\": \"notch_radius_mm\", \"value_mm\": 4.5, \"low_mm\": 3.0, \"high_mm\": 6.0}], \"support\": \"back face at X = 0\", \"load\": null, \"material\": null, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\"}, \"missing\": [\"load\", \"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 7,
+      "type": "tool",
+      "name": "set_load",
+      "input": {
+        "force_n": 500,
+        "direction": [
+          0,
+          -1,
+          0
+        ]
+      }
+    },
+    {
+      "seq": 8,
+      "type": "tool_result",
+      "name": "set_load",
+      "content": "{\"ok\": true, \"message\": \"Part: t05_clean_mass.dsco (discovery file), Side-notch bracket T05. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 500 N along -Y on the free-end face at max X [user]\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 10), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Notch radius 4.5 mm (3 to 6)\\nStill needed: material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t05_clean_mass\\\\t05_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t05_side_notches_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Notch radius\", \"contract_name\": \"notch_radius_mm\", \"value_mm\": 4.5, \"low_mm\": 3.0, \"high_mm\": 6.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 500.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": null, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\"}, \"missing\": [\"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 9,
+      "type": "tool",
+      "name": "record_study_inputs",
+      "input": {
+        "safety_factor": 1.5,
+        "objective": "mass_kg",
+        "direction": "minimize"
+      }
+    },
+    {
+      "seq": 10,
+      "type": "tool_result",
+      "name": "record_study_inputs",
+      "content": "{\"ok\": true, \"inputs\": {\"safety_factor\": 1.5, \"objective\": \"mass_kg\", \"direction\": \"minimize\", \"limits\": [], \"vary\": null}}",
+      "is_error": false
+    },
+    {
+      "seq": 11,
+      "type": "text",
+      "text": "For the lightest design, I recommend aluminum 6061. The fast search supports structural steel and aluminum 6061; the ANSYS search offers more materials. I\u2019ll use the fast search for the bracket\u2019s mass optimization; say 'use ANSYS' to switch.\n\nWould you like me to set the material to aluminum 6061?"
+    },
+    {
+      "seq": 12,
+      "type": "student",
+      "text": "No, keep structural steel."
+    },
+    {
+      "seq": 13,
+      "type": "tool",
+      "name": "set_material",
+      "input": {
+        "material": "structural_steel"
+      }
+    },
+    {
+      "seq": 14,
+      "type": "tool_result",
+      "name": "set_material",
+      "content": "{\"ok\": true, \"message\": \"Part: t05_clean_mass.dsco (discovery file), Side-notch bracket T05. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 500 N along -Y on the free-end face at max X [user]\\nMaterial: Structural steel, E 200,000 MPa, yield 250 MPa, density 7850 kg/m3 [user]\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 10), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Notch radius 4.5 mm (3 to 6)\\nStill needed: nothing\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t05_clean_mass\\\\t05_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t05_side_notches_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Notch radius\", \"contract_name\": \"notch_radius_mm\", \"value_mm\": 4.5, \"low_mm\": 3.0, \"high_mm\": 6.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 500.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": {\"name\": \"Structural steel\", \"youngs_mpa\": 200000.0, \"poisson\": 0.3, \"yield_mpa\": 250.0, \"ultimate_mpa\": null, \"density_kg_m3\": 7849.999999999999}, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\", \"material\": \"user\"}, \"missing\": [], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 15,
+      "type": "tool",
+      "name": "describe_setup",
+      "input": {}
+    },
+    {
+      "seq": 16,
+      "type": "tool_result",
+      "name": "describe_setup",
+      "content": "{\"ok\": true, \"message\": \"Part: t05_clean_mass.dsco (discovery file), Side-notch bracket T05. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 500 N along -Y on the free-end face at max X [user]\\nMaterial: Structural steel, E 200,000 MPa, yield 250 MPa, density 7850 kg/m3 [user]\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 10), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Notch radius 4.5 mm (3 to 6)\\nStill needed: nothing\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t05_clean_mass\\\\t05_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t05_side_notches_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Notch radius\", \"contract_name\": \"notch_radius_mm\", \"value_mm\": 4.5, \"low_mm\": 3.0, \"high_mm\": 6.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 500.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": {\"name\": \"Structural steel\", \"youngs_mpa\": 200000.0, \"poisson\": 0.3, \"yield_mpa\": 250.0, \"ultimate_mpa\": null, \"density_kg_m3\": 7849.999999999999}, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\", \"material\": \"user\"}, \"missing\": [], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 17,
+      "type": "text",
+      "text": "Setup card: side-notch bracket T05; fixed at the back face at X = 0; 500 N straight down (-Y) on the free-end face; structural steel. Current dimensions are thickness 6 mm, flange length 80 mm, arm width 40 mm, hole diameter 8 mm, fillet radius 4 mm, vertical height 60 mm, and notch radius 4.5 mm. Safety factor: 1.5. Objective: minimize mass.\n\nWhich dimensions may change in the search? You can say \u201call\u201d or list specific dimensions."
+    },
+    {
+      "seq": 18,
+      "type": "student",
+      "text": "All."
+    },
+    {
+      "seq": 19,
+      "type": "tool",
+      "name": "record_study_inputs",
+      "input": {
+        "vary": [
+          "Thickness",
+          "Flange length",
+          "Arm width",
+          "Hole diameter",
+          "Fillet radius",
+          "Vertical height",
+          "Notch radius"
+        ]
+      }
+    },
+    {
+      "seq": 20,
+      "type": "tool_result",
+      "name": "record_study_inputs",
+      "content": "{\"ok\": true, \"inputs\": {\"safety_factor\": 1.5, \"objective\": \"mass_kg\", \"direction\": \"minimize\", \"limits\": [], \"vary\": [\"Thickness\", \"Flange length\", \"Arm width\", \"Hole diameter\", \"Fillet radius\", \"Vertical height\", \"Notch radius\"]}}",
+      "is_error": false
+    },
+    {
+      "seq": 21,
+      "type": "text",
+      "text": "The setup is ready: side-notch bracket T05, fixed at the back face at X = 0, with 500 N straight down (-Y) on the free-end face. Material is structural steel. All seven dimensions may vary within the ranges shown: thickness, flange length, arm width, hole diameter, fillet radius, vertical height, and notch radius. Safety factor is 1.5, and the objective is to minimize mass.\n\nIs this setup correct?"
+    },
+    {
+      "seq": 22,
+      "type": "student",
+      "text": "OK, go ahead."
+    },
+    {
+      "seq": 23,
+      "type": "tool",
+      "name": "confirm_setup",
+      "input": {}
+    },
+    {
+      "seq": 24,
+      "type": "tool_result",
+      "name": "confirm_setup",
+      "content": "{\"ok\": true, \"message\": \"Setup confirmed.\\nPart: t05_clean_mass.dsco (discovery file), Side-notch bracket T05. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 500 N along -Y on the free-end face at max X [user]\\nMaterial: Structural steel, E 200,000 MPa, yield 250 MPa, density 7850 kg/m3 [user]\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 10), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Notch radius 4.5 mm (3 to 6)\\nStill needed: nothing\\nStatus: confirmed by the user\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t05_clean_mass\\\\t05_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t05_side_notches_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Notch radius\", \"contract_name\": \"notch_radius_mm\", \"value_mm\": 4.5, \"low_mm\": 3.0, \"high_mm\": 6.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 500.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": {\"name\": \"Structural steel\", \"youngs_mpa\": 200000.0, \"poisson\": 0.3, \"yield_mpa\": 250.0, \"ultimate_mpa\": null, \"density_kg_m3\": 7849.999999999999}, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\", \"material\": \"user\"}, \"missing\": [], \"problems\": [], \"confirmed\": true}}",
+      "is_error": false
+    },
+    {
+      "seq": 25,
+      "type": "tool",
+      "name": "optimize_design",
+      "input": {
+        "objective": "mass_kg",
+        "direction": "minimize",
+        "constraints": [
+          {
+            "metric": "safety_factor",
+            "op": ">=",
+            "value": 1.5
+          }
+        ],
+        "vary": [
+          "Thickness",
+          "Flange length",
+          "Arm width",
+          "Hole diameter",
+          "Fillet radius",
+          "Vertical height",
+          "Notch radius"
+        ]
+      }
+    },
+    {
+      "seq": 26,
+      "type": "tool_result",
+      "name": "optimize_design",
+      "content": "Recommended pl-0-00510: mass 0.241 kg (-3% vs baseline), safety factor 1.61, displacement 0.293 mm. Binding constraint: safety_factor >= 1.5. Verified with power_law_t05_side_notches_v1.\n\nExplanation for the user:\nThe baseline does not meet the safety-factor limit of 1.5. I recommend design pl-0-00510: its mass is 0.241 kg, compared with the baseline\u2019s 0.248 kg, and its safety factor is 1.61. The binding constraint is safety factor \u2265 1.5, meaning this is the limit the design must satisfy. Because the baseline is infeasible, the thicker bracket is the price of meeting the limit, not a trade-off. Enter these values in Ansys Discovery: thickness 7.623 mm; flange length 78.897 mm; arm width 32.422 mm; hole diameter 8.228 mm; fillet radius 3.835 mm; vertical height 56.649 mm; notch radius 5.272 mm.",
+      "is_error": false
+    },
+    {
+      "seq": 27,
+      "type": "text",
+      "text": "The baseline does not meet the safety-factor limit of 1.5. Recommended design **pl-0-00510** has a mass of 0.241 kg (baseline: 0.248 kg), a safety factor of 1.61, and displacement of 0.293 mm. The binding constraint is safety factor \u2265 1.5. The finalist was verified with `power_law_t05_side_notches_v1`.\n\nEnter these dimensions in Ansys Discovery:\n- Thickness: 7.623 mm\n- Flange length: 78.897 mm\n- Arm width: 32.422 mm\n- Hole diameter: 8.228 mm\n- Fillet radius: 3.835 mm\n- Vertical height: 56.649 mm\n- Notch radius: 5.272 mm"
+    }
+  ],
+  "result": {
+    "schema_version": "0.2.0",
+    "spec": {
+      "schema_version": "0.2.0",
+      "bracket_family": "t05_side_notches_v1",
+      "objective": {
+        "metric": "mass_kg",
+        "direction": "minimize"
+      },
+      "constraints": [
+        {
+          "metric": "safety_factor",
+          "op": ">=",
+          "value": 1.5
+        }
+      ],
+      "parameters": [
+        {
+          "name": "thickness_mm",
+          "low_mm": 4.0,
+          "high_mm": 10.0
+        },
+        {
+          "name": "flange_length_mm",
+          "low_mm": 75.0,
+          "high_mm": 120.0
+        },
+        {
+          "name": "arm_width_mm",
+          "low_mm": 32.0,
+          "high_mm": 60.0
+        },
+        {
+          "name": "hole_diameter_mm",
+          "low_mm": 6.0,
+          "high_mm": 10.0
+        },
+        {
+          "name": "fillet_radius_mm",
+          "low_mm": 2.0,
+          "high_mm": 8.0
+        },
+        {
+          "name": "vertical_height_mm",
+          "low_mm": 50.0,
+          "high_mm": 90.0
+        },
+        {
+          "name": "notch_radius_mm",
+          "low_mm": 3.0,
+          "high_mm": 6.0
+        }
+      ],
+      "load": {
+        "force_n": 500.0,
+        "angle_deg": -90.0
+      },
+      "material_key": "structural_steel",
+      "n_candidates": 2000,
+      "n_verify": 5,
+      "assumptions": [
+        "Load 500 N along -Y on the free-end face at max X (user).",
+        "Material Structural steel (user).",
+        "Setup confirmed by the user."
+      ]
+    },
+    "baseline": {
+      "design_id": "baseline",
+      "design": {
+        "thickness_mm": 6.0,
+        "flange_length_mm": 80.0,
+        "arm_width_mm": 40.0,
+        "hole_diameter_mm": 8.0,
+        "fillet_radius_mm": 4.0,
+        "vertical_height_mm": 60.0,
+        "notch_radius_mm": 4.5
+      },
+      "source": "power_law_t05_side_notches_v1",
+      "mass_kg": 0.24814440703911816,
+      "max_stress_mpa": 197.07176523538521,
+      "max_disp_mm": 0.49908153809536093,
+      "safety_factor": 1.268573403711062,
+      "feasible": false,
+      "violated": [
+        "safety_factor >= 1.5"
+      ]
+    },
+    "recommended": {
+      "design_id": "pl-0-00510",
+      "design": {
+        "thickness_mm": 7.623217946444516,
+        "flange_length_mm": 78.89715216252321,
+        "arm_width_mm": 32.422075192345744,
+        "hole_diameter_mm": 8.227920459556437,
+        "fillet_radius_mm": 3.8347072072221824,
+        "vertical_height_mm": 56.649344672553006,
+        "notch_radius_mm": 5.271897767623906
+      },
+      "source": "power_law_t05_side_notches_v1",
+      "mass_kg": 0.24056145197759163,
+      "max_stress_mpa": 155.2357253459439,
+      "max_disp_mm": 0.2926812870717734,
+      "safety_factor": 1.6104540333281738,
+      "feasible": true,
+      "violated": []
+    },
+    "finalists": [
+      {
+        "design_id": "pl-0-00510",
+        "design": {
+          "thickness_mm": 7.623217946444516,
+          "flange_length_mm": 78.89715216252321,
+          "arm_width_mm": 32.422075192345744,
+          "hole_diameter_mm": 8.227920459556437,
+          "fillet_radius_mm": 3.8347072072221824,
+          "vertical_height_mm": 56.649344672553006,
+          "notch_radius_mm": 5.271897767623906
+        },
+        "source": "power_law_t05_side_notches_v1",
+        "mass_kg": 0.24056145197759163,
+        "max_stress_mpa": 155.2357253459439,
+        "max_disp_mm": 0.2926812870717734,
+        "safety_factor": 1.6104540333281738,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-01277",
+        "design": {
+          "thickness_mm": 7.553213750799937,
+          "flange_length_mm": 76.55158395766271,
+          "arm_width_mm": 33.019634062270555,
+          "hole_diameter_mm": 7.72967512218727,
+          "fillet_radius_mm": 4.651877439774344,
+          "vertical_height_mm": 60.47509402140445,
+          "notch_radius_mm": 5.876282582395061
+        },
+        "source": "power_law_t05_side_notches_v1",
+        "mass_kg": 0.24544292206985424,
+        "max_stress_mpa": 146.53866969128234,
+        "max_disp_mm": 0.26581693717508614,
+        "safety_factor": 1.7060343220440237,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-01981",
+        "design": {
+          "thickness_mm": 7.416676121962583,
+          "flange_length_mm": 77.53915314912157,
+          "arm_width_mm": 35.186239828922716,
+          "hole_diameter_mm": 8.74462510105753,
+          "fillet_radius_mm": 5.141170490936984,
+          "vertical_height_mm": 54.368571512387554,
+          "notch_radius_mm": 4.611923714129686
+        },
+        "source": "power_law_t05_side_notches_v1",
+        "mass_kg": 0.24917696040032197,
+        "max_stress_mpa": 140.4235370768897,
+        "max_disp_mm": 0.2679481454594866,
+        "safety_factor": 1.7803283210499898,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-00947",
+        "design": {
+          "thickness_mm": 7.021016834400485,
+          "flange_length_mm": 82.03421504741603,
+          "arm_width_mm": 36.45042543876376,
+          "hole_diameter_mm": 7.238417687329241,
+          "fillet_radius_mm": 7.828673622009635,
+          "vertical_height_mm": 56.219900725167776,
+          "notch_radius_mm": 3.5766661495290926
+        },
+        "source": "power_law_t05_side_notches_v1",
+        "mass_kg": 0.2628927456042127,
+        "max_stress_mpa": 151.7463071907077,
+        "max_disp_mm": 0.3428433006656011,
+        "safety_factor": 1.6474865492826234,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-00238",
+        "design": {
+          "thickness_mm": 6.933076216775559,
+          "flange_length_mm": 75.50814924027407,
+          "arm_width_mm": 37.26479675180318,
+          "hole_diameter_mm": 6.057331751574969,
+          "fillet_radius_mm": 3.962415065844257,
+          "vertical_height_mm": 63.23874614242327,
+          "notch_radius_mm": 3.61460212531333
+        },
+        "source": "power_law_t05_side_notches_v1",
+        "mass_kg": 0.264488163429161,
+        "max_stress_mpa": 157.06057236912008,
+        "max_disp_mm": 0.28084221840419077,
+        "safety_factor": 1.5917425756761912,
+        "feasible": true,
+        "violated": []
+      }
+    ],
+    "binding_constraint": "safety_factor >= 1.5",
+    "sensitivities": {
+      "thickness_mm": 0.0486122715355208,
+      "flange_length_mm": 0.3519490430293873,
+      "arm_width_mm": 0.4555133971974391,
+      "hole_diameter_mm": -0.04860042198179771,
+      "fillet_radius_mm": 0.23116992823505708,
+      "vertical_height_mm": 0.1376021929680174,
+      "notch_radius_mm": -0.2026915644940227
+    },
+    "explanation": "Recommended pl-0-00510: mass 0.241 kg (-3% vs baseline), safety factor 1.61, displacement 0.293 mm. Binding constraint: safety_factor >= 1.5. Verified with power_law_t05_side_notches_v1.",
+    "discovery_values": {
+      "thickness_mm": 7.623217946444516,
+      "flange_length_mm": 78.89715216252321,
+      "arm_width_mm": 32.422075192345744,
+      "hole_diameter_mm": 8.227920459556437,
+      "fillet_radius_mm": 3.8347072072221824,
+      "vertical_height_mm": 56.649344672553006,
+      "notch_radius_mm": 5.271897767623906
+    },
+    "warnings": [
+      "power-law surrogate fitted to 80 CalculiX runs of t05_side_notches_v1; see docs/models.md for its error",
+      "Finalists were checked with the fitted power law, not a real solver. Use the CalculiX engine (Role 1) for a real check.",
+      "Side-notch bracket T05: the GUI's beam equations describe the v0 L-bracket; the numbers above come from the t05_side_notches_v1 models and engine."
+    ]
+  },
+  "stopped": null,
+  "seconds": 28.0
+}

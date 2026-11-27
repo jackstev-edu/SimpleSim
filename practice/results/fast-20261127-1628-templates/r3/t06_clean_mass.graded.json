@@ -1,0 +1,74 @@
+{
+  "id": "t06_clean_mass",
+  "checks": {
+    "handoff": {
+      "result": "pass",
+      "detail": "stayed on the fast path"
+    },
+    "asked": {
+      "result": "pass",
+      "detail": ""
+    },
+    "confirmed": {
+      "result": "pass",
+      "detail": "student agreed before confirm_setup"
+    },
+    "force": {
+      "result": "pass",
+      "detail": "got 500.0, want 500.0"
+    },
+    "direction": {
+      "result": "pass",
+      "detail": "got -90.0, want -90.0"
+    },
+    "material": {
+      "result": "pass",
+      "detail": "got structural_steel, want structural_steel"
+    },
+    "safety_factor": {
+      "result": "pass",
+      "detail": "got 1.5, want 1.5"
+    },
+    "objective": {
+      "result": "pass",
+      "detail": "got {'metric': 'mass_kg', 'direction': 'minimize'}, want {'metric': 'mass_kg', 'direction': 'minimize'}"
+    },
+    "limits": {
+      "result": "pass",
+      "detail": "got [], want []"
+    },
+    "vary": {
+      "result": "pass",
+      "detail": "got ['arm_width_mm', 'fillet_radius_mm', 'flange_length_mm', 'hole_diameter_mm', 'thickness_mm', 'tip_trim_mm', 'vertical_height_mm'], want ['arm_width_mm', 'fillet_radius_mm', 'flange_length_mm', 'hole_diameter_mm', 'thickness_mm', 'tip_trim_mm', 'vertical_height_mm']"
+    },
+    "family": {
+      "result": "pass",
+      "detail": "got t06_tapered_v1, want t06_tapered_v1"
+    },
+    "no_silent_default": {
+      "result": "pass",
+      "detail": "got 1.5, want 1.5"
+    },
+    "feasible": {
+      "result": "pass",
+      "detail": "SF at the pessimistic bound 1.759"
+    },
+    "pick_gap": {
+      "result": "pass",
+      "detail": "mass_kg 0.21139 vs model optimum 0.21139 (+0.0%)"
+    },
+    "dense_gap": {
+      "result": "info",
+      "detail": "vs 400,000-design best 0.18757 (+12.7%)"
+    },
+    "sim_gap": {
+      "result": "info",
+      "detail": "vs CalculiX best 0.25703 (-17.8%)"
+    }
+  },
+  "pick": {
+    "gap": 0.0,
+    "dense_gap": 0.12701144001152093,
+    "sim_gap": -0.177587839784391
+  }
+}

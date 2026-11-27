@@ -1,0 +1,449 @@
+{
+  "id": "t10_clean_mass",
+  "events": [
+    {
+      "seq": 0,
+      "type": "path",
+      "path": "fast",
+      "reason": "this is the Offset-planform bracket T10, which the team's predictor knows"
+    },
+    {
+      "seq": 1,
+      "type": "tool",
+      "name": "describe_setup",
+      "input": {}
+    },
+    {
+      "seq": 2,
+      "type": "tool_result",
+      "name": "describe_setup",
+      "content": "{\"ok\": true, \"message\": \"Part: t10_clean_mass.dsco (discovery file), Offset-planform bracket T10. Engine: power_law_v0.\\nFixed: not set\\nLoad: not set\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 10), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Offset trim 9 mm (6 to 12)\\nStill needed: supports; load; material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t10_clean_mass\\\\t10_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t10_offset_planform_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Offset trim\", \"contract_name\": \"offset_trim_mm\", \"value_mm\": 9.0, \"low_mm\": 6.0, \"high_mm\": 12.0}], \"support\": null, \"load\": null, \"material\": null, \"sources\": {\"dimensions\": \"file\"}, \"missing\": [\"supports\", \"load\", \"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 3,
+      "type": "text",
+      "text": "I see an offset-planform T10 bracket in the open Discovery file. Its dimensions are: thickness 6 mm, flange length 80 mm, arm width 40 mm, hole diameter 8 mm, fillet radius 4 mm, vertical height 60 mm, and offset trim 9 mm. The support, load, and material aren\u2019t set yet.\n\nWhere is the bracket held?"
+    },
+    {
+      "seq": 4,
+      "type": "student",
+      "text": "This is a offset-planform steel bracket, bolted to a wall by the back face of its upright leg. 500 N acts straight down on the free end of the flange. Safety factor 1.5. Make it as light as possible."
+    },
+    {
+      "seq": 5,
+      "type": "tool",
+      "name": "set_support",
+      "input": {
+        "face": "back face at X = 0"
+      }
+    },
+    {
+      "seq": 6,
+      "type": "tool_result",
+      "name": "set_support",
+      "content": "{\"ok\": true, \"message\": \"Part: t10_clean_mass.dsco (discovery file), Offset-planform bracket T10. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: not set\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 10), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Offset trim 9 mm (6 to 12)\\nStill needed: load; material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t10_clean_mass\\\\t10_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t10_offset_planform_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Offset trim\", \"contract_name\": \"offset_trim_mm\", \"value_mm\": 9.0, \"low_mm\": 6.0, \"high_mm\": 12.0}], \"support\": \"back face at X = 0\", \"load\": null, \"material\": null, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\"}, \"missing\": [\"load\", \"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 7,
+      "type": "tool",
+      "name": "set_load",
+      "input": {
+        "force_n": 500,
+        "direction": [
+          0,
+          -1,
+          0
+        ]
+      }
+    },
+    {
+      "seq": 8,
+      "type": "tool_result",
+      "name": "set_load",
+      "content": "{\"ok\": true, \"message\": \"Part: t10_clean_mass.dsco (discovery file), Offset-planform bracket T10. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 500 N along -Y on the free-end face at max X [user]\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 10), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Offset trim 9 mm (6 to 12)\\nStill needed: material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t10_clean_mass\\\\t10_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t10_offset_planform_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Offset trim\", \"contract_name\": \"offset_trim_mm\", \"value_mm\": 9.0, \"low_mm\": 6.0, \"high_mm\": 12.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 500.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": null, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\"}, \"missing\": [\"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 9,
+      "type": "tool",
+      "name": "record_study_inputs",
+      "input": {
+        "safety_factor": 1.5,
+        "objective": "mass_kg",
+        "direction": "minimize"
+      }
+    },
+    {
+      "seq": 10,
+      "type": "tool_result",
+      "name": "record_study_inputs",
+      "content": "{\"ok\": true, \"inputs\": {\"safety_factor\": 1.5, \"objective\": \"mass_kg\", \"direction\": \"minimize\", \"limits\": [], \"vary\": null}}",
+      "is_error": false
+    },
+    {
+      "seq": 11,
+      "type": "tool",
+      "name": "describe_setup",
+      "input": {}
+    },
+    {
+      "seq": 12,
+      "type": "tool_result",
+      "name": "describe_setup",
+      "content": "{\"ok\": true, \"message\": \"Part: t10_clean_mass.dsco (discovery file), Offset-planform bracket T10. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 500 N along -Y on the free-end face at max X [user]\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 10), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Offset trim 9 mm (6 to 12)\\nStill needed: material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t10_clean_mass\\\\t10_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t10_offset_planform_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Offset trim\", \"contract_name\": \"offset_trim_mm\", \"value_mm\": 9.0, \"low_mm\": 6.0, \"high_mm\": 12.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 500.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": null, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\"}, \"missing\": [\"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 13,
+      "type": "text",
+      "text": "The setup so far: held at the back face at X = 0; 500 N straight down (\u2212Y) on the free-end face; safety factor 1.5; objective: minimize mass. The file\u2019s current dimensions are thickness 6 mm, flange length 80 mm, arm width 40 mm, hole diameter 8 mm, fillet radius 4 mm, vertical height 60 mm, and offset trim 9 mm.\n\nThe fast search supports structural steel and aluminum 6061. Since your goal is a lighter bracket, I recommend aluminum 6061; if you want to keep steel, the available grade is structural steel. The ANSYS search has more material options. I\u2019m using the fast search because this is a supported bracket type and it can quickly search many designs; say 'use ANSYS' to switch.\n\nWhich material do you want: aluminum 6061 or structural steel?"
+    },
+    {
+      "seq": 14,
+      "type": "student",
+      "text": "Structural steel."
+    },
+    {
+      "seq": 15,
+      "type": "tool",
+      "name": "set_material",
+      "input": {
+        "material": "structural_steel"
+      }
+    },
+    {
+      "seq": 16,
+      "type": "tool_result",
+      "name": "set_material",
+      "content": "{\"ok\": true, \"message\": \"Part: t10_clean_mass.dsco (discovery file), Offset-planform bracket T10. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 500 N along -Y on the free-end face at max X [user]\\nMaterial: Structural steel, E 200,000 MPa, yield 250 MPa, density 7850 kg/m3 [user]\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 10), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Offset trim 9 mm (6 to 12)\\nStill needed: nothing\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t10_clean_mass\\\\t10_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t10_offset_planform_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Offset trim\", \"contract_name\": \"offset_trim_mm\", \"value_mm\": 9.0, \"low_mm\": 6.0, \"high_mm\": 12.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 500.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": {\"name\": \"Structural steel\", \"youngs_mpa\": 200000.0, \"poisson\": 0.3, \"yield_mpa\": 250.0, \"ultimate_mpa\": null, \"density_kg_m3\": 7849.999999999999}, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\", \"material\": \"user\"}, \"missing\": [], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 17,
+      "type": "text",
+      "text": "Structural steel is set. Which dimensions may the search change? You can name specific dimensions or say all of them."
+    },
+    {
+      "seq": 18,
+      "type": "student",
+      "text": "All of them."
+    },
+    {
+      "seq": 19,
+      "type": "tool",
+      "name": "record_study_inputs",
+      "input": {
+        "vary": [
+          "Thickness",
+          "Flange length",
+          "Arm width",
+          "Hole diameter",
+          "Fillet radius",
+          "Vertical height",
+          "Offset trim"
+        ]
+      }
+    },
+    {
+      "seq": 20,
+      "type": "tool_result",
+      "name": "record_study_inputs",
+      "content": "{\"ok\": true, \"inputs\": {\"safety_factor\": 1.5, \"objective\": \"mass_kg\", \"direction\": \"minimize\", \"limits\": [], \"vary\": [\"Thickness\", \"Flange length\", \"Arm width\", \"Hole diameter\", \"Fillet radius\", \"Vertical height\", \"Offset trim\"]}}",
+      "is_error": false
+    },
+    {
+      "seq": 21,
+      "type": "text",
+      "text": "Setup card:\n\n- Part: T10 offset-planform bracket\n- Support: back face at X = 0\n- Load: 500 N straight down (\u2212Y) on the free-end face\n- Material: structural steel\n- Safety factor: 1.5\n- Objective: minimize mass\n- Dimensions allowed to change: all seven \u2014 thickness, flange length, arm width, hole diameter, fillet radius, vertical height, and offset trim\n\nIs this setup correct?"
+    },
+    {
+      "seq": 22,
+      "type": "student",
+      "text": "Yes, that\u2019s correct."
+    },
+    {
+      "seq": 23,
+      "type": "tool",
+      "name": "confirm_setup",
+      "input": {}
+    },
+    {
+      "seq": 24,
+      "type": "tool_result",
+      "name": "confirm_setup",
+      "content": "{\"ok\": true, \"message\": \"Setup confirmed.\\nPart: t10_clean_mass.dsco (discovery file), Offset-planform bracket T10. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 500 N along -Y on the free-end face at max X [user]\\nMaterial: Structural steel, E 200,000 MPa, yield 250 MPa, density 7850 kg/m3 [user]\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 10), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Offset trim 9 mm (6 to 12)\\nStill needed: nothing\\nStatus: confirmed by the user\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t10_clean_mass\\\\t10_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t10_offset_planform_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Offset trim\", \"contract_name\": \"offset_trim_mm\", \"value_mm\": 9.0, \"low_mm\": 6.0, \"high_mm\": 12.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 500.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": {\"name\": \"Structural steel\", \"youngs_mpa\": 200000.0, \"poisson\": 0.3, \"yield_mpa\": 250.0, \"ultimate_mpa\": null, \"density_kg_m3\": 7849.999999999999}, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\", \"material\": \"user\"}, \"missing\": [], \"problems\": [], \"confirmed\": true}}",
+      "is_error": false
+    },
+    {
+      "seq": 25,
+      "type": "tool",
+      "name": "optimize_design",
+      "input": {
+        "objective": "mass_kg",
+        "direction": "minimize",
+        "constraints": [
+          {
+            "metric": "safety_factor",
+            "op": ">=",
+            "value": 1.5
+          }
+        ],
+        "vary": [
+          "Thickness",
+          "Flange length",
+          "Arm width",
+          "Hole diameter",
+          "Fillet radius",
+          "Vertical height",
+          "Offset trim"
+        ],
+        "n_verify": 5
+      }
+    },
+    {
+      "seq": 26,
+      "type": "tool_result",
+      "name": "optimize_design",
+      "content": "Recommended pl-0-00149: mass 0.296 kg (+26% vs baseline), safety factor 1.63, displacement 0.149 mm. Binding constraint: safety_factor >= 1.5. Verified with power_law_t10_offset_planform_v1.\n\nExplanation for the user:\nThe baseline does not meet the safety-factor limit of at least 1.5, so the recommended design is the lighter feasible option identified, at 0.296 kg. Its binding constraint is safety factor \u2265 1.5: that is the limit the design must satisfy, and its safety factor is 1.63. Since the baseline fails this limit, the recommended design\u2019s higher mass\u201426% more than baseline\u2014is the price of meeting it, not a trade-off. Enter these values in Ansys Discovery: thickness 8.979 mm; flange length 77.330 mm; arm width 37.361 mm; hole diameter 6.396 mm; fillet radius 4.711 mm; vertical height 55.950 mm; offset trim 11.345 mm. The result is based on a fitted model, so confirm it with a real solver check.",
+      "is_error": false
+    },
+    {
+      "seq": 27,
+      "type": "text",
+      "text": "The recommended design is **pl-0-00149**, with a mass of 0.296 kg and a safety factor of 1.63. The baseline does not meet the minimum safety factor of 1.5, so this recommendation is the lighter feasible option found. The safety-factor limit is binding; the recommended design\u2019s mass is 26% higher than the baseline because it meets that limit.\n\nRecommended dimensions:\n- Thickness: 8.979 mm\n- Flange length: 77.330 mm\n- Arm width: 37.361 mm\n- Hole diameter: 6.396 mm\n- Fillet radius: 4.711 mm\n- Vertical height: 55.950 mm\n- Offset trim: 11.345 mm\n\nThe finalists were checked with a fitted model. The result should be confirmed with a real solver check."
+    }
+  ],
+  "result": {
+    "schema_version": "0.2.0",
+    "spec": {
+      "schema_version": "0.2.0",
+      "bracket_family": "t10_offset_planform_v1",
+      "objective": {
+        "metric": "mass_kg",
+        "direction": "minimize"
+      },
+      "constraints": [
+        {
+          "metric": "safety_factor",
+          "op": ">=",
+          "value": 1.5
+        }
+      ],
+      "parameters": [
+        {
+          "name": "thickness_mm",
+          "low_mm": 4.0,
+          "high_mm": 10.0
+        },
+        {
+          "name": "flange_length_mm",
+          "low_mm": 75.0,
+          "high_mm": 120.0
+        },
+        {
+          "name": "arm_width_mm",
+          "low_mm": 32.0,
+          "high_mm": 60.0
+        },
+        {
+          "name": "hole_diameter_mm",
+          "low_mm": 6.0,
+          "high_mm": 10.0
+        },
+        {
+          "name": "fillet_radius_mm",
+          "low_mm": 2.0,
+          "high_mm": 8.0
+        },
+        {
+          "name": "vertical_height_mm",
+          "low_mm": 50.0,
+          "high_mm": 90.0
+        },
+        {
+          "name": "offset_trim_mm",
+          "low_mm": 6.0,
+          "high_mm": 12.0
+        }
+      ],
+      "load": {
+        "force_n": 500.0,
+        "angle_deg": -90.0
+      },
+      "material_key": "structural_steel",
+      "n_candidates": 2000,
+      "n_verify": 5,
+      "assumptions": [
+        "Load 500 N along -Y on the free-end face at max X (user).",
+        "Material Structural steel (user).",
+        "Setup confirmed by the user."
+      ]
+    },
+    "baseline": {
+      "design_id": "baseline",
+      "design": {
+        "thickness_mm": 6.0,
+        "flange_length_mm": 80.0,
+        "arm_width_mm": 40.0,
+        "hole_diameter_mm": 8.0,
+        "fillet_radius_mm": 4.0,
+        "vertical_height_mm": 60.0,
+        "offset_trim_mm": 9.0
+      },
+      "source": "power_law_t10_offset_planform_v1",
+      "mass_kg": 0.23421065540334596,
+      "max_stress_mpa": 288.48690748780814,
+      "max_disp_mm": 0.5233093727783119,
+      "safety_factor": 0.8665904535392662,
+      "feasible": false,
+      "violated": [
+        "safety_factor >= 1.5"
+      ]
+    },
+    "recommended": {
+      "design_id": "pl-0-00149",
+      "design": {
+        "thickness_mm": 8.978823911668616,
+        "flange_length_mm": 77.32994967306078,
+        "arm_width_mm": 37.36113861196186,
+        "hole_diameter_mm": 6.396413553519385,
+        "fillet_radius_mm": 4.710578082147306,
+        "vertical_height_mm": 55.950475538963815,
+        "offset_trim_mm": 11.34504578794516
+      },
+      "source": "power_law_t10_offset_planform_v1",
+      "mass_kg": 0.2955436575751309,
+      "max_stress_mpa": 153.78415746150424,
+      "max_disp_mm": 0.14946504240321704,
+      "safety_factor": 1.6256551008030904,
+      "feasible": true,
+      "violated": []
+    },
+    "finalists": [
+      {
+        "design_id": "pl-0-00149",
+        "design": {
+          "thickness_mm": 8.978823911668616,
+          "flange_length_mm": 77.32994967306078,
+          "arm_width_mm": 37.36113861196186,
+          "hole_diameter_mm": 6.396413553519385,
+          "fillet_radius_mm": 4.710578082147306,
+          "vertical_height_mm": 55.950475538963815,
+          "offset_trim_mm": 11.34504578794516
+        },
+        "source": "power_law_t10_offset_planform_v1",
+        "mass_kg": 0.2955436575751309,
+        "max_stress_mpa": 153.78415746150424,
+        "max_disp_mm": 0.14946504240321704,
+        "safety_factor": 1.6256551008030904,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-00091",
+        "design": {
+          "thickness_mm": 9.807557139547878,
+          "flange_length_mm": 80.87531704867644,
+          "arm_width_mm": 33.19636034733862,
+          "hole_diameter_mm": 6.765896830195243,
+          "fillet_radius_mm": 7.040926071089568,
+          "vertical_height_mm": 57.301874006484425,
+          "offset_trim_mm": 10.409283168022068
+        },
+        "source": "power_law_t10_offset_planform_v1",
+        "mass_kg": 0.295680121752077,
+        "max_stress_mpa": 148.84643349661604,
+        "max_disp_mm": 0.14354036362819356,
+        "safety_factor": 1.6795834077252758,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-00662",
+        "design": {
+          "thickness_mm": 8.687831591369807,
+          "flange_length_mm": 78.17497162157457,
+          "arm_width_mm": 34.80723472491996,
+          "hole_diameter_mm": 8.979683673961842,
+          "fillet_radius_mm": 5.443858669140523,
+          "vertical_height_mm": 66.00856237135912,
+          "offset_trim_mm": 6.874310273935073
+        },
+        "source": "power_law_t10_offset_planform_v1",
+        "mass_kg": 0.30073795553631527,
+        "max_stress_mpa": 146.70499007129888,
+        "max_disp_mm": 0.17378608659743403,
+        "safety_factor": 1.704100180085896,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-01173",
+        "design": {
+          "thickness_mm": 9.41634000346967,
+          "flange_length_mm": 93.22088853827307,
+          "arm_width_mm": 32.56726253067937,
+          "hole_diameter_mm": 9.32193150609136,
+          "fillet_radius_mm": 2.3155775508012324,
+          "vertical_height_mm": 52.79204550601037,
+          "offset_trim_mm": 6.012600625005014
+        },
+        "source": "power_law_t10_offset_planform_v1",
+        "mass_kg": 0.30336479027294433,
+        "max_stress_mpa": 150.34943630432628,
+        "max_disp_mm": 0.2705181123298944,
+        "safety_factor": 1.662793064910256,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-00686",
+        "design": {
+          "thickness_mm": 8.423005006836524,
+          "flange_length_mm": 82.15285800081756,
+          "arm_width_mm": 40.02016659157233,
+          "hole_diameter_mm": 7.577890034498489,
+          "fillet_radius_mm": 3.217041849536542,
+          "vertical_height_mm": 54.968782551371184,
+          "offset_trim_mm": 9.103592037569955
+        },
+        "source": "power_law_t10_offset_planform_v1",
+        "mass_kg": 0.3135470963108781,
+        "max_stress_mpa": 156.2472081234774,
+        "max_disp_mm": 0.20587165414956732,
+        "safety_factor": 1.6000285893264257,
+        "feasible": true,
+        "violated": []
+      }
+    ],
+    "binding_constraint": "safety_factor >= 1.5",
+    "sensitivities": {
+      "thickness_mm": -0.15301515715565947,
+      "flange_length_mm": 0.16907969621752517,
+      "arm_width_mm": 0.3411694523837433,
+      "hole_diameter_mm": 0.11607030072656041,
+      "fillet_radius_mm": -0.00030894833168082833,
+      "vertical_height_mm": 0.0925527484658318,
+      "offset_trim_mm": -0.2436936921147026
+    },
+    "explanation": "Recommended pl-0-00149: mass 0.296 kg (+26% vs baseline), safety factor 1.63, displacement 0.149 mm. Binding constraint: safety_factor >= 1.5. Verified with power_law_t10_offset_planform_v1.",
+    "discovery_values": {
+      "thickness_mm": 8.978823911668616,
+      "flange_length_mm": 77.32994967306078,
+      "arm_width_mm": 37.36113861196186,
+      "hole_diameter_mm": 6.396413553519385,
+      "fillet_radius_mm": 4.710578082147306,
+      "vertical_height_mm": 55.950475538963815,
+      "offset_trim_mm": 11.34504578794516
+    },
+    "warnings": [
+      "power-law surrogate fitted to 80 CalculiX runs of t10_offset_planform_v1; see docs/models.md for its error",
+      "Finalists were checked with the fitted power law, not a real solver. Use the CalculiX engine (Role 1) for a real check.",
+      "Offset-planform bracket T10: the GUI's beam equations describe the v0 L-bracket; the numbers above come from the t10_offset_planform_v1 models and engine."
+    ]
+  },
+  "stopped": null,
+  "seconds": 24.1
+}

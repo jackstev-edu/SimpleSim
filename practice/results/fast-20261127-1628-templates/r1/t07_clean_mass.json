@@ -1,0 +1,413 @@
+{
+  "id": "t07_clean_mass",
+  "events": [
+    {
+      "seq": 0,
+      "type": "path",
+      "path": "fast",
+      "reason": "this is the Stepped bracket T07, which the team's predictor knows"
+    },
+    {
+      "seq": 1,
+      "type": "tool",
+      "name": "describe_setup",
+      "input": {}
+    },
+    {
+      "seq": 2,
+      "type": "tool_result",
+      "name": "describe_setup",
+      "content": "{\"ok\": true, \"message\": \"Part: t07_clean_mass.dsco (discovery file), Stepped bracket T07. Engine: power_law_v0.\\nFixed: not set\\nLoad: not set\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 10), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Step trim 4.5 mm (3 to 6)\\nStill needed: supports; load; material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r1\\\\t07_clean_mass\\\\t07_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t07_stepped_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Step trim\", \"contract_name\": \"step_trim_mm\", \"value_mm\": 4.5, \"low_mm\": 3.0, \"high_mm\": 6.0}], \"support\": null, \"load\": null, \"material\": null, \"sources\": {\"dimensions\": \"file\"}, \"missing\": [\"supports\", \"load\", \"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 3,
+      "type": "text",
+      "text": "The open file is a stepped bracket, T07. Its dimensions are Thickness 6 mm, Flange length 80 mm, Arm width 40 mm, Hole diameter 8 mm, Fillet radius 4 mm, Vertical height 60 mm, and Step trim 4.5 mm.\n\nThe setup card still needs the fixed face, load and direction, and material. Where is the bracket held?"
+    },
+    {
+      "seq": 4,
+      "type": "student",
+      "text": "This is a stepped steel bracket, bolted to a wall by the back face of its upright leg. 500 N acts straight down on the free end of the flange. Safety factor 1.5. Make it as light as possible."
+    },
+    {
+      "seq": 5,
+      "type": "tool",
+      "name": "record_study_inputs",
+      "input": {
+        "safety_factor": 1.5,
+        "objective": "mass_kg",
+        "direction": "minimize"
+      }
+    },
+    {
+      "seq": 6,
+      "type": "tool_result",
+      "name": "record_study_inputs",
+      "content": "{\"ok\": true, \"inputs\": {\"safety_factor\": 1.5, \"objective\": \"mass_kg\", \"direction\": \"minimize\", \"limits\": [], \"vary\": null}}",
+      "is_error": false
+    },
+    {
+      "seq": 7,
+      "type": "tool",
+      "name": "set_support",
+      "input": {
+        "face": "back face at X = 0"
+      }
+    },
+    {
+      "seq": 8,
+      "type": "tool_result",
+      "name": "set_support",
+      "content": "{\"ok\": true, \"message\": \"Part: t07_clean_mass.dsco (discovery file), Stepped bracket T07. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: not set\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 10), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Step trim 4.5 mm (3 to 6)\\nStill needed: load; material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r1\\\\t07_clean_mass\\\\t07_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t07_stepped_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Step trim\", \"contract_name\": \"step_trim_mm\", \"value_mm\": 4.5, \"low_mm\": 3.0, \"high_mm\": 6.0}], \"support\": \"back face at X = 0\", \"load\": null, \"material\": null, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\"}, \"missing\": [\"load\", \"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 9,
+      "type": "tool",
+      "name": "set_load",
+      "input": {
+        "force_n": 500,
+        "direction": [
+          0,
+          -1,
+          0
+        ]
+      }
+    },
+    {
+      "seq": 10,
+      "type": "tool_result",
+      "name": "set_load",
+      "content": "{\"ok\": true, \"message\": \"Part: t07_clean_mass.dsco (discovery file), Stepped bracket T07. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 500 N along -Y on the free-end face at max X [user]\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 10), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Step trim 4.5 mm (3 to 6)\\nStill needed: material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r1\\\\t07_clean_mass\\\\t07_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t07_stepped_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Step trim\", \"contract_name\": \"step_trim_mm\", \"value_mm\": 4.5, \"low_mm\": 3.0, \"high_mm\": 6.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 500.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": null, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\"}, \"missing\": [\"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 11,
+      "type": "text",
+      "text": "I\u2019ve recorded the wall-side support, the 500 N downward load, a safety factor of 1.5, and minimizing mass. For the lightest result, I recommend aluminum 6061; the fast search also supports structural steel. You described the part as steel\u2014should I use structural steel, or switch to aluminum 6061? The ANSYS search has more material options."
+    },
+    {
+      "seq": 12,
+      "type": "student",
+      "text": "Use structural steel."
+    },
+    {
+      "seq": 13,
+      "type": "tool",
+      "name": "set_material",
+      "input": {
+        "material": "structural_steel"
+      }
+    },
+    {
+      "seq": 14,
+      "type": "tool_result",
+      "name": "set_material",
+      "content": "{\"ok\": true, \"message\": \"Part: t07_clean_mass.dsco (discovery file), Stepped bracket T07. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 500 N along -Y on the free-end face at max X [user]\\nMaterial: Structural steel, E 200,000 MPa, yield 250 MPa, density 7850 kg/m3 [user]\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 10), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Step trim 4.5 mm (3 to 6)\\nStill needed: nothing\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r1\\\\t07_clean_mass\\\\t07_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t07_stepped_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Step trim\", \"contract_name\": \"step_trim_mm\", \"value_mm\": 4.5, \"low_mm\": 3.0, \"high_mm\": 6.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 500.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": {\"name\": \"Structural steel\", \"youngs_mpa\": 200000.0, \"poisson\": 0.3, \"yield_mpa\": 250.0, \"ultimate_mpa\": null, \"density_kg_m3\": 7849.999999999999}, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\", \"material\": \"user\"}, \"missing\": [], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 15,
+      "type": "text",
+      "text": "Setup so far: stepped bracket T07; fixed at the back face at X = 0; 500 N downward on the free-end face; structural steel; safety factor 1.5; objective: minimize mass.\n\nWhich dimensions may change in the search? You can say all dimensions, or name specific ones. For reference, the available dimensions are Thickness, Flange length, Arm width, Hole diameter, Fillet radius, Vertical height, and Step trim."
+    },
+    {
+      "seq": 16,
+      "type": "student",
+      "text": "All dimensions may change."
+    },
+    {
+      "seq": 17,
+      "type": "text",
+      "text": "Setup card: stepped bracket T07; fixed at the back face at X = 0; 500 N downward on the free-end face; structural steel; safety factor 1.5; objective: minimize mass; all dimensions may change.\n\nI\u2019ll use the fast search because it searches many designs and checks the finalists. Does this setup look right? Say \u201cuse ANSYS\u201d to switch."
+    },
+    {
+      "seq": 18,
+      "type": "student",
+      "text": "OK, go ahead."
+    },
+    {
+      "seq": 19,
+      "type": "tool",
+      "name": "confirm_setup",
+      "input": {}
+    },
+    {
+      "seq": 20,
+      "type": "tool_result",
+      "name": "confirm_setup",
+      "content": "{\"ok\": true, \"message\": \"Setup confirmed.\\nPart: t07_clean_mass.dsco (discovery file), Stepped bracket T07. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 500 N along -Y on the free-end face at max X [user]\\nMaterial: Structural steel, E 200,000 MPa, yield 250 MPa, density 7850 kg/m3 [user]\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 10), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Step trim 4.5 mm (3 to 6)\\nStill needed: nothing\\nStatus: confirmed by the user\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r1\\\\t07_clean_mass\\\\t07_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t07_stepped_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Step trim\", \"contract_name\": \"step_trim_mm\", \"value_mm\": 4.5, \"low_mm\": 3.0, \"high_mm\": 6.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 500.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": {\"name\": \"Structural steel\", \"youngs_mpa\": 200000.0, \"poisson\": 0.3, \"yield_mpa\": 250.0, \"ultimate_mpa\": null, \"density_kg_m3\": 7849.999999999999}, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\", \"material\": \"user\"}, \"missing\": [], \"problems\": [], \"confirmed\": true}}",
+      "is_error": false
+    },
+    {
+      "seq": 21,
+      "type": "tool",
+      "name": "optimize_design",
+      "input": {
+        "objective": "mass_kg",
+        "direction": "minimize",
+        "constraints": [
+          {
+            "metric": "safety_factor",
+            "op": ">=",
+            "value": 1.5
+          }
+        ],
+        "vary": [
+          "Thickness",
+          "Flange length",
+          "Arm width",
+          "Hole diameter",
+          "Fillet radius",
+          "Vertical height",
+          "Step trim"
+        ],
+        "n_verify": 5
+      }
+    },
+    {
+      "seq": 22,
+      "type": "tool_result",
+      "name": "optimize_design",
+      "content": "Recommended pl-0-01674: mass 0.246 kg (+5% vs baseline), safety factor 1.56, displacement 0.238 mm. Binding constraint: safety_factor >= 1.5. Verified with power_law_t07_stepped_v1.\n\nExplanation for the user:\nThe baseline does not meet the safety-factor limit of 1.5; its safety factor is 1.068. I recommend design pl-0-01674, which meets the limit with a safety factor of 1.562 and has a mass of 0.246 kg. The binding constraint is safety factor \u2265 1.5, meaning the design must stay at or above that minimum; this design sits just above it. Because the baseline is infeasible, the recommended design\u2019s higher mass is the price of meeting the limit, not a trade-off. Enter these values in Ansys Discovery: thickness 8.381 mm, flange length 81.515 mm, arm width 32.945 mm, hole diameter 8.676 mm, fillet radius 4.945 mm, vertical height 53.420 mm, and step trim 4.826 mm.",
+      "is_error": false
+    },
+    {
+      "seq": 23,
+      "type": "text",
+      "text": "The recommended design is **pl-0-01674**. It meets the minimum safety factor of 1.5, with a reported safety factor of 1.562, and has a mass of 0.246 kg. The baseline safety factor is 1.068, so it does not meet the requirement; the recommended design\u2019s higher mass is the price of meeting it. The safety-factor limit is binding, meaning this design is just above the minimum. The finalists were verified with `power_law_t07_stepped_v1`.\n\nEnter these dimensions in Ansys Discovery:\n- Thickness: 8.381 mm\n- Flange length: 81.515 mm\n- Arm width: 32.945 mm\n- Hole diameter: 8.676 mm\n- Fillet radius: 4.945 mm\n- Vertical height: 53.420 mm\n- Step trim: 4.826 mm"
+    }
+  ],
+  "result": {
+    "schema_version": "0.2.0",
+    "spec": {
+      "schema_version": "0.2.0",
+      "bracket_family": "t07_stepped_v1",
+      "objective": {
+        "metric": "mass_kg",
+        "direction": "minimize"
+      },
+      "constraints": [
+        {
+          "metric": "safety_factor",
+          "op": ">=",
+          "value": 1.5
+        }
+      ],
+      "parameters": [
+        {
+          "name": "thickness_mm",
+          "low_mm": 4.0,
+          "high_mm": 10.0
+        },
+        {
+          "name": "flange_length_mm",
+          "low_mm": 75.0,
+          "high_mm": 120.0
+        },
+        {
+          "name": "arm_width_mm",
+          "low_mm": 32.0,
+          "high_mm": 60.0
+        },
+        {
+          "name": "hole_diameter_mm",
+          "low_mm": 6.0,
+          "high_mm": 10.0
+        },
+        {
+          "name": "fillet_radius_mm",
+          "low_mm": 2.0,
+          "high_mm": 8.0
+        },
+        {
+          "name": "vertical_height_mm",
+          "low_mm": 50.0,
+          "high_mm": 90.0
+        },
+        {
+          "name": "step_trim_mm",
+          "low_mm": 3.0,
+          "high_mm": 6.0
+        }
+      ],
+      "load": {
+        "force_n": 500.0,
+        "angle_deg": -90.0
+      },
+      "material_key": "structural_steel",
+      "n_candidates": 2000,
+      "n_verify": 5,
+      "assumptions": [
+        "Load 500 N along -Y on the free-end face at max X (user).",
+        "Material Structural steel (user).",
+        "Setup confirmed by the user."
+      ]
+    },
+    "baseline": {
+      "design_id": "baseline",
+      "design": {
+        "thickness_mm": 6.0,
+        "flange_length_mm": 80.0,
+        "arm_width_mm": 40.0,
+        "hole_diameter_mm": 8.0,
+        "fillet_radius_mm": 4.0,
+        "vertical_height_mm": 60.0,
+        "step_trim_mm": 4.5
+      },
+      "source": "power_law_t07_stepped_v1",
+      "mass_kg": 0.23421065540334596,
+      "max_stress_mpa": 234.1046247086984,
+      "max_disp_mm": 0.5070826853660716,
+      "safety_factor": 1.067898595814075,
+      "feasible": false,
+      "violated": [
+        "safety_factor >= 1.5"
+      ]
+    },
+    "recommended": {
+      "design_id": "pl-0-01674",
+      "design": {
+        "thickness_mm": 8.381032140102416,
+        "flange_length_mm": 81.51461496669168,
+        "arm_width_mm": 32.94495124377386,
+        "hole_diameter_mm": 8.675865517042372,
+        "fillet_radius_mm": 4.944621829020378,
+        "vertical_height_mm": 53.419746083763556,
+        "step_trim_mm": 4.825902681155124
+      },
+      "source": "power_law_t07_stepped_v1",
+      "mass_kg": 0.24588892136671567,
+      "max_stress_mpa": 160.0155142640401,
+      "max_disp_mm": 0.23764243127324727,
+      "safety_factor": 1.5623485082045068,
+      "feasible": true,
+      "violated": []
+    },
+    "finalists": [
+      {
+        "design_id": "pl-0-01674",
+        "design": {
+          "thickness_mm": 8.381032140102416,
+          "flange_length_mm": 81.51461496669168,
+          "arm_width_mm": 32.94495124377386,
+          "hole_diameter_mm": 8.675865517042372,
+          "fillet_radius_mm": 4.944621829020378,
+          "vertical_height_mm": 53.419746083763556,
+          "step_trim_mm": 4.825902681155124
+        },
+        "source": "power_law_t07_stepped_v1",
+        "mass_kg": 0.24588892136671567,
+        "max_stress_mpa": 160.0155142640401,
+        "max_disp_mm": 0.23764243127324727,
+        "safety_factor": 1.5623485082045068,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-01456",
+        "design": {
+          "thickness_mm": 8.070910666324309,
+          "flange_length_mm": 79.302214173183,
+          "arm_width_mm": 35.63745146133138,
+          "hole_diameter_mm": 6.050216828231307,
+          "fillet_radius_mm": 3.1465527214192575,
+          "vertical_height_mm": 55.764697339488634,
+          "step_trim_mm": 4.25017076815695
+        },
+        "source": "power_law_t07_stepped_v1",
+        "mass_kg": 0.26415909061842996,
+        "max_stress_mpa": 148.71124720739397,
+        "max_disp_mm": 0.2266429593292214,
+        "safety_factor": 1.6811102367485888,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-00584",
+        "design": {
+          "thickness_mm": 8.415541599387854,
+          "flange_length_mm": 78.30452452287642,
+          "arm_width_mm": 34.88418541097335,
+          "hole_diameter_mm": 7.775300371253289,
+          "fillet_radius_mm": 4.686867324668997,
+          "vertical_height_mm": 57.85970795192651,
+          "step_trim_mm": 4.797048164932605
+        },
+        "source": "power_law_t07_stepped_v1",
+        "mass_kg": 0.26773858340797724,
+        "max_stress_mpa": 143.91064774860277,
+        "max_disp_mm": 0.1940916530159919,
+        "safety_factor": 1.737189039943205,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-00934",
+        "design": {
+          "thickness_mm": 7.93865365704266,
+          "flange_length_mm": 79.50868758138728,
+          "arm_width_mm": 36.194137771917724,
+          "hole_diameter_mm": 6.9886838910122195,
+          "fillet_radius_mm": 6.930583224223056,
+          "vertical_height_mm": 61.282202055014636,
+          "step_trim_mm": 4.953382351931616
+        },
+        "source": "power_law_t07_stepped_v1",
+        "mass_kg": 0.27565133421388405,
+        "max_stress_mpa": 157.88644676265838,
+        "max_disp_mm": 0.22675794155789358,
+        "safety_factor": 1.5834164687727164,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-00730",
+        "design": {
+          "thickness_mm": 8.7400919078848,
+          "flange_length_mm": 83.24215521679636,
+          "arm_width_mm": 33.951242634101334,
+          "hole_diameter_mm": 7.770854410632412,
+          "fillet_radius_mm": 7.976354075265874,
+          "vertical_height_mm": 59.061679878741955,
+          "step_trim_mm": 4.302506056160896
+        },
+        "source": "power_law_t07_stepped_v1",
+        "mass_kg": 0.2869337692713983,
+        "max_stress_mpa": 140.30989494034927,
+        "max_disp_mm": 0.20582273430886802,
+        "safety_factor": 1.7817702743365598,
+        "feasible": true,
+        "violated": []
+      }
+    ],
+    "binding_constraint": "safety_factor >= 1.5",
+    "sensitivities": {
+      "thickness_mm": 0.04783116635841429,
+      "flange_length_mm": 0.3328018953814494,
+      "arm_width_mm": 0.2633947843888732,
+      "hole_diameter_mm": 0.14098078026743627,
+      "fillet_radius_mm": 0.005138203202039396,
+      "vertical_height_mm": 0.1742123929006134,
+      "step_trim_mm": -0.20814232551039166
+    },
+    "explanation": "Recommended pl-0-01674: mass 0.246 kg (+5% vs baseline), safety factor 1.56, displacement 0.238 mm. Binding constraint: safety_factor >= 1.5. Verified with power_law_t07_stepped_v1.",
+    "discovery_values": {
+      "thickness_mm": 8.381032140102416,
+      "flange_length_mm": 81.51461496669168,
+      "arm_width_mm": 32.94495124377386,
+      "hole_diameter_mm": 8.675865517042372,
+      "fillet_radius_mm": 4.944621829020378,
+      "vertical_height_mm": 53.419746083763556,
+      "step_trim_mm": 4.825902681155124
+    },
+    "warnings": [
+      "power-law surrogate fitted to 80 CalculiX runs of t07_stepped_v1; see docs/models.md for its error",
+      "Finalists were checked with the fitted power law, not a real solver. Use the CalculiX engine (Role 1) for a real check.",
+      "Stepped bracket T07: the GUI's beam equations describe the v0 L-bracket; the numbers above come from the t07_stepped_v1 models and engine."
+    ]
+  },
+  "stopped": null,
+  "seconds": 24.1
+}

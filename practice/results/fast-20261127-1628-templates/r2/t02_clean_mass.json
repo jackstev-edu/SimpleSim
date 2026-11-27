@@ -1,0 +1,426 @@
+{
+  "id": "t02_clean_mass",
+  "events": [
+    {
+      "seq": 0,
+      "type": "path",
+      "path": "fast",
+      "reason": "this is the Single-slot bracket T02, which the team's predictor knows"
+    },
+    {
+      "seq": 1,
+      "type": "tool",
+      "name": "describe_setup",
+      "input": {}
+    },
+    {
+      "seq": 2,
+      "type": "tool_result",
+      "name": "describe_setup",
+      "content": "{\"ok\": true, \"message\": \"Part: t02_clean_mass.dsco (discovery file), Single-slot bracket T02. Engine: power_law_v0.\\nFixed: not set\\nLoad: not set\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Slot width 8 mm (6 to 10), Slot straight length 13 mm (8 to 18)\\nStill needed: supports; load; material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t02_clean_mass\\\\t02_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t02_single_slot_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Slot width\", \"contract_name\": \"slot_width_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Slot straight length\", \"contract_name\": \"slot_straight_length_mm\", \"value_mm\": 13.0, \"low_mm\": 8.0, \"high_mm\": 18.0}], \"support\": null, \"load\": null, \"material\": null, \"sources\": {\"dimensions\": \"file\"}, \"missing\": [\"supports\", \"load\", \"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 3,
+      "type": "text",
+      "text": "The open file is `t02_clean_mass.dsco`, a single-slot T02 bracket. Its dimensions are Thickness 6 mm, Flange length 80 mm, Arm width 40 mm, Fillet radius 4 mm, Vertical height 60 mm, Slot width 8 mm, and Slot straight length 13 mm.\n\nThe setup card still needs the support face, load and direction, and material. Where is the bracket held?"
+    },
+    {
+      "seq": 4,
+      "type": "student",
+      "text": "This is a single-slot steel bracket, bolted to a wall by the back face of its upright leg. 500 N acts straight down on the free end of the flange. Safety factor 1.5. Make it as light as possible."
+    },
+    {
+      "seq": 5,
+      "type": "tool",
+      "name": "record_study_inputs",
+      "input": {
+        "safety_factor": 1.5,
+        "objective": "mass_kg",
+        "direction": "minimize"
+      }
+    },
+    {
+      "seq": 6,
+      "type": "tool_result",
+      "name": "record_study_inputs",
+      "content": "{\"ok\": true, \"inputs\": {\"safety_factor\": 1.5, \"objective\": \"mass_kg\", \"direction\": \"minimize\", \"limits\": [], \"vary\": null}}",
+      "is_error": false
+    },
+    {
+      "seq": 7,
+      "type": "tool",
+      "name": "describe_setup",
+      "input": {}
+    },
+    {
+      "seq": 8,
+      "type": "tool_result",
+      "name": "describe_setup",
+      "content": "{\"ok\": true, \"message\": \"Part: t02_clean_mass.dsco (discovery file), Single-slot bracket T02. Engine: power_law_v0.\\nFixed: not set\\nLoad: not set\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Slot width 8 mm (6 to 10), Slot straight length 13 mm (8 to 18)\\nStill needed: supports; load; material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t02_clean_mass\\\\t02_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t02_single_slot_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Slot width\", \"contract_name\": \"slot_width_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Slot straight length\", \"contract_name\": \"slot_straight_length_mm\", \"value_mm\": 13.0, \"low_mm\": 8.0, \"high_mm\": 18.0}], \"support\": null, \"load\": null, \"material\": null, \"sources\": {\"dimensions\": \"file\"}, \"missing\": [\"supports\", \"load\", \"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 9,
+      "type": "tool",
+      "name": "set_support",
+      "input": {
+        "face": "back face at X = 0"
+      }
+    },
+    {
+      "seq": 10,
+      "type": "tool_result",
+      "name": "set_support",
+      "content": "{\"ok\": true, \"message\": \"Part: t02_clean_mass.dsco (discovery file), Single-slot bracket T02. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: not set\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Slot width 8 mm (6 to 10), Slot straight length 13 mm (8 to 18)\\nStill needed: load; material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t02_clean_mass\\\\t02_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t02_single_slot_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Slot width\", \"contract_name\": \"slot_width_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Slot straight length\", \"contract_name\": \"slot_straight_length_mm\", \"value_mm\": 13.0, \"low_mm\": 8.0, \"high_mm\": 18.0}], \"support\": \"back face at X = 0\", \"load\": null, \"material\": null, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\"}, \"missing\": [\"load\", \"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 11,
+      "type": "tool",
+      "name": "set_load",
+      "input": {
+        "force_n": 500,
+        "direction": [
+          0,
+          -1,
+          0
+        ]
+      }
+    },
+    {
+      "seq": 12,
+      "type": "tool_result",
+      "name": "set_load",
+      "content": "{\"ok\": true, \"message\": \"Part: t02_clean_mass.dsco (discovery file), Single-slot bracket T02. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 500 N along -Y on the free-end face at max X [user]\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Slot width 8 mm (6 to 10), Slot straight length 13 mm (8 to 18)\\nStill needed: material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t02_clean_mass\\\\t02_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t02_single_slot_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Slot width\", \"contract_name\": \"slot_width_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Slot straight length\", \"contract_name\": \"slot_straight_length_mm\", \"value_mm\": 13.0, \"low_mm\": 8.0, \"high_mm\": 18.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 500.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": null, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\"}, \"missing\": [\"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 13,
+      "type": "text",
+      "text": "I recorded the 1.5 safety factor and the goal of minimizing mass. The support is the back face at X = 0, and the load is 500 N straight down (-Y) on the free-end face.\n\nFor a lighter design, I recommend aluminum 6061, but you asked for steel. The fast search offers structural steel; the ANSYS search has more material options. Should I use structural steel?"
+    },
+    {
+      "seq": 14,
+      "type": "student",
+      "text": "Yes, use structural steel."
+    },
+    {
+      "seq": 15,
+      "type": "tool",
+      "name": "set_material",
+      "input": {
+        "material": "structural_steel"
+      }
+    },
+    {
+      "seq": 16,
+      "type": "tool_result",
+      "name": "set_material",
+      "content": "{\"ok\": true, \"message\": \"Part: t02_clean_mass.dsco (discovery file), Single-slot bracket T02. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 500 N along -Y on the free-end face at max X [user]\\nMaterial: Structural steel, E 200,000 MPa, yield 250 MPa, density 7850 kg/m3 [user]\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Slot width 8 mm (6 to 10), Slot straight length 13 mm (8 to 18)\\nStill needed: nothing\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t02_clean_mass\\\\t02_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t02_single_slot_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Slot width\", \"contract_name\": \"slot_width_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Slot straight length\", \"contract_name\": \"slot_straight_length_mm\", \"value_mm\": 13.0, \"low_mm\": 8.0, \"high_mm\": 18.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 500.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": {\"name\": \"Structural steel\", \"youngs_mpa\": 200000.0, \"poisson\": 0.3, \"yield_mpa\": 250.0, \"ultimate_mpa\": null, \"density_kg_m3\": 7849.999999999999}, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\", \"material\": \"user\"}, \"missing\": [], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 17,
+      "type": "text",
+      "text": "The setup has structural steel, the back face at X = 0 fixed, and a 500 N downward load (-Y) on the flange\u2019s free end. The safety factor is 1.5, and the objective is to minimize mass.\n\nWhich dimensions may change in the search? You can name specific dimensions or say all of them. I\u2019ll use the fast search because it screens many bracket designs quickly; say 'use ANSYS' to switch."
+    },
+    {
+      "seq": 18,
+      "type": "student",
+      "text": "All dimensions may change; use the fast search."
+    },
+    {
+      "seq": 19,
+      "type": "text",
+      "text": "The setup card is:\n\n- Part: Single-slot T02 bracket\n- Support: Back face at X = 0\n- Load: 500 N straight down (-Y) on the free-end face\n- Material: Structural steel\n- Safety factor: 1.5\n- Objective: Minimize mass\n- Dimensions allowed to change: All seven \u2014 Thickness, Flange length, Arm width, Fillet radius, Vertical height, Slot width, and Slot straight length\n\nIs this setup correct?"
+    },
+    {
+      "seq": 20,
+      "type": "student",
+      "text": "Yes, this setup is correct."
+    },
+    {
+      "seq": 21,
+      "type": "tool",
+      "name": "confirm_setup",
+      "input": {}
+    },
+    {
+      "seq": 22,
+      "type": "tool_result",
+      "name": "confirm_setup",
+      "content": "{\"ok\": true, \"message\": \"Setup confirmed.\\nPart: t02_clean_mass.dsco (discovery file), Single-slot bracket T02. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 500 N along -Y on the free-end face at max X [user]\\nMaterial: Structural steel, E 200,000 MPa, yield 250 MPa, density 7850 kg/m3 [user]\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Fillet radius 4 mm (2 to 8), Vertical height 60 mm (50 to 90), Slot width 8 mm (6 to 10), Slot straight length 13 mm (8 to 18)\\nStill needed: nothing\\nStatus: confirmed by the user\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261127-1628-templates\\\\r2\\\\t02_clean_mass\\\\t02_clean_mass.dsco\", \"file_type\": \"discovery\", \"family\": \"t02_single_slot_v1\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}, {\"name\": \"Vertical height\", \"contract_name\": \"vertical_height_mm\", \"value_mm\": 60.0, \"low_mm\": 50.0, \"high_mm\": 90.0}, {\"name\": \"Slot width\", \"contract_name\": \"slot_width_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 10.0}, {\"name\": \"Slot straight length\", \"contract_name\": \"slot_straight_length_mm\", \"value_mm\": 13.0, \"low_mm\": 8.0, \"high_mm\": 18.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 500.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": {\"name\": \"Structural steel\", \"youngs_mpa\": 200000.0, \"poisson\": 0.3, \"yield_mpa\": 250.0, \"ultimate_mpa\": null, \"density_kg_m3\": 7849.999999999999}, \"sources\": {\"dimensions\": \"file\", \"supports\": \"user\", \"load\": \"user\", \"material\": \"user\"}, \"missing\": [], \"problems\": [], \"confirmed\": true}}",
+      "is_error": false
+    },
+    {
+      "seq": 23,
+      "type": "tool",
+      "name": "optimize_design",
+      "input": {
+        "objective": "mass_kg",
+        "direction": "minimize",
+        "constraints": [
+          {
+            "metric": "safety_factor",
+            "op": ">=",
+            "value": 1.5
+          }
+        ],
+        "vary": [
+          "Thickness",
+          "Flange length",
+          "Arm width",
+          "Fillet radius",
+          "Vertical height",
+          "Slot width",
+          "Slot straight length"
+        ],
+        "n_verify": 5
+      }
+    },
+    {
+      "seq": 24,
+      "type": "tool_result",
+      "name": "optimize_design",
+      "content": "Recommended pl-0-01054: mass 0.235 kg (-5% vs baseline), safety factor 1.57, displacement 0.440 mm. Binding constraint: safety_factor >= 1.5. Verified with power_law_t02_single_slot_v1.\n\nExplanation for the user:\nThe baseline does not meet the safety-factor limit of at least 1.5; its safety factor is 1.35. I recommend design pl-0-01054: it meets the limit and has a lower mass than the baseline. The binding constraint is safety factor \u2265 1.5, meaning the design must satisfy this minimum. The design uses a narrower arm, a longer and taller bracket, greater thickness, and a larger fillet radius; since the baseline fails, added mass or cost may be necessary to meet the limit. Enter these Ansys Discovery values: thickness 6.60 mm, flange length 79.91 mm, arm width 32.38 mm, fillet radius 7.22 mm, vertical height 72.01 mm, slot width 9.98 mm, and slot straight length 15.26 mm.",
+      "is_error": false
+    },
+    {
+      "seq": 25,
+      "type": "text",
+      "text": "The baseline does not meet the safety-factor limit of 1.5; its safety factor is 1.35. The recommended design, **pl-0-01054**, meets the limit with a safety factor of 1.57 and has a mass of 0.235 kg, 5% lower than the baseline. Its displacement is 0.440 mm.\n\nThe binding constraint is the minimum safety factor of 1.5. The design uses a narrower arm, a longer and taller bracket, greater thickness, and a larger fillet radius. The finalists were verified with `power_law_t02_single_slot_v1`.\n\nRecommended dimensions:\n- Thickness: 6.60 mm\n- Flange length: 79.91 mm\n- Arm width: 32.38 mm\n- Fillet radius: 7.22 mm\n- Vertical height: 72.01 mm\n- Slot width: 9.98 mm\n- Slot straight length: 15.26 mm"
+    }
+  ],
+  "result": {
+    "schema_version": "0.2.0",
+    "spec": {
+      "schema_version": "0.2.0",
+      "bracket_family": "t02_single_slot_v1",
+      "objective": {
+        "metric": "mass_kg",
+        "direction": "minimize"
+      },
+      "constraints": [
+        {
+          "metric": "safety_factor",
+          "op": ">=",
+          "value": 1.5
+        }
+      ],
+      "parameters": [
+        {
+          "name": "thickness_mm",
+          "low_mm": 4.0,
+          "high_mm": 10.0
+        },
+        {
+          "name": "flange_length_mm",
+          "low_mm": 75.0,
+          "high_mm": 120.0
+        },
+        {
+          "name": "arm_width_mm",
+          "low_mm": 32.0,
+          "high_mm": 60.0
+        },
+        {
+          "name": "fillet_radius_mm",
+          "low_mm": 2.0,
+          "high_mm": 8.0
+        },
+        {
+          "name": "vertical_height_mm",
+          "low_mm": 50.0,
+          "high_mm": 90.0
+        },
+        {
+          "name": "slot_width_mm",
+          "low_mm": 6.0,
+          "high_mm": 10.0
+        },
+        {
+          "name": "slot_straight_length_mm",
+          "low_mm": 8.0,
+          "high_mm": 18.0
+        }
+      ],
+      "load": {
+        "force_n": 500.0,
+        "angle_deg": -90.0
+      },
+      "material_key": "structural_steel",
+      "n_candidates": 2000,
+      "n_verify": 5,
+      "assumptions": [
+        "Load 500 N along -Y on the free-end face at max X (user).",
+        "Material Structural steel (user).",
+        "Setup confirmed by the user."
+      ]
+    },
+    "baseline": {
+      "design_id": "baseline",
+      "design": {
+        "thickness_mm": 6.0,
+        "flange_length_mm": 80.0,
+        "arm_width_mm": 40.0,
+        "fillet_radius_mm": 4.0,
+        "vertical_height_mm": 60.0,
+        "slot_width_mm": 8.0,
+        "slot_straight_length_mm": 13.0
+      },
+      "source": "power_law_t02_single_slot_v1",
+      "mass_kg": 0.24626825540334596,
+      "max_stress_mpa": 185.72097508080824,
+      "max_disp_mm": 0.48837467814414365,
+      "safety_factor": 1.3461053598885295,
+      "feasible": false,
+      "violated": [
+        "safety_factor >= 1.5"
+      ]
+    },
+    "recommended": {
+      "design_id": "pl-0-01054",
+      "design": {
+        "thickness_mm": 6.59988001592224,
+        "flange_length_mm": 79.9113957419992,
+        "arm_width_mm": 32.37920801051628,
+        "fillet_radius_mm": 7.224233295901327,
+        "vertical_height_mm": 72.01016897322005,
+        "slot_width_mm": 9.979999127988696,
+        "slot_straight_length_mm": 15.261798321635371
+      },
+      "source": "power_law_t02_single_slot_v1",
+      "mass_kg": 0.23468517740948347,
+      "max_stress_mpa": 159.61676638479787,
+      "max_disp_mm": 0.4398755780887706,
+      "safety_factor": 1.566251501407501,
+      "feasible": true,
+      "violated": []
+    },
+    "finalists": [
+      {
+        "design_id": "pl-0-01054",
+        "design": {
+          "thickness_mm": 6.59988001592224,
+          "flange_length_mm": 79.9113957419992,
+          "arm_width_mm": 32.37920801051628,
+          "fillet_radius_mm": 7.224233295901327,
+          "vertical_height_mm": 72.01016897322005,
+          "slot_width_mm": 9.979999127988696,
+          "slot_straight_length_mm": 15.261798321635371
+        },
+        "source": "power_law_t02_single_slot_v1",
+        "mass_kg": 0.23468517740948347,
+        "max_stress_mpa": 159.61676638479787,
+        "max_disp_mm": 0.4398755780887706,
+        "safety_factor": 1.566251501407501,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-01983",
+        "design": {
+          "thickness_mm": 7.257493971576581,
+          "flange_length_mm": 77.30665293602078,
+          "arm_width_mm": 32.715102072881635,
+          "fillet_radius_mm": 4.686323217380076,
+          "vertical_height_mm": 60.60226704956454,
+          "slot_width_mm": 8.8597921480224,
+          "slot_straight_length_mm": 12.858083858796135
+        },
+        "source": "power_law_t02_single_slot_v1",
+        "mass_kg": 0.23471898581272338,
+        "max_stress_mpa": 145.34229784680016,
+        "max_disp_mm": 0.3004983211457561,
+        "safety_factor": 1.7200773876818403,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-00627",
+        "design": {
+          "thickness_mm": 6.133822518290716,
+          "flange_length_mm": 83.0771857570754,
+          "arm_width_mm": 40.096978924406386,
+          "fillet_radius_mm": 7.483697464264685,
+          "vertical_height_mm": 51.237268198311156,
+          "slot_width_mm": 7.488041540445034,
+          "slot_straight_length_mm": 14.566073444784376
+        },
+        "source": "power_law_t02_single_slot_v1",
+        "mass_kg": 0.2438878517359962,
+        "max_stress_mpa": 153.59491828959025,
+        "max_disp_mm": 0.48485686483492874,
+        "safety_factor": 1.6276580161893515,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-00424",
+        "design": {
+          "thickness_mm": 7.4631876939195445,
+          "flange_length_mm": 75.62774219855599,
+          "arm_width_mm": 32.531987023804106,
+          "fillet_radius_mm": 4.968777719447011,
+          "vertical_height_mm": 64.11915176537414,
+          "slot_width_mm": 8.381608823593545,
+          "slot_straight_length_mm": 9.045624562430621
+        },
+        "source": "power_law_t02_single_slot_v1",
+        "mass_kg": 0.24580086460164313,
+        "max_stress_mpa": 133.17273401404074,
+        "max_disp_mm": 0.25527841155156183,
+        "safety_factor": 1.8772611514729574,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-00510",
+        "design": {
+          "thickness_mm": 7.623217946444516,
+          "flange_length_mm": 78.89715216252321,
+          "arm_width_mm": 32.422075192345744,
+          "fillet_radius_mm": 5.341880689334654,
+          "vertical_height_mm": 62.231381381481214,
+          "slot_width_mm": 6.6649344672553,
+          "slot_straight_length_mm": 15.572992558746353
+        },
+        "source": "power_law_t02_single_slot_v1",
+        "mass_kg": 0.25228796750726096,
+        "max_stress_mpa": 131.16189230669113,
+        "max_disp_mm": 0.2721018249179553,
+        "safety_factor": 1.90604142410079,
+        "feasible": true,
+        "violated": []
+      }
+    ],
+    "binding_constraint": "safety_factor >= 1.5",
+    "sensitivities": {
+      "thickness_mm": 0.2043737521294467,
+      "flange_length_mm": 0.10617966755793726,
+      "arm_width_mm": 0.43041257486922335,
+      "fillet_radius_mm": -0.24039945874769086,
+      "vertical_height_mm": -0.13609639533783513,
+      "slot_width_mm": -0.2464242382698419,
+      "slot_straight_length_mm": 0.024985830789091435
+    },
+    "explanation": "Recommended pl-0-01054: mass 0.235 kg (-5% vs baseline), safety factor 1.57, displacement 0.440 mm. Binding constraint: safety_factor >= 1.5. Verified with power_law_t02_single_slot_v1.",
+    "discovery_values": {
+      "thickness_mm": 6.59988001592224,
+      "flange_length_mm": 79.9113957419992,
+      "arm_width_mm": 32.37920801051628,
+      "fillet_radius_mm": 7.224233295901327,
+      "vertical_height_mm": 72.01016897322005,
+      "slot_width_mm": 9.979999127988696,
+      "slot_straight_length_mm": 15.261798321635371
+    },
+    "warnings": [
+      "power-law surrogate fitted to 80 CalculiX runs of t02_single_slot_v1; see docs/models.md for its error",
+      "Finalists were checked with the fitted power law, not a real solver. Use the CalculiX engine (Role 1) for a real check.",
+      "Single-slot bracket T02: the GUI's beam equations describe the v0 L-bracket; the numbers above come from the t02_single_slot_v1 models and engine."
+    ]
+  },
+  "stopped": null,
+  "seconds": 23.7
+}

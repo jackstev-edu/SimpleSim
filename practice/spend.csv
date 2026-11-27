@@ -1,0 +1,20 @@
+date,label,problems,models,cost_usd,total_usd
+2026-11-15 11:54,portcheck,1,gpt-6-luna,0.0026,0.0026
+2026-11-15 13:38,after,12,gpt-6-luna,0.0723,0.0749
+2026-11-15 13:57,after-rerun,3,gpt-6-luna,0.0311,0.1060
+2026-11-15 16:29,after-rerun2,3,gpt-6-luna,0.0271,0.1331
+2026-11-18 11:04,assistant-smoke,2,gpt-6-luna,0.0011,0.1342
+2026-11-18 11:14,assistant-smoke,2,gpt-6-luna,0.0042,0.1384
+2026-11-21 19:08,assistant-smoke,2,gpt-6-luna,0.0061,0.1445
+2026-11-21 20:16,after2b,4,gpt-6-luna,0.0296,0.1741
+2026-11-21 20:22,after2c,1,gpt-6-luna,0.0133,0.1874
+2026-11-21 19:16,after2 (killed at 9/12; cost from the run log),9,gpt-6-luna,0.0548,0.2422
+2026-11-22 22:40,fast-costcheck,1,gpt-6-luna,0.0026,0.2448
+2026-11-22 22:47,fast-first,10,gpt-6-luna,0.0225,0.2673
+2026-11-22 22:55,fast-first-rerun,10,gpt-6-luna,0.0228,0.2901
+2026-11-22 23:00,fast-first-r2,10,gpt-6-luna,0.0212,0.3113
+2026-11-23 11:03,fast-after-fix,10,gpt-6-luna,0.0229,0.3342
+2026-11-26 20:23,fast-pr14,10,gpt-6-luna,0.0217,0.3559
+2026-11-26 21:17,gui-live,0,gpt-6-luna,0.0061,0.3620
+2026-11-26 21:24,fast-prompt-check,10,gpt-6-luna,0.0218,0.3838
+2026-11-27 16:42,fast-templates,30,gpt-6-luna,0.0699,0.4537

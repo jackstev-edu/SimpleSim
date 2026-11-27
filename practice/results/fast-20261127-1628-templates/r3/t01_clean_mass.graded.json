@@ -1,0 +1,74 @@
+{
+  "id": "t01_clean_mass",
+  "checks": {
+    "handoff": {
+      "result": "pass",
+      "detail": "stayed on the fast path"
+    },
+    "asked": {
+      "result": "pass",
+      "detail": ""
+    },
+    "confirmed": {
+      "result": "pass",
+      "detail": "student agreed before confirm_setup"
+    },
+    "force": {
+      "result": "pass",
+      "detail": "got 500.0, want 500.0"
+    },
+    "direction": {
+      "result": "pass",
+      "detail": "got -90.0, want -90.0"
+    },
+    "material": {
+      "result": "pass",
+      "detail": "got structural_steel, want structural_steel"
+    },
+    "safety_factor": {
+      "result": "pass",
+      "detail": "got 1.5, want 1.5"
+    },
+    "objective": {
+      "result": "pass",
+      "detail": "got {'metric': 'mass_kg', 'direction': 'minimize'}, want {'metric': 'mass_kg', 'direction': 'minimize'}"
+    },
+    "limits": {
+      "result": "pass",
+      "detail": "got [], want []"
+    },
+    "vary": {
+      "result": "pass",
+      "detail": "got ['arm_width_mm', 'fillet_radius_mm', 'flange_length_mm', 'hole_diameter_mm', 'thickness_mm', 'vertical_height_mm'], want ['arm_width_mm', 'fillet_radius_mm', 'flange_length_mm', 'hole_diameter_mm', 'thickness_mm', 'vertical_height_mm']"
+    },
+    "family": {
+      "result": "pass",
+      "detail": "got t01_double_hole_v1, want t01_double_hole_v1"
+    },
+    "no_silent_default": {
+      "result": "pass",
+      "detail": "got 1.5, want 1.5"
+    },
+    "feasible": {
+      "result": "pass",
+      "detail": "SF at the pessimistic bound 1.564"
+    },
+    "pick_gap": {
+      "result": "pass",
+      "detail": "mass_kg 0.22166 vs model optimum 0.22166 (+0.0%)"
+    },
+    "dense_gap": {
+      "result": "info",
+      "detail": "vs 400,000-design best 0.20819 (+6.5%)"
+    },
+    "sim_gap": {
+      "result": "info",
+      "detail": "vs CalculiX best 0.28648 (-22.6%)"
+    }
+  },
+  "pick": {
+    "gap": 0.0,
+    "dense_gap": 0.06470315442270123,
+    "sim_gap": -0.22627261747473584
+  }
+}

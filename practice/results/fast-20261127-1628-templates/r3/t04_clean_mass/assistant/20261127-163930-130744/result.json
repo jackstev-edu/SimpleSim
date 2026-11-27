@@ -1,0 +1,243 @@
+{
+ "schema_version": "0.2.0",
+ "spec": {
+  "schema_version": "0.2.0",
+  "bracket_family": "t04_rounded_window_v1",
+  "objective": {
+   "metric": "mass_kg",
+   "direction": "minimize"
+  },
+  "constraints": [
+   {
+    "metric": "safety_factor",
+    "op": ">=",
+    "value": 1.5
+   }
+  ],
+  "parameters": [
+   {
+    "name": "thickness_mm",
+    "low_mm": 4.0,
+    "high_mm": 10.0
+   },
+   {
+    "name": "flange_length_mm",
+    "low_mm": 75.0,
+    "high_mm": 120.0
+   },
+   {
+    "name": "arm_width_mm",
+    "low_mm": 32.0,
+    "high_mm": 60.0
+   },
+   {
+    "name": "fillet_radius_mm",
+    "low_mm": 2.0,
+    "high_mm": 8.0
+   },
+   {
+    "name": "vertical_height_mm",
+    "low_mm": 50.0,
+    "high_mm": 90.0
+   },
+   {
+    "name": "window_length_mm",
+    "low_mm": 18.0,
+    "high_mm": 30.0
+   },
+   {
+    "name": "window_width_mm",
+    "low_mm": 12.0,
+    "high_mm": 20.0
+   },
+   {
+    "name": "window_radius_mm",
+    "low_mm": 2.0,
+    "high_mm": 4.0
+   }
+  ],
+  "load": {
+   "force_n": 500.0,
+   "angle_deg": -90.0
+  },
+  "material_key": "structural_steel",
+  "n_candidates": 2000,
+  "n_verify": 5,
+  "assumptions": [
+   "Load 500 N along -Y on the free-end face at max X (user).",
+   "Material Structural steel (user).",
+   "Setup confirmed by the user."
+  ]
+ },
+ "baseline": {
+  "design_id": "baseline",
+  "design": {
+   "thickness_mm": 6.0,
+   "flange_length_mm": 80.0,
+   "arm_width_mm": 40.0,
+   "fillet_radius_mm": 4.0,
+   "vertical_height_mm": 60.0,
+   "window_length_mm": 24.0,
+   "window_width_mm": 16.0,
+   "window_radius_mm": 3.0
+  },
+  "source": "power_law_t04_rounded_window_v1",
+  "mass_kg": 0.23581163850123452,
+  "max_stress_mpa": 218.59513775738014,
+  "max_disp_mm": 0.5377419300338016,
+  "safety_factor": 1.1436667922480337,
+  "feasible": false,
+  "violated": [
+   "safety_factor >= 1.5"
+  ]
+ },
+ "recommended": {
+  "design_id": "pl-0-00602",
+  "design": {
+   "thickness_mm": 8.059626779467477,
+   "flange_length_mm": 75.34726019084835,
+   "arm_width_mm": 36.515901107230675,
+   "fillet_radius_mm": 5.9916254897431775,
+   "vertical_height_mm": 51.279010562074255,
+   "window_length_mm": 29.120006644409635,
+   "window_width_mm": 19.90355569408476,
+   "window_radius_mm": 3.2442271339709414
+  },
+  "source": "power_law_t04_rounded_window_v1",
+  "mass_kg": 0.24003374987465712,
+  "max_stress_mpa": 140.4769866009786,
+  "max_disp_mm": 0.20393879781308236,
+  "safety_factor": 1.7796509310818207,
+  "feasible": true,
+  "violated": []
+ },
+ "finalists": [
+  {
+   "design_id": "pl-0-00602",
+   "design": {
+    "thickness_mm": 8.059626779467477,
+    "flange_length_mm": 75.34726019084835,
+    "arm_width_mm": 36.515901107230675,
+    "fillet_radius_mm": 5.9916254897431775,
+    "vertical_height_mm": 51.279010562074255,
+    "window_length_mm": 29.120006644409635,
+    "window_width_mm": 19.90355569408476,
+    "window_radius_mm": 3.2442271339709414
+   },
+   "source": "power_law_t04_rounded_window_v1",
+   "mass_kg": 0.24003374987465712,
+   "max_stress_mpa": 140.4769866009786,
+   "max_disp_mm": 0.20393879781308236,
+   "safety_factor": 1.7796509310818207,
+   "feasible": true,
+   "violated": []
+  },
+  {
+   "design_id": "pl-0-01719",
+   "design": {
+    "thickness_mm": 8.668044361690491,
+    "flange_length_mm": 76.61419393662055,
+    "arm_width_mm": 33.782777719330554,
+    "fillet_radius_mm": 5.152501832985095,
+    "vertical_height_mm": 56.31880929029473,
+    "window_length_mm": 28.25450911343028,
+    "window_width_mm": 18.84329547751459,
+    "window_radius_mm": 3.480693906312823
+   },
+   "source": "power_law_t04_rounded_window_v1",
+   "mass_kg": 0.25164167701048323,
+   "max_stress_mpa": 134.28051058971772,
+   "max_disp_mm": 0.18793513275598875,
+   "safety_factor": 1.8617742731397038,
+   "feasible": true,
+   "violated": []
+  },
+  {
+   "design_id": "pl-0-01358",
+   "design": {
+    "thickness_mm": 8.23472449319378,
+    "flange_length_mm": 76.47330985550555,
+    "arm_width_mm": 36.350130003807806,
+    "fillet_radius_mm": 3.66479839248482,
+    "vertical_height_mm": 52.18208381010664,
+    "window_length_mm": 25.662365162327745,
+    "window_width_mm": 15.475162687672647,
+    "window_radius_mm": 3.125864148848086
+   },
+   "source": "power_law_t04_rounded_window_v1",
+   "mass_kg": 0.25865362512387774,
+   "max_stress_mpa": 128.35523844069863,
+   "max_disp_mm": 0.19873411493165488,
+   "safety_factor": 1.9477194934704782,
+   "feasible": true,
+   "violated": []
+  },
+  {
+   "design_id": "pl-0-01456",
+   "design": {
+    "thickness_mm": 8.070910666324309,
+    "flange_length_mm": 79.302214173183,
+    "arm_width_mm": 35.63745146133138,
+    "fillet_radius_mm": 2.075325242346961,
+    "vertical_height_mm": 57.64368480946172,
+    "window_length_mm": 19.72940920184659,
+    "window_width_mm": 15.333788715085198,
+    "window_radius_mm": 3.7957587973960334
+   },
+   "source": "power_law_t04_rounded_window_v1",
+   "mass_kg": 0.27285798504199216,
+   "max_stress_mpa": 135.87213182474244,
+   "max_disp_mm": 0.24786605756133023,
+   "safety_factor": 1.8399652426331827,
+   "feasible": true,
+   "violated": []
+  },
+  {
+   "design_id": "pl-0-01844",
+   "design": {
+    "thickness_mm": 6.950720083639364,
+    "flange_length_mm": 76.97936319584332,
+    "arm_width_mm": 43.16382914506035,
+    "fillet_radius_mm": 6.5878773194353135,
+    "vertical_height_mm": 54.799850245734476,
+    "window_length_mm": 24.965882690334,
+    "window_width_mm": 17.69108171465094,
+    "window_radius_mm": 3.819342856806279
+   },
+   "source": "power_law_t04_rounded_window_v1",
+   "mass_kg": 0.27373037165705816,
+   "max_stress_mpa": 135.88562139278292,
+   "max_disp_mm": 0.27275083801232036,
+   "safety_factor": 1.839782586542875,
+   "feasible": true,
+   "violated": []
+  }
+ ],
+ "binding_constraint": "safety_factor >= 1.5",
+ "sensitivities": {
+  "thickness_mm": -0.10097032359310573,
+  "flange_length_mm": 0.42214955134169624,
+  "arm_width_mm": 0.14245475757595275,
+  "fillet_radius_mm": 0.047745788725846,
+  "vertical_height_mm": 0.5673738238841461,
+  "window_length_mm": -0.2940689729102226,
+  "window_width_mm": -0.5644739246771804,
+  "window_radius_mm": 0.009592776448077985
+ },
+ "explanation": "Recommended pl-0-00602: mass 0.240 kg (+2% vs baseline), safety factor 1.78, displacement 0.204 mm. Binding constraint: safety_factor >= 1.5. Verified with power_law_t04_rounded_window_v1.",
+ "discovery_values": {
+  "thickness_mm": 8.059626779467477,
+  "flange_length_mm": 75.34726019084835,
+  "arm_width_mm": 36.515901107230675,
+  "fillet_radius_mm": 5.9916254897431775,
+  "vertical_height_mm": 51.279010562074255,
+  "window_length_mm": 29.120006644409635,
+  "window_width_mm": 19.90355569408476,
+  "window_radius_mm": 3.2442271339709414
+ },
+ "warnings": [
+  "power-law surrogate fitted to 80 CalculiX runs of t04_rounded_window_v1; see docs/models.md for its error",
+  "Finalists were checked with the fitted power law, not a real solver. Use the CalculiX engine (Role 1) for a real check.",
+  "Rounded-window bracket T04: the GUI's beam equations describe the v0 L-bracket; the numbers above come from the t04_rounded_window_v1 models and engine."
+ ]
+}

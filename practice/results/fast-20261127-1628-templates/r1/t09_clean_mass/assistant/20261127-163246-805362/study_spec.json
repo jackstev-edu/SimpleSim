@@ -1,0 +1,74 @@
+{
+ "schema_version": "0.2.0",
+ "bracket_family": "t09_perforated_gusset_v1",
+ "objective": {
+  "metric": "mass_kg",
+  "direction": "minimize"
+ },
+ "constraints": [
+  {
+   "metric": "safety_factor",
+   "op": ">=",
+   "value": 1.5
+  }
+ ],
+ "parameters": [
+  {
+   "name": "thickness_mm",
+   "low_mm": 4.0,
+   "high_mm": 10.0
+  },
+  {
+   "name": "flange_length_mm",
+   "low_mm": 75.0,
+   "high_mm": 120.0
+  },
+  {
+   "name": "arm_width_mm",
+   "low_mm": 32.0,
+   "high_mm": 60.0
+  },
+  {
+   "name": "hole_diameter_mm",
+   "low_mm": 6.0,
+   "high_mm": 10.0
+  },
+  {
+   "name": "fillet_radius_mm",
+   "low_mm": 2.5,
+   "high_mm": 8.0
+  },
+  {
+   "name": "vertical_height_mm",
+   "low_mm": 50.0,
+   "high_mm": 90.0
+  },
+  {
+   "name": "gusset_thickness_mm",
+   "low_mm": 5.0,
+   "high_mm": 9.0
+  },
+  {
+   "name": "gusset_length_mm",
+   "low_mm": 28.0,
+   "high_mm": 35.0
+  },
+  {
+   "name": "rib_hole_diameter_mm",
+   "low_mm": 5.0,
+   "high_mm": 8.0
+  }
+ ],
+ "load": {
+  "force_n": 500.0,
+  "angle_deg": -90.0
+ },
+ "material_key": "structural_steel",
+ "n_candidates": 2000,
+ "n_verify": 5,
+ "assumptions": [
+  "Load 500 N along -Y on the free-end face at max X (user).",
+  "Material Structural steel (user).",
+  "Setup confirmed by the user."
+ ]
+}
