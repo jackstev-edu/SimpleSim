@@ -172,3 +172,10 @@ def test_prompt_confirms_a_vague_material_grade():
     # fast-path benchmark 2026-11-22: "aluminium" was set to aluminium 6061 without asking (rule 2026-11-13)
     from src.assistant.front import PROMPT
     assert "only by type" in PROMPT and "before set_material" in PROMPT
+
+
+def test_prompt_does_not_promise_an_ansys_check():
+    # live GUI run 2026-11-26: on the fitted engine it said finalists would be "verified in ANSYS"
+    p = " ".join(PROMPT.split())
+    assert "solved in ANSYS" not in p and "verified in ANSYS" not in p
+    assert "how the finalists were checked" in p

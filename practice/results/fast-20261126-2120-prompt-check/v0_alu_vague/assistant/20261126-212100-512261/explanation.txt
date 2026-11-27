@@ -1,0 +1,5 @@
+The recommended design is pl-0-01738; it is 21% lighter than the baseline while meeting the safety-factor limit.  
+Safety factor is the binding constraint, meaning it is the limit the design is closest to: its value is 1.74 against a minimum of 1.5.  
+The trade-off is slightly greater displacement than the baseline: 1.145 mm instead of 1.100 mm.  
+Enter these values in Ansys Discovery: thickness 6.116 mm, flange length 76.953 mm, arm width 32.078 mm, hole diameter 9.279 mm, and fillet radius 4.451 mm.  
+The results were checked with a fitted power-law model, not a real solver, so verify the design with a real analysis.

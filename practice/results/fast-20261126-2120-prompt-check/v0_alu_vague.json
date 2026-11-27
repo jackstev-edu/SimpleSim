@@ -1,0 +1,431 @@
+{
+  "id": "v0_alu_vague",
+  "events": [
+    {
+      "seq": 0,
+      "type": "path",
+      "path": "fast",
+      "reason": "this is the L-bracket v0, which the team's predictor knows"
+    },
+    {
+      "seq": 1,
+      "type": "tool",
+      "name": "describe_setup",
+      "input": {}
+    },
+    {
+      "seq": 2,
+      "type": "tool_result",
+      "name": "describe_setup",
+      "content": "{\"ok\": true, \"message\": \"Part: v0_alu_vague.dsco (discovery file), L-bracket v0. Engine: power_law_v0.\\nFixed: not set\\nLoad: not set\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 12), Fillet radius 4 mm (2 to 8)\\nStill needed: supports; load; material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261126-2120-prompt-check\\\\v0_alu_vague\\\\v0_alu_vague.dsco\", \"file_type\": \"discovery\", \"family\": \"l_bracket_v0\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 12.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}], \"support\": null, \"load\": null, \"material\": null, \"sources\": {\"dimensions\": \"file\"}, \"missing\": [\"supports\", \"load\", \"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 3,
+      "type": "text",
+      "text": "I see an L-bracket in the Discovery file. Its current dimensions are: thickness 6 mm, flange length 80 mm, arm width 40 mm, hole diameter 8 mm, and fillet radius 4 mm. The support, load, and material aren\u2019t set.\n\nI\u2019ll use the fast search because this is an L-bracket; the ANSYS search offers more material choices. Say \u201cuse ANSYS\u201d to switch.\n\nWhere is the bracket held?"
+    },
+    {
+      "seq": 4,
+      "type": "student",
+      "text": "Can you make this aluminium L-bracket as light as possible? It carries 400 N downward at the tip and needs a safety factor of 1.5."
+    },
+    {
+      "seq": 5,
+      "type": "tool",
+      "name": "set_load",
+      "input": {
+        "force_n": 400,
+        "direction": [
+          0,
+          -1,
+          0
+        ]
+      }
+    },
+    {
+      "seq": 6,
+      "type": "tool_result",
+      "name": "set_load",
+      "content": "{\"ok\": true, \"message\": \"Part: v0_alu_vague.dsco (discovery file), L-bracket v0. Engine: power_law_v0.\\nFixed: not set\\nLoad: 400 N along -Y on the free-end face at max X [user]\\nMaterial: not set\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 12), Fillet radius 4 mm (2 to 8)\\nStill needed: supports; material\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261126-2120-prompt-check\\\\v0_alu_vague\\\\v0_alu_vague.dsco\", \"file_type\": \"discovery\", \"family\": \"l_bracket_v0\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 12.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}], \"support\": null, \"load\": {\"force_n\": 400.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": null, \"sources\": {\"dimensions\": \"file\", \"load\": \"user\"}, \"missing\": [\"supports\", \"material\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 7,
+      "type": "tool",
+      "name": "record_study_inputs",
+      "input": {
+        "safety_factor": 1.5,
+        "objective": "mass_kg",
+        "direction": "minimize",
+        "limits": [
+          {
+            "metric": "safety_factor",
+            "op": ">=",
+            "value": 1.5
+          }
+        ]
+      }
+    },
+    {
+      "seq": 8,
+      "type": "tool_result",
+      "name": "record_study_inputs",
+      "content": "{\"ok\": true, \"inputs\": {\"safety_factor\": 1.5, \"objective\": \"mass_kg\", \"direction\": \"minimize\", \"limits\": [{\"metric\": \"safety_factor\", \"op\": \">=\", \"value\": 1.5}], \"vary\": null}}",
+      "is_error": false
+    },
+    {
+      "seq": 9,
+      "type": "text",
+      "text": "I\u2019ve recorded the 400 N downward load and the goal of minimizing mass while meeting a 1.5 safety factor. For a lighter design, I recommend aluminum 6061, which the fast search supports. May I use aluminum 6061?"
+    },
+    {
+      "seq": 10,
+      "type": "student",
+      "text": "Yes, you may use aluminum 6061."
+    },
+    {
+      "seq": 11,
+      "type": "tool",
+      "name": "set_material",
+      "input": {
+        "material": "aluminum_6061"
+      }
+    },
+    {
+      "seq": 12,
+      "type": "tool_result",
+      "name": "set_material",
+      "content": "{\"ok\": true, \"message\": \"Part: v0_alu_vague.dsco (discovery file), L-bracket v0. Engine: power_law_v0.\\nFixed: not set\\nLoad: 400 N along -Y on the free-end face at max X [user]\\nMaterial: Aluminum alloy 6061-T6, E 69,000 MPa, yield 276 MPa, density 2700 kg/m3 [user]\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 12), Fillet radius 4 mm (2 to 8)\\nStill needed: supports\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261126-2120-prompt-check\\\\v0_alu_vague\\\\v0_alu_vague.dsco\", \"file_type\": \"discovery\", \"family\": \"l_bracket_v0\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 12.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}], \"support\": null, \"load\": {\"force_n\": 400.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": {\"name\": \"Aluminum alloy 6061-T6\", \"youngs_mpa\": 69000.0, \"poisson\": 0.33, \"yield_mpa\": 276.0, \"ultimate_mpa\": null, \"density_kg_m3\": 2700.0}, \"sources\": {\"dimensions\": \"file\", \"load\": \"user\", \"material\": \"user\"}, \"missing\": [\"supports\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 13,
+      "type": "tool",
+      "name": "describe_setup",
+      "input": {}
+    },
+    {
+      "seq": 14,
+      "type": "tool_result",
+      "name": "describe_setup",
+      "content": "{\"ok\": true, \"message\": \"Part: v0_alu_vague.dsco (discovery file), L-bracket v0. Engine: power_law_v0.\\nFixed: not set\\nLoad: 400 N along -Y on the free-end face at max X [user]\\nMaterial: Aluminum alloy 6061-T6, E 69,000 MPa, yield 276 MPa, density 2700 kg/m3 [user]\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 12), Fillet radius 4 mm (2 to 8)\\nStill needed: supports\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261126-2120-prompt-check\\\\v0_alu_vague\\\\v0_alu_vague.dsco\", \"file_type\": \"discovery\", \"family\": \"l_bracket_v0\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 12.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}], \"support\": null, \"load\": {\"force_n\": 400.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": {\"name\": \"Aluminum alloy 6061-T6\", \"youngs_mpa\": 69000.0, \"poisson\": 0.33, \"yield_mpa\": 276.0, \"ultimate_mpa\": null, \"density_kg_m3\": 2700.0}, \"sources\": {\"dimensions\": \"file\", \"load\": \"user\", \"material\": \"user\"}, \"missing\": [\"supports\"], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 15,
+      "type": "text",
+      "text": "Which face is held fixed?"
+    },
+    {
+      "seq": 16,
+      "type": "student",
+      "text": "The back face of the upright leg, which is bolted flat to the wall."
+    },
+    {
+      "seq": 17,
+      "type": "tool",
+      "name": "set_support",
+      "input": {
+        "face": "back face at X = 0"
+      }
+    },
+    {
+      "seq": 18,
+      "type": "tool_result",
+      "name": "set_support",
+      "content": "{\"ok\": true, \"message\": \"Part: v0_alu_vague.dsco (discovery file), L-bracket v0. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 400 N along -Y on the free-end face at max X [user]\\nMaterial: Aluminum alloy 6061-T6, E 69,000 MPa, yield 276 MPa, density 2700 kg/m3 [user]\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 12), Fillet radius 4 mm (2 to 8)\\nStill needed: nothing\\nStatus: waiting for the user to confirm this setup\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261126-2120-prompt-check\\\\v0_alu_vague\\\\v0_alu_vague.dsco\", \"file_type\": \"discovery\", \"family\": \"l_bracket_v0\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 12.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 400.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": {\"name\": \"Aluminum alloy 6061-T6\", \"youngs_mpa\": 69000.0, \"poisson\": 0.33, \"yield_mpa\": 276.0, \"ultimate_mpa\": null, \"density_kg_m3\": 2700.0}, \"sources\": {\"dimensions\": \"file\", \"load\": \"user\", \"material\": \"user\", \"supports\": \"user\"}, \"missing\": [], \"problems\": [], \"confirmed\": false}}",
+      "is_error": false
+    },
+    {
+      "seq": 19,
+      "type": "text",
+      "text": "Setup card: L-bracket v0; held at the back face at X = 0; 400 N downward at the free end; aluminum 6061-T6. Current dimensions: thickness 6 mm, flange length 80 mm, arm width 40 mm, hole diameter 8 mm, and fillet radius 4 mm. Safety factor target: 1.5. Objective: minimize mass.\n\nWhich dimensions may change in the search? You can name specific dimensions or say all five."
+    },
+    {
+      "seq": 20,
+      "type": "student",
+      "text": "All five."
+    },
+    {
+      "seq": 21,
+      "type": "tool",
+      "name": "record_study_inputs",
+      "input": {
+        "vary": [
+          "Thickness",
+          "Flange length",
+          "Arm width",
+          "Hole diameter",
+          "Fillet radius"
+        ]
+      }
+    },
+    {
+      "seq": 22,
+      "type": "tool_result",
+      "name": "record_study_inputs",
+      "content": "{\"ok\": true, \"inputs\": {\"safety_factor\": 1.5, \"objective\": \"mass_kg\", \"direction\": \"minimize\", \"limits\": [{\"metric\": \"safety_factor\", \"op\": \">=\", \"value\": 1.5}], \"vary\": [\"Thickness\", \"Flange length\", \"Arm width\", \"Hole diameter\", \"Fillet radius\"]}}",
+      "is_error": false
+    },
+    {
+      "seq": 23,
+      "type": "text",
+      "text": "The setup card now has all five dimensions available to change: thickness, flange length, arm width, hole diameter, and fillet radius. The current values are 6, 80, 40, 8, and 4 mm, respectively. It also shows the back face at X = 0 fixed, 400 N downward at the free end, and aluminum 6061-T6. The study will minimize mass while meeting a safety factor of at least 1.5.\n\nIs this setup correct?"
+    },
+    {
+      "seq": 24,
+      "type": "student",
+      "text": "Yes, this setup is correct."
+    },
+    {
+      "seq": 25,
+      "type": "tool",
+      "name": "confirm_setup",
+      "input": {}
+    },
+    {
+      "seq": 26,
+      "type": "tool_result",
+      "name": "confirm_setup",
+      "content": "{\"ok\": true, \"message\": \"Setup confirmed.\\nPart: v0_alu_vague.dsco (discovery file), L-bracket v0. Engine: power_law_v0.\\nFixed: back face at X = 0 [user]\\nLoad: 400 N along -Y on the free-end face at max X [user]\\nMaterial: Aluminum alloy 6061-T6, E 69,000 MPa, yield 276 MPa, density 2700 kg/m3 [user]\\nDimensions [file]: Thickness 6 mm (4 to 10), Flange length 80 mm (75 to 120), Arm width 40 mm (32 to 60), Hole diameter 8 mm (6 to 12), Fillet radius 4 mm (2 to 8)\\nStill needed: nothing\\nStatus: confirmed by the user\", \"state\": {\"part\": \"C:\\\\Users\\\\Yunus\\\\Desktop\\\\Secret Sauce\\\\CMU_Class_Material\\\\Fall26\\\\24679 (Design AI)\\\\Project2\\\\SimpleSim\\\\practice\\\\results\\\\fast-20261126-2120-prompt-check\\\\v0_alu_vague\\\\v0_alu_vague.dsco\", \"file_type\": \"discovery\", \"family\": \"l_bracket_v0\", \"engine\": \"power_law_v0\", \"dimensions\": [{\"name\": \"Thickness\", \"contract_name\": \"thickness_mm\", \"value_mm\": 6.0, \"low_mm\": 4.0, \"high_mm\": 10.0}, {\"name\": \"Flange length\", \"contract_name\": \"flange_length_mm\", \"value_mm\": 80.0, \"low_mm\": 75.0, \"high_mm\": 120.0}, {\"name\": \"Arm width\", \"contract_name\": \"arm_width_mm\", \"value_mm\": 40.0, \"low_mm\": 32.0, \"high_mm\": 60.0}, {\"name\": \"Hole diameter\", \"contract_name\": \"hole_diameter_mm\", \"value_mm\": 8.0, \"low_mm\": 6.0, \"high_mm\": 12.0}, {\"name\": \"Fillet radius\", \"contract_name\": \"fillet_radius_mm\", \"value_mm\": 4.0, \"low_mm\": 2.0, \"high_mm\": 8.0}], \"support\": \"back face at X = 0\", \"load\": {\"force_n\": 400.0, \"direction\": [0.0, -1.0, 0.0]}, \"material\": {\"name\": \"Aluminum alloy 6061-T6\", \"youngs_mpa\": 69000.0, \"poisson\": 0.33, \"yield_mpa\": 276.0, \"ultimate_mpa\": null, \"density_kg_m3\": 2700.0}, \"sources\": {\"dimensions\": \"file\", \"load\": \"user\", \"material\": \"user\", \"supports\": \"user\"}, \"missing\": [], \"problems\": [], \"confirmed\": true}}",
+      "is_error": false
+    },
+    {
+      "seq": 27,
+      "type": "tool",
+      "name": "optimize_design",
+      "input": {
+        "objective": "mass_kg",
+        "direction": "minimize",
+        "constraints": [
+          {
+            "metric": "safety_factor",
+            "op": ">=",
+            "value": 1.5
+          }
+        ],
+        "vary": [
+          "Thickness",
+          "Flange length",
+          "Arm width",
+          "Hole diameter",
+          "Fillet radius"
+        ],
+        "n_verify": 5
+      }
+    },
+    {
+      "seq": 28,
+      "type": "tool_result",
+      "name": "optimize_design",
+      "content": "Recommended pl-0-01738: mass 0.069 kg (-21% vs baseline), safety factor 1.74, displacement 1.145 mm. Binding constraint: safety_factor >= 1.5. Verified with power_law_v0.\n\nExplanation for the user:\nThe recommended design is pl-0-01738; it is 21% lighter than the baseline while meeting the safety-factor limit.  \nSafety factor is the binding constraint, meaning it is the limit the design is closest to: its value is 1.74 against a minimum of 1.5.  \nThe trade-off is slightly greater displacement than the baseline: 1.145 mm instead of 1.100 mm.  \nEnter these values in Ansys Discovery: thickness 6.116 mm, flange length 76.953 mm, arm width 32.078 mm, hole diameter 9.279 mm, and fillet radius 4.451 mm.  \nThe results were checked with a fitted power-law model, not a real solver, so verify the design with a real analysis.",
+      "is_error": false
+    },
+    {
+      "seq": 29,
+      "type": "text",
+      "text": "The recommended design is **pl-0-01738**, with a mass of 0.069 kg\u201421% lighter than the baseline. Its safety factor is 1.74, above the 1.5 minimum. The safety-factor constraint is binding, meaning it is the limit the design is closest to.\n\nThe trade-off is slightly greater displacement: 1.145 mm versus 1.100 mm for the baseline.\n\nEnter these dimensions in Ansys Discovery:\n- Thickness: 6.116 mm\n- Flange length: 76.953 mm\n- Arm width: 32.078 mm\n- Hole diameter: 9.279 mm\n- Fillet radius: 4.451 mm\n\nThe finalists were checked with a fitted power-law model, not a real solver. Verify the design with a real analysis before relying on it."
+    }
+  ],
+  "result": {
+    "schema_version": "0.2.0",
+    "spec": {
+      "schema_version": "0.2.0",
+      "bracket_family": "l_bracket_v0",
+      "objective": {
+        "metric": "mass_kg",
+        "direction": "minimize"
+      },
+      "constraints": [
+        {
+          "metric": "safety_factor",
+          "op": ">=",
+          "value": 1.5
+        }
+      ],
+      "parameters": [
+        {
+          "name": "thickness_mm",
+          "low_mm": 4.0,
+          "high_mm": 10.0
+        },
+        {
+          "name": "flange_length_mm",
+          "low_mm": 75.0,
+          "high_mm": 120.0
+        },
+        {
+          "name": "arm_width_mm",
+          "low_mm": 32.0,
+          "high_mm": 60.0
+        },
+        {
+          "name": "hole_diameter_mm",
+          "low_mm": 6.0,
+          "high_mm": 12.0
+        },
+        {
+          "name": "fillet_radius_mm",
+          "low_mm": 2.0,
+          "high_mm": 8.0
+        }
+      ],
+      "load": {
+        "force_n": 400.0,
+        "angle_deg": -90.0
+      },
+      "material_key": "aluminum_6061",
+      "n_candidates": 2000,
+      "n_verify": 5,
+      "assumptions": [
+        "Load 400 N along -Y on the free-end face at max X (user).",
+        "Material Aluminum alloy 6061-T6 (user).",
+        "Setup confirmed by the user."
+      ]
+    },
+    "baseline": {
+      "design_id": "baseline",
+      "design": {
+        "thickness_mm": 6.0,
+        "flange_length_mm": 80.0,
+        "arm_width_mm": 40.0,
+        "hole_diameter_mm": 8.0,
+        "fillet_radius_mm": 4.0
+      },
+      "source": "power_law_v0",
+      "mass_kg": 0.08638853115783875,
+      "max_stress_mpa": 141.18701039885244,
+      "max_disp_mm": 1.0996550960538225,
+      "safety_factor": 1.9548540564765957,
+      "feasible": true,
+      "violated": []
+    },
+    "recommended": {
+      "design_id": "pl-0-01738",
+      "design": {
+        "thickness_mm": 6.115754857895299,
+        "flange_length_mm": 76.9534294958879,
+        "arm_width_mm": 32.07802924122041,
+        "hole_diameter_mm": 9.27873373986636,
+        "fillet_radius_mm": 4.451404916838734
+      },
+      "source": "power_law_v0",
+      "mass_kg": 0.0685551062246167,
+      "max_stress_mpa": 158.33303546648824,
+      "max_disp_mm": 1.145285489653392,
+      "safety_factor": 1.7431611740837016,
+      "feasible": true,
+      "violated": []
+    },
+    "finalists": [
+      {
+        "design_id": "pl-0-01738",
+        "design": {
+          "thickness_mm": 6.115754857895299,
+          "flange_length_mm": 76.9534294958879,
+          "arm_width_mm": 32.07802924122041,
+          "hole_diameter_mm": 9.27873373986636,
+          "fillet_radius_mm": 4.451404916838734
+        },
+        "source": "power_law_v0",
+        "mass_kg": 0.0685551062246167,
+        "max_stress_mpa": 158.33303546648824,
+        "max_disp_mm": 1.145285489653392,
+        "safety_factor": 1.7431611740837016,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-01650",
+        "design": {
+          "thickness_mm": 5.961569436438155,
+          "flange_length_mm": 75.88652502098181,
+          "arm_width_mm": 32.86728333489767,
+          "hole_diameter_mm": 6.565135374201008,
+          "fillet_radius_mm": 7.591317085857184
+        },
+        "source": "power_law_v0",
+        "mass_kg": 0.06928804190701607,
+        "max_stress_mpa": 143.3564209597642,
+        "max_disp_mm": 1.0914945151305677,
+        "safety_factor": 1.9252712794599194,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-01770",
+        "design": {
+          "thickness_mm": 5.968876550872478,
+          "flange_length_mm": 79.88957993716107,
+          "arm_width_mm": 32.59554139248533,
+          "hole_diameter_mm": 7.501009756174513,
+          "fillet_radius_mm": 3.694906850305567
+        },
+        "source": "power_law_v0",
+        "mass_kg": 0.06989537899448982,
+        "max_stress_mpa": 177.4140033480105,
+        "max_disp_mm": 1.385372247323331,
+        "safety_factor": 1.555683287629815,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-01100",
+        "design": {
+          "thickness_mm": 4.642267120268432,
+          "flange_length_mm": 75.59984465586197,
+          "arm_width_mm": 44.56931616831635,
+          "hole_diameter_mm": 11.921951541232536,
+          "fillet_radius_mm": 6.044633132050609
+        },
+        "source": "power_law_v0",
+        "mass_kg": 0.07270214792125024,
+        "max_stress_mpa": 176.59143729600785,
+        "max_disp_mm": 1.752668874561003,
+        "safety_factor": 1.5629296880197001,
+        "feasible": true,
+        "violated": []
+      },
+      {
+        "design_id": "pl-0-00617",
+        "design": {
+          "thickness_mm": 5.385532572269662,
+          "flange_length_mm": 75.6696220859606,
+          "arm_width_mm": 38.211180513108246,
+          "hole_diameter_mm": 6.451391500746047,
+          "fillet_radius_mm": 7.274434071893953
+        },
+        "source": "power_law_v0",
+        "mass_kg": 0.0730855750618398,
+        "max_stress_mpa": 150.43712029404517,
+        "max_disp_mm": 1.2665016560086384,
+        "safety_factor": 1.834653571276351,
+        "feasible": true,
+        "violated": []
+      }
+    ],
+    "binding_constraint": "safety_factor >= 1.5",
+    "sensitivities": {
+      "thickness_mm": -0.07038498231726956,
+      "flange_length_mm": 0.31463882936398524,
+      "arm_width_mm": 0.36235137093804143,
+      "hole_diameter_mm": 0.2749027618935483,
+      "fillet_radius_mm": -0.13289138749839513
+    },
+    "explanation": "Recommended pl-0-01738: mass 0.069 kg (-21% vs baseline), safety factor 1.74, displacement 1.145 mm. Binding constraint: safety_factor >= 1.5. Verified with power_law_v0.",
+    "discovery_values": {
+      "thickness_mm": 6.115754857895299,
+      "flange_length_mm": 76.9534294958879,
+      "arm_width_mm": 32.07802924122041,
+      "hole_diameter_mm": 9.27873373986636,
+      "fillet_radius_mm": 4.451404916838734
+    },
+    "warnings": [
+      "power-law surrogate fitted to 200 CalculiX runs of l_bracket_v0; see docs/models.md for its error",
+      "Finalists were checked with the fitted power law, not a real solver. Use the CalculiX engine (Role 1) for a real check."
+    ]
+  },
+  "stopped": null,
+  "seconds": 31.4
+}

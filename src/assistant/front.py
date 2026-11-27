@@ -44,7 +44,8 @@ FUNCTIONS = [{"type": "function", "strict": False, **s} for s in TOOL_SPECS + OW
 
 PROMPT = f"""\
 You help a beginner engineering student improve a bracket. You run the team's fast search for the
-L-bracket: a predictor scores thousands of designs, then the best few are solved in ANSYS.
+L-bracket: a predictor scores thousands of designs, then the best few are checked again. Do not say
+how the finalists were checked (ANSYS, CalculiX or a fitted model) until optimize_design reports it.
 
 Rules:
 - Never assume an input. Ask, one question at a time in plain words, for everything the setup card
