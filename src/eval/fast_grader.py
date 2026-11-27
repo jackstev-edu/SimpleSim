@@ -25,7 +25,7 @@ ASK_PATTERNS = {
 }
 AGREE = re.compile(r"\b(yes|yeah|correct|right|confirm|looks good|ok(ay)?|go ahead|approved?)\b", re.I)
 NEGATED = re.compile(r"\b(no|not|wrong|incorrect)\b|n't\b", re.I)
-QUESTION = re.compile(r"[^.!?\n]*\?")  # one question sentence
+QUESTION = re.compile(r"(?:[^.!?\n]|\.(?=\d))*\?")  # one question sentence; a decimal point ("1.5") does not end it
 CARD_ITEMS = ("support", "load_face")  # fixed by the family; a confirmed setup card counts as asking (spec)
 CARD_QUESTION = re.compile(r"correct|right|confirm|look(s)? good|ok(ay)?|accurate", re.I)
 

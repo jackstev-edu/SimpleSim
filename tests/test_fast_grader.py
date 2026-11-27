@@ -139,6 +139,15 @@ def test_asked_needs_keyword_in_the_question():
     assert out["checks"]["asked"]["result"] == "fail"
 
 
+def test_a_decimal_point_does_not_end_the_question():
+    # benchmark 2026-11-26: "Is a safety factor of 1.5 okay?" was cut at "1." and read as "5 okay?"
+    events = [{"type": "text", "text": "Is a safety factor of 1.5 okay? It's a common choice."},
+              {"type": "student", "text": "OK, go ahead."},
+              {"type": "tool", "name": "record_study_inputs", "input": {"safety_factor": 1.5}},
+              {"type": "tool", "name": "optimize_design", "input": {}}]
+    assert checks(problem(must_ask=("safety_factor",)), log(events=events))["asked"] == "pass"
+
+
 def test_confirm_rejects_negated_agreement():
     # I3: "not right" is a correction, not agreement
     events = [e if e.get("text") != "Yes, that is right." else {**e, "text": "No, that's not right."} for e in GOOD_EVENTS]

@@ -6,8 +6,8 @@
       "detail": "stayed on the fast path"
     },
     "asked": {
-      "result": "fail",
-      "detail": "not asked before use: safety_factor"
+      "result": "pass",
+      "detail": ""
     },
     "confirmed": {
       "result": "pass",
